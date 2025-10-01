@@ -1,31 +1,35 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+import dbConnect from '@/lib/dbConnect';
+import ImageModel from '@/models/Image';
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function DELETE(req) {
-  const { searchParams } = new URL(req.url);
-  const fileName = searchParams.get('file');
+  await dbConnect();
+  
+  // Get the publicId from the search params
+  const publicId = req.nextUrl.searchParams.get('publicId'); 
 
-  if (!fileName) {
-    return NextResponse.json({ error: 'Missing file name parameter' }, { status: 400 });
+  if (!publicId) {
+    return NextResponse.json({ error: 'Missing Public ID.' }, { status: 400 });
   }
 
-  const publicFilePath = path.join(process.cwd(), 'public', 'gallery', fileName);
-  const metaFilePath = path.join(process.cwd(), 'data', 'gallery.json');
-
   try {
-    // Delete the file from the public folder
-    await fs.unlink(publicFilePath);
+    // 1. Delete from Cloudinary
+    await cloudinary.uploader.destroy(publicId);
 
-    // Update the metadata file
-    const existingData = await fs.readFile(metaFilePath, 'utf-8');
-    const metadata = JSON.parse(existingData);
-    const updatedMetadata = metadata.filter(img => img.filename !== fileName);
-    await fs.writeFile(metaFilePath, JSON.stringify(updatedMetadata, null, 2));
+    // 2. Delete the record from MongoDB
+    await ImageModel.deleteOne({ publicId });
 
-    return NextResponse.json({ message: 'File deleted successfully' });
+    return NextResponse.json({ message: 'File deleted successfully!' });
   } catch (error) {
-    console.error('Error deleting file:', error);
+    console.error('Error deleting file (Cloudinary/MongoDB):', error);
     return NextResponse.json({ error: 'Failed to delete file.' }, { status: 500 });
   }
 }
