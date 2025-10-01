@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 // 🛑 FIX: Use relative path to bypass Vercel alias resolution error
-import dbConnect from '../../../../lib/dbConnect';
+import dbConnect from '../../../lib/dbConnect';
 import ImageModel from '@/models/Image';
 
 // Configure Cloudinary using Vercel environment variables

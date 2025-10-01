@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 // 🛑 FIX: Use relative path to bypass Vercel alias resolution error
-import dbConnect from '../../../../lib/dbConnect';
+import dbConnect from '../../../lib/dbConnect';
 import ImageModel from '@/models/Image';
 
 export async function GET() {
