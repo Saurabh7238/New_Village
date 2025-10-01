@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-// 🛑 FIX: Use relative path to bypass Vercel alias resolution error
-import dbConnect from '../../../lib/dbConnect';
+// 🛑 FIX: Use the final, correct relative path (two levels up)
+import dbConnect from '../../lib/dbConnect';
 import ImageModel from '@/models/Image';
 
 export async function GET() {
   await dbConnect();
 
   try {
-    // Fetch all image documents from MongoDB
     const images = await ImageModel.find({}).sort({ createdAt: -1 });
 
     return NextResponse.json(images);
