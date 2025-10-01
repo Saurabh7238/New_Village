@@ -3,7 +3,6 @@ import { v2 as cloudinary } from 'cloudinary';
 import dbConnect from '@/lib/dbConnect';
 import ImageModel from '@/models/Image';
 
-// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -13,7 +12,7 @@ cloudinary.config({
 export async function DELETE(req) {
   await dbConnect();
   
-  // Get the publicId from the search params
+  // The client must send the publicId, not the filename
   const publicId = req.nextUrl.searchParams.get('publicId'); 
 
   if (!publicId) {

@@ -6,6 +6,7 @@ export async function GET() {
   await dbConnect(); 
 
   try {
+    // Fetch all image metadata from MongoDB
     const images = await ImageModel.find({}).sort({ uploadedAt: -1 });
 
     return NextResponse.json(images, { status: 200 });

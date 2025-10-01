@@ -15,11 +15,12 @@ export default function GalleryPage() {
   }, []);
 
   useEffect(() => {
-    // FIX: Appending a unique query parameter to bypass cache for the data list.
+    // FIX: Appending a unique query parameter (t=timestamp) to the API call
+    // to bypass browser and Vercel edge caching, ensuring fresh data is fetched.
     fetch(`/api/images?t=${Date.now()}`) 
       .then((res) => res.json())
       .then((data) => {
-        // The data should now be an array of image objects from MongoDB
+        // Data is an array of image documents from MongoDB
         const imageArray = Array.isArray(data) ? data : data.images;
         setImages(imageArray || []);
       })
@@ -37,11 +38,11 @@ export default function GalleryPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 px-4">
         {images.map((img, index) => (
           <motion.div
-            key={img._id || index} // Use MongoDB _id as the key for stability
+            key={img._id || index} // Use MongoDB _id for stability
             whileHover={{ scale: 1.05 }}
             className="overflow-hidden rounded-lg shadow-md cursor-zoom-in relative"
-            // The onclick link should probably use the secure URL or publicId if linking to a dynamic page
-            onClick={() => window.open(img.secureUrl || `/gallery/view/${img.publicId}`, "_blank")}
+            // Use the secureUrl for the onClick link
+            onClick={() => window.open(img.secureUrl, "_blank")}
           >
             <Image
               // 🛑 CRITICAL CHANGE: Use the secureUrl from the MongoDB document
