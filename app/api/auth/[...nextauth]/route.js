@@ -4,18 +4,23 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 
-// Database connection function
+// --- Database Connection Function ---
 const connect = async () => {
-  if (mongoose.connections[0].readyState) return;
+  // Check if Mongoose is already connected (prevents warnings/errors in Next.js)
+  if (mongoose.connections[0].readyState) return; 
+  
   try {
+    // Attempt to connect using the URI from environment variables
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log("MongoDB connected.");
+    console.log("MongoDB connected successfully.");
   } catch (error) {
-    throw new Error("Connection failed!");
+    console.error("MongoDB Connection Failed:", error.message);
+    // Throw a specific error to catch during authorize
+    throw new Error("Connection Failed!");
   }
 };
 
-// Updated User schema to use email
+// --- Mongoose User Schema and Model (Must be defined only once) ---
 const UserSchema = new mongoose.Schema(
   {
     email: {
@@ -35,10 +40,11 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Use existing model or create new one
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
 
-// NextAuth configuration
+// --- NextAuth Configuration ---
 const authOptions = {
   providers: [
     CredentialsProvider({
@@ -48,7 +54,15 @@ const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        await connect();
+        // CRITICAL: Ensure database connection is ready
+        try {
+          await connect();
+        } catch (error) {
+          // If connection fails, prevent login attempt
+          console.error("Authorize failed: DB connection error.");
+          return null; 
+        }
+
         const userFound = await User.findOne({ email: credentials.email });
 
         if (!userFound) return null;
@@ -60,9 +74,9 @@ const authOptions = {
 
         if (isMatch) {
           return {
-            id: userFound._id,
-            name: userFound.email,
-            role: userFound.role,
+            id: userFound._id.toString(), // Ensure ID is a string
+            email: userFound.email,
+            role: userFound.role, // This is key for admin access
           };
         }
 
@@ -72,6 +86,7 @@ const authOptions = {
   ],
   pages: {
     signIn: "/signin",
+    error: '/signin', // Redirect to signin on error
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -82,11 +97,16 @@ const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      session.user.email = token.email;
-      session.user.role = token.role;
+      // Ensure session.user exists before assigning properties
+      if (session.user) {
+        session.user.email = token.email;
+        session.user.role = token.role;
+      }
       return session;
     },
   },
+  // Ensure we use the NEXTAUTH_SECRET from environment
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);
