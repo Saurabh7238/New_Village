@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
-import dbConnect from '@/lib/dbConnect';
+// 🛑 FIX: Use relative path to bypass Vercel alias resolution error
+import dbConnect from '../../../../lib/dbConnect';
 import ImageModel from '@/models/Image';
 
 cloudinary.config({
@@ -12,7 +13,7 @@ cloudinary.config({
 export async function DELETE(req) {
   await dbConnect();
   
-  // The client must send the publicId, not the filename
+  // Client must send the publicId, which is used for Cloudinary deletion
   const publicId = req.nextUrl.searchParams.get('publicId'); 
 
   if (!publicId) {
@@ -20,7 +21,8 @@ export async function DELETE(req) {
   }
 
   try {
-    // 1. Delete from Cloudinary
+    // 1. Delete the image from Cloudinary
+    // This replaces fs.unlink() which caused the EROFS error.
     await cloudinary.uploader.destroy(publicId);
 
     // 2. Delete the record from MongoDB

@@ -1,52 +1,63 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
-import dbConnect from '@/lib/dbConnect'; // Assuming you use this
+// 🛑 FIX: Use relative path to bypass Vercel alias resolution error
+import dbConnect from '../../../../lib/dbConnect';
 import ImageModel from '@/models/Image';
 
+// Configure Cloudinary using Vercel environment variables
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const bufferToDataUrl = (buffer, mimeType) => {
-    const base64 = Buffer.from(buffer).toString('base64');
-    return `data:${mimeType};base64,${base64}`;
-};
+// Utility function to convert stream to buffer
+async function streamToBuffer(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('error', reject);
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+}
 
 export async function POST(req) {
-    await dbConnect();
+  await dbConnect();
+
+  try {
     const formData = await req.formData();
     const file = formData.get('file');
-    const title = formData.get('title') || '';
-    const tags = formData.get('tags') || '';
+    const title = formData.get('title') || 'Untitled';
 
     if (!file) {
-        return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
+      return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
     }
 
-    try {
-        const buffer = await file.arrayBuffer();
-        const dataUrl = bufferToDataUrl(buffer, file.type);
+    // Convert file to a buffer
+    const buffer = await streamToBuffer(file.stream());
+    // Convert buffer to Base64 data URL
+    const dataUrl = `data:${file.type};base64,${buffer.toString('base64')}`;
 
-        // 1. Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(dataUrl, {
-            folder: 'gram-panchayat-gallery',
-            resource_type: 'image',
-        });
+    // 1. Upload to Cloudinary (replaces local file system storage)
+    const result = await cloudinary.uploader.upload(dataUrl, {
+      folder: 'gram-panchayat-portal', // Optional: your specific folder
+    });
 
-        // 2. Save metadata to MongoDB
-        const newImage = new ImageModel({
-            publicId: result.public_id,
-            secureUrl: result.secure_url,
-            title,
-            tags: tags.split(',').map(tag => tag.trim()),
-        });
-        await newImage.save();
+    // 2. Save metadata to MongoDB
+    const newImage = new ImageModel({
+      title: title,
+      publicId: result.public_id, // Store Cloudinary ID for later deletion
+      secureUrl: result.secure_url, // Store URL for display
+    });
+    await newImage.save();
 
-        return NextResponse.json({ message: 'File uploaded successfully!', publicId: result.public_id });
-    } catch (error) {
-        console.error('Error uploading file (Cloudinary/MongoDB):', error);
-        return NextResponse.json({ error: 'Failed to upload file.' }, { status: 500 });
-    }
+    return NextResponse.json({ 
+      message: 'File uploaded successfully!', 
+      image: newImage 
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('Error during file upload/save:', error);
+    return NextResponse.json({ error: 'Failed to upload file.' }, { status: 500 });
+  }
 }
