@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 // 🛑 FIX: Use the final, correct relative path (two levels up)
-import dbConnect from '../../lib/dbConnect';
+import dbConnect from '@/lib/dbConnect';
 import ImageModel from '@/models/Image';
 
 cloudinary.config({
