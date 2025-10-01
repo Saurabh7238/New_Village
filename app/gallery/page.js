@@ -8,17 +8,25 @@ export default function GalleryPage() {
   const [images, setImages] = useState([]);
 
   useEffect(() => {
+    // Prevents right-click saving of images
     const disableRightClick = (e) => e.preventDefault();
     document.addEventListener("contextmenu", disableRightClick);
     return () => document.removeEventListener("contextmenu", disableRightClick);
   }, []);
 
   useEffect(() => {
-    fetch("/api/images")
+    // ----------------------------------------------------------------------
+    // FIX: Appending a unique query parameter (t=timestamp) to the API call
+    // to bypass browser and Vercel edge caching, ensuring fresh data is fetched.
+    // ----------------------------------------------------------------------
+    fetch(`/api/images?t=${Date.now()}`) 
       .then((res) => res.json())
       .then((data) => {
         const imageArray = Array.isArray(data) ? data : data.images;
         setImages(imageArray || []);
+      })
+      .catch(error => {
+          console.error("Failed to fetch gallery images:", error);
       });
   }, []);
 
@@ -37,7 +45,9 @@ export default function GalleryPage() {
             onClick={() => window.open(`/gallery/${img.filename}`, "_blank")}
           >
             <Image
-              src={`/gallery/${img.filename}`}
+              // OPTIONAL: Adding cache-buster to the Image src as well,
+              // useful if the image content itself updates frequently.
+              src={`/gallery/${img.filename}?t=${Date.now()}`}
               alt={img.title || `Gallery ${index + 1}`}
               width={400}
               height={300}
