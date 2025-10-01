@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 // 🛑 FIX: Use the final, correct relative path (two levels up)
 import dbConnect from '@/lib/dbConnect';
-import ImageModel from '@/models/Image';
+import ImageModel from '@/models/Image.js';
 
 export async function GET() {
   await dbConnect();

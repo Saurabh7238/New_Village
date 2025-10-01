@@ -1,5 +1,5 @@
 import dbConnect from "@/lib/db";
-import Image from "@/models/Image";
+import Image from "@/models/Image.js";
 
 export async function GET() {
   try {
