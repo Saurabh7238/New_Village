@@ -2,9 +2,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      // ...
+      // Maps the @/ prefix to the project root directory
+      "@/*": ["*"], 
       "@/lib/*": ["lib/*"],
-      // ...
+      "@/models/*": ["models/*"]
     }
-  }
+  },
+  "include": ["**/*.js", "**/*.jsx"]
 }

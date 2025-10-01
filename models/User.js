@@ -19,6 +19,7 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// The import in the API route is expecting a default export called 'User'
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
 export default User;

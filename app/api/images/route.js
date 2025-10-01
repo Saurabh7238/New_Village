@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
-// 🛑 FIX: Use the final, correct relative path (two levels up)
-import dbConnect from '@/lib/dbConnect';
+// FIX: Changed from '@/lib/dbConnect' to '@/lib/db'
+import dbConnect from '@/lib/db'; 
 import ImageModel from '@/models/Image.js';
 
 export async function GET() {
-  await dbConnect();
-
   try {
-    const images = await ImageModel.find({}).sort({ createdAt: -1 });
-
-    return NextResponse.json(images);
+    await dbConnect();
+    const images = await ImageModel.find({});
+    return NextResponse.json({ success: true, data: images }, { status: 200 });
   } catch (error) {
-    console.error('Failed to fetch images:', error);
-    return NextResponse.json({ error: 'Failed to retrieve images.' }, { status: 500 });
+    console.error('Fetch error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
   }
 }

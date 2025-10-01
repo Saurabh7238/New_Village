@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db"; // Import the correct connection function
-import User from "@/models/User.js"; // Import the User model
+// FIX: Corrected import path
+import dbConnect from "@/lib/db"; 
+// This file *must* exist and be named User.js
+import User from "@/models/User.js"; 
 import bcrypt from "bcryptjs";
 
 export const POST = async (request) => {

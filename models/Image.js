@@ -7,12 +7,12 @@ const ImageSchema = new mongoose.Schema({
   },
   // 🛑 CRITICAL: New fields for Cloudinary integration
   publicId: {
-    type: String, // Used to identify and delete the file from Cloudinary
+    type: String,
     required: true,
     unique: true,
   },
   secureUrl: {
-    type: String, // Used to display the image on the client side
+    type: String, 
     required: true,
   },
   createdAt: {

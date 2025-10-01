@@ -1,4 +1,4 @@
-import dbConnect from "@/lib/db";
+import dbConnect from "@/lib/dbConnect";
 import Image from "@/models/Image.js";
 
 export async function GET() {
