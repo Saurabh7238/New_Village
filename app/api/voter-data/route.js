@@ -1,123 +1,95 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import dbConnect from '@/lib/db';  // Your MongoDB connection file
+import VoterData from '@/models/VoterData'; // The new Mongoose Model
+import mongoose from 'mongoose'; 
 
-const dataDirectory = path.join(process.cwd(), 'data');
+// List of valid types for validation
+const VALID_TYPES = ['vidhan-sabha', 'lok-sabha', 'gram-panchayat'];
 
-function readDataFile(fileName) {
-  try {
-    const filePath = path.join(dataDirectory, fileName);
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error(`Error reading ${fileName}:`, error);
-    return [];
-  }
-}
-
-function writeDataFile(fileName, data) {
-  try {
-    const filePath = path.join(dataDirectory, fileName);
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
-    return true;
-  } catch (error) {
-    console.error(`Error writing to ${fileName}:`, error);
-    return false;
-  }
-}
-
+// --- GET: Fetch data from MongoDB ---
 export async function GET(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type') || 'vidhan-sabha';
-    let fileName = '';
+    // 1. Connect to the database
+    await dbConnect(); 
 
-    switch (type) {
-      case 'vidhan-sabha':
-        fileName = 'vidhan-sabha.json';
-        break;
-      case 'lok-sabha':
-        fileName = 'lok-sabha.json';
-        break;
-      case 'gram-panchayat':
-        fileName = 'gram-panchayat.json';
-        break;
-      default:
-        return NextResponse.json({ error: 'Invalid voter type' }, { status: 400 });
+    try {
+        const { searchParams } = new URL(request.url);
+        const type = searchParams.get('type') || 'vidhan-sabha';
+
+        if (!VALID_TYPES.includes(type)) {
+            return NextResponse.json({ error: 'Invalid voter type' }, { status: 400 });
+        }
+
+        // 2. Query MongoDB, filtered by the document type
+        const data = await VoterData.find({ type: type }).exec();
+        
+        return NextResponse.json(data);
+
+    } catch (error) {
+        console.error('Failed to fetch voter data from MongoDB:', error);
+        return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
     }
-
-    const data = readDataFile(fileName);
-    return NextResponse.json(data);
-
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
-  }
 }
 
+// --- POST: Add new item to MongoDB ---
 export async function POST(request) {
-  try {
-    const body = await request.json();
-    const { type, ...newItem } = body;
-    let fileName = '';
+    // 1. Connect to the database
+    await dbConnect(); 
 
-    switch (type) {
-      case 'vidhan-sabha':
-        fileName = 'vidhan-sabha.json';
-        break;
-      case 'lok-sabha':
-        fileName = 'lok-sabha.json';
-        break;
-      case 'gram-panchayat':
-        fileName = 'gram-panchayat.json';
-        break;
-      default:
-        return NextResponse.json({ error: 'Invalid voter type' }, { status: 400 });
-    }
+    try {
+        const body = await request.json();
+        const { type, ...newItem } = body;
+        
+        if (!VALID_TYPES.includes(type)) {
+            return NextResponse.json({ error: 'Invalid voter type' }, { status: 400 });
+        }
 
-    const data = readDataFile(fileName);
-    const newRecord = { id: Date.now(), ...newItem };
-    data.push(newRecord);
-    
-    if (writeDataFile(fileName, data)) {
-      return NextResponse.json(newRecord);
-    } else {
-      throw new Error('Failed to write data');
+        // 2. Create the new record in MongoDB
+        const newRecord = await VoterData.create({
+            type: type, // Assign the type discriminator
+            ...newItem // Spread the rest of the submitted fields
+        });
+        
+        return NextResponse.json(newRecord);
+
+    } catch (error) {
+        console.error('Failed to add voter item to MongoDB:', error);
+        return NextResponse.json({ error: 'Failed to add item' }, { status: 500 });
     }
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to add item' }, { status: 500 });
-  }
 }
 
+// --- DELETE: Remove item from MongoDB ---
 export async function DELETE(request) {
-  try {
-    const body = await request.json();
-    const { id, type } = body;
-    let fileName = '';
+    // 1. Connect to the database
+    await dbConnect(); 
 
-    switch (type) {
-      case 'vidhan-sabha':
-        fileName = 'vidhan-sabha.json';
-        break;
-      case 'lok-sabha':
-        fileName = 'lok-sabha.json';
-        break;
-      case 'gram-panchayat':
-        fileName = 'gram-panchayat.json';
-        break;
-      default:
-        return NextResponse.json({ error: 'Invalid voter type' }, { status: 400 });
+    try {
+        const body = await request.json();
+        const { id, type } = body; 
+        
+        if (!id || !type) {
+             return NextResponse.json({ error: 'ID and type are required for deletion' }, { status: 400 });
+        }
+
+        if (!VALID_TYPES.includes(type)) {
+            return NextResponse.json({ error: 'Invalid voter type' }, { status: 400 });
+        }
+
+        // Mongoose uses _id, so we assume the client is sending the MongoDB _id
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+        }
+
+        // 2. Delete the record from MongoDB by its unique _id and the type
+        const result = await VoterData.deleteOne({ _id: id, type: type });
+
+        if (result.deletedCount === 0) {
+            return NextResponse.json({ error: 'Item not found or already deleted' }, { status: 404 });
+        }
+
+        return NextResponse.json({ message: 'Item deleted successfully' });
+
+    } catch (error) {
+        console.error('Failed to delete voter item from MongoDB:', error);
+        return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
     }
-
-    let data = readDataFile(fileName);
-    data = data.filter(item => item.id !== id);
-
-    if (writeDataFile(fileName, data)) {
-      return NextResponse.json({ message: 'Item deleted successfully' });
-    } else {
-      throw new Error('Failed to delete item');
-    }
-
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
-  }
 }

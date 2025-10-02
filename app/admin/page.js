@@ -15,7 +15,7 @@ export default function AdminPanel() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedImageForUpload, setSelectedImageForUpload] = useState(null);
   const [imageTitle, setImageTitle] = useState("");
-  const [imageTags, setImageTags] = useState("");
+  const [imageTags, setImageTags] = useState(""); 
   const [uploadError, setUploadError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -30,8 +30,11 @@ export default function AdminPanel() {
   const [voterWardNo, setVoterWardNo] = useState("");
   const [voterConstituency, setVoterConstituency] = useState("");
   const [voterId, setVoterId] = useState("");
-  const [voterImage, setVoterImage] = useState("");
+  // voterImage now stores the Base64 data URI
+  const [voterImage, setVoterImage] = useState(""); 
   const [showImagePicker, setShowImagePicker] = useState(false);
+
+  // --- Data Fetching Hooks ---
 
   useEffect(() => {
     fetch("/api/notifications")
@@ -40,6 +43,7 @@ export default function AdminPanel() {
   }, []);
 
   useEffect(() => {
+    // Fetch images which now contain the Base64 data in 'image_data'
     fetch("/api/images")
       .then((res) => res.json())
       .then((data) => {
@@ -68,6 +72,8 @@ export default function AdminPanel() {
       });
   }, [voterType]);
 
+  // --- API Handlers ---
+
   const addNotification = async (e) => {
     e.preventDefault();
     const res = await fetch("/api/notifications", {
@@ -89,7 +95,8 @@ export default function AdminPanel() {
       voterName,
       voterGuardianName,
       voterGender,
-      image: voterImage,
+      // voterImage now holds the Base64 string
+      image: voterImage, 
     };
 
     if (voterType === "gram-panchayat") {
@@ -132,95 +139,97 @@ export default function AdminPanel() {
     setVoterList((prev) => prev.filter((v) => v.id !== id));
   };
 
+  // Upload function for Base64 storage
   const handleUpload = async (e) => {
     e.preventDefault();
     setUploadError("");
     setUploadProgress(0);
 
-    const formData = new FormData();
-
-    if (selectedFile) {
-      if (!(selectedFile instanceof File)) {
-        setUploadError("Please select a valid image file.");
-        return;
-      }
-      formData.append("file", selectedFile);
-    } else if (selectedImageForUpload) {
+    if (selectedImageForUpload) {
       setUploading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000)); 
       setUploading(false);
-      alert(`Image from gallery selected: ${selectedImageForUpload.title}`);
+      console.log(`Image from gallery selected: ${selectedImageForUpload.title}`);
       setSelectedImageForUpload(null);
       setImageTitle("");
       setImageTags("");
       return;
-    } else {
-      setUploadError("Please select a file or choose from the gallery.");
-      return;
     }
 
-    formData.append("title", imageTitle);
-    formData.append("tags", imageTags);
+    if (!selectedFile) {
+      setUploadError("Please select a file to upload.");
+      return;
+    }
+    
+    if (!imageTitle) {
+        setUploadError("Please provide an image title.");
+        return;
+    }
 
     setUploading(true);
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/upload");
+    const formData = new FormData();
+    formData.append("image", selectedFile); 
+    formData.append("title", imageTitle); 
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100);
-        setUploadProgress(percent);
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      setUploadProgress(100); 
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Upload failed with status ' + res.status);
       }
-    };
 
-    xhr.onload = () => {
+      const result = await res.json();
+      
+      setImages((prev) => [
+        ...prev,
+        result.image, 
+      ]);
+      
+      // Reset form states
+      setSelectedFile(null);
+      setFileName("No file chosen");
+      setImageTitle("");
+      setImageTags("");
+      setUploadProgress(0);
+      setUploadError(""); 
+
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setUploadError(error.message || "Failed to upload image.");
+    } finally {
       setUploading(false);
-      if (xhr.status === 200) {
-        const result = JSON.parse(xhr.responseText);
-        setImages((prev) => [
-          ...prev,
-          {
-            filename: result.filename,
-            title: imageTitle,
-            tags: imageTags.split(",").map((t) => t.trim()),
-          },
-        ]);
-        setSelectedFile(null);
-        setFileName("No file chosen");
-        setImageTitle("");
-        setImageTags("");
-        setUploadProgress(0);
-      } else {
-        const error = JSON.parse(xhr.responseText);
-        setUploadError(error.error || "Upload failed.");
-      }
-    };
-
-    xhr.onerror = () => {
-      setUploading(false);
-      setUploadError("Something went wrong during upload.");
-    };
-
-    xhr.send(formData);
+    }
   };
 
-  const handleDeleteImage = async (filename) => {
-    await fetch(`/api/delete?file=${filename}`, { method: "DELETE" });
-    setImages((prev) => prev.filter((img) => img.filename !== filename));
+  // Deletion using MongoDB document ID (_id)
+  const handleDeleteImage = async (imageId) => {
+    await fetch(`/api/images`, { 
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageId }), 
+    });
+    setImages((prev) => prev.filter((img) => img._id !== imageId));
   };
 
   const handleGallerySelect = (img) => {
     setSelectedImageForUpload(img);
     setSelectedFile(null);
-    setFileName(`Gallery: ${img.title || img.filename}`);
+    setFileName(`Gallery: ${img.title || img._id}`);
     setImageTitle(img.title || "");
-    setImageTags(img.tags?.join(", ") || "");
+    setTags(Array.isArray(img.tags) ? img.tags.join(", ") : img.tags || ""); 
     setShowGalleryPicker(false);
   };
 
-  const handleImageSelect = (filename) => {
-    setVoterImage(`/gallery/${filename}`);
+  // Select now stores the Base64 data URI
+  const handleImageSelect = (imageData) => {
+    setVoterImage(imageData); 
     setShowImagePicker(false);
   };
 
@@ -249,17 +258,18 @@ export default function AdminPanel() {
           </button>
         </div>
 
+        {/* --- Notifications Section (unchanged) --- */}
         <section>
           <h1 className="text-3xl font-bold mb-6 text-green-700 dark:text-yellow-400">Admin Notifications</h1>
           <form onSubmit={addNotification} className="mb-8 space-y-4">
             <input
-              className="border p-2 w-full rounded"
+              className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               placeholder="Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
             <textarea
-              className="border p-2 w-full rounded"
+              className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               placeholder="Description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -273,7 +283,7 @@ export default function AdminPanel() {
           </form>
           <ul className="space-y-4">
             {notifications.map((n) => (
-              <li key={n.id} className="border rounded p-4 flex justify-between items-center">
+              <li key={n.id} className="border rounded p-4 flex justify-between items-center dark:border-gray-700 bg-white dark:bg-gray-800">
                 <div>
                   <h2 className="font-semibold">{n.title}</h2>
                   <p className="text-gray-600 dark:text-gray-300">{n.description}</p>
@@ -289,13 +299,14 @@ export default function AdminPanel() {
           </ul>
         </section>
 
-        <hr className="my-12" />
+        <hr className="my-12 border-gray-300 dark:border-gray-700" />
 
+        {/* --- Voter List Section --- */}
         <section>
           <h2 className="text-2xl font-bold mb-4 text-orange-700 dark:text-orange-400">Manage Voter List</h2>
           <form onSubmit={addVoter} className="mb-8 space-y-4">
             <select
-              className="border p-2 w-full rounded"
+              className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               value={voterType}
               onChange={(e) => setVoterType(e.target.value)}
             >
@@ -304,21 +315,21 @@ export default function AdminPanel() {
               <option value="gram-panchayat">Gram Panchayat</option>
             </select>
             <input
-              className="border p-2 w-full rounded"
+              className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               placeholder="Voter Name"
               value={voterName}
               onChange={(e) => setVoterName(e.target.value)}
               required
             />
             <input
-              className="border p-2 w-full rounded"
+              className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               placeholder="Guardian Name"
               value={voterGuardianName}
               onChange={(e) => setVoterGuardianName(e.target.value)}
               required
             />
             <input
-              className="border p-2 w-full rounded"
+              className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               placeholder="Gender"
               value={voterGender}
               onChange={(e) => setVoterGender(e.target.value)}
@@ -326,7 +337,7 @@ export default function AdminPanel() {
             />
             {voterType === "gram-panchayat" ? (
               <input
-                className="border p-2 w-full rounded"
+                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 placeholder="Ward Number"
                 value={voterWardNo}
                 onChange={(e) => setVoterWardNo(e.target.value)}
@@ -334,7 +345,7 @@ export default function AdminPanel() {
               />
             ) : (
               <input
-                className="border p-2 w-full rounded"
+                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 placeholder="Constituency"
                 value={voterConstituency}
                 onChange={(e) => setVoterConstituency(e.target.value)}
@@ -342,7 +353,7 @@ export default function AdminPanel() {
               />
             )}
             <input
-              className="border p-2 w-full rounded"
+              className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               placeholder="Voter ID"
               value={voterId}
               onChange={(e) => setVoterId(e.target.value)}
@@ -350,8 +361,9 @@ export default function AdminPanel() {
             />
             
             <div className="flex items-center gap-4">
+              {/* RENDER USING Base64 (Using <img> tag for data URI compatibility) */}
               {voterImage && (
-                <Image
+                <img
                   src={voterImage}
                   alt="Selected Voter"
                   width={64}
@@ -362,7 +374,7 @@ export default function AdminPanel() {
               <button
                 type="button"
                 onClick={() => setShowImagePicker(true)}
-                className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 {voterImage ? "Change Image" : "Select Image from Gallery"}
               </button>
@@ -376,12 +388,13 @@ export default function AdminPanel() {
             </button>
           </form>
 
+          {/* Image Picker Modal for Voter */}
           {showImagePicker && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto relative">
                 <button
                   onClick={() => setShowImagePicker(false)}
-                  className="absolute top-2 right-2 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  className="absolute top-2 right-2 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-2xl"
                 >
                   &times;
                 </button>
@@ -390,18 +403,20 @@ export default function AdminPanel() {
                   {images.length > 0 ? (
                     images.map((img, idx) => (
                       <div
-                        key={idx}
-                        className="cursor-pointer border-2 border-transparent hover:border-blue-500 rounded"
-                        onClick={() => handleImageSelect(img.filename)}
+                        key={img._id || idx}
+                        className="cursor-pointer border-2 border-transparent hover:border-blue-500 rounded p-1"
+                        // Pass the image_data (Base64 URI)
+                        onClick={() => handleImageSelect(img.image_data)}
                       >
-                        <Image
-                          src={`/gallery/${img.filename}`}
+                        {/* RENDER USING Base64 */}
+                        <img
+                          src={img.image_data}
                           alt={img.title}
                           width={150}
                           height={96}
                           className="w-full h-24 object-cover rounded"
                         />
-                        <p className="text-xs text-center mt-1 truncate">{img.title || img.filename}</p>
+                        <p className="text-xs text-center mt-1 truncate">{img.title || img._id}</p>
                       </div>
                     ))
                   ) : (
@@ -415,11 +430,12 @@ export default function AdminPanel() {
           <ul className="space-y-4">
             {voterList.length > 0 ? (
               voterList.map((voter, index) => (
-                <li key={`${voter.id || 'voter'}-${index}`} className="border rounded p-4 flex justify-between items-center">
+                <li key={`${voter.id || 'voter'}-${index}`} className="border rounded p-4 flex justify-between items-center dark:border-gray-700 bg-white dark:bg-gray-800">
                   <div className="flex items-center gap-4">
+                    {/* RENDER USING Base64 */}
                     {voter.image && (
-                      <Image
-                        src={voter.image}
+                      <img
+                        src={voter.image} // This field now holds the Base64 data from the voter record
                         alt={voter.name || voter.elector_name}
                         width={64}
                         height={64}
@@ -448,17 +464,20 @@ export default function AdminPanel() {
           </ul>
         </section>
 
-        <hr className="my-12" />
+        <hr className="my-12 border-gray-300 dark:border-gray-700" />
 
+        {/* --- Gallery Management Section --- */}
         <section>
-          <h2 className="text-2xl font-bold mb-4 text-blue-700 dark:text-blue-300">Manage Gallery Images</h2>
+          <h2 className="text-2xl font-bold mb-4 text-blue-700 dark:text-blue-300">Manage Gallery Images (MongoDB Base64 Storage)</h2>
+          
+          <p className="text-sm text-red-500 mb-4 font-semibold">
+            WARNING: Images are stored directly in MongoDB as Base64. **Files larger than 16MB will fail to upload.**
+          </p>
           
           <button
-            onClick={async () => {
-              const res = await fetch('/api/rebuild-gallery');
-              const data = await res.json();
-              alert(data.message);
-              fetch("/api/images")
+            onClick={() => {
+               // Just refetch the images
+               fetch("/api/images")
                 .then((res) => res.json())
                 .then((data) => {
                   const imageArray = Array.isArray(data) ? data : data.images;
@@ -467,10 +486,11 @@ export default function AdminPanel() {
             }}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4"
           >
-            Rebuild Gallery Index
+            Refresh Gallery Index
           </button>
           
-          <form onSubmit={handleUpload} className="mb-6 space-y-4">
+          <form onSubmit={handleUpload} className="mb-6 space-y-4 p-4 border rounded dark:border-gray-700 bg-white dark:bg-gray-800">
+            <h3 className="text-lg font-semibold mb-2">Upload New Image</h3>
             <div className="flex items-center space-x-4">
               <label
                 htmlFor="file-upload"
@@ -482,6 +502,7 @@ export default function AdminPanel() {
                 id="file-upload"
                 type="file"
                 className="hidden"
+                accept="image/*"
                 onChange={(e) => {
                   const file = e.target.files[0];
                   setSelectedFile(file);
@@ -492,25 +513,26 @@ export default function AdminPanel() {
             </div>
             <input
               type="text"
-              placeholder="Image title"
+              placeholder="Image title (Required by server)"
               value={imageTitle}
               onChange={(e) => setImageTitle(e.target.value)}
-              className="border p-2 rounded w-full"
+              className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              required
             />
             <input
               type="text"
-              placeholder="Tags (comma-separated)"
+              placeholder="Tags (comma-separated, optional)"
               value={imageTags}
               onChange={(e) => setImageTags(e.target.value)}
-              className="border p-2 rounded w-full"
+              className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
             <div className="flex gap-4 flex-wrap">
               <button
                 type="submit"
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                disabled={uploading}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-opacity disabled:opacity-50"
+                disabled={uploading || !selectedFile}
               >
-                {uploading ? "Uploading..." : "Upload / Use Image"}
+                {uploading ? "Uploading..." : "Upload Image"}
               </button>
             </div>
             {uploading && (
@@ -524,28 +546,29 @@ export default function AdminPanel() {
             {uploadError && <p className="text-red-500 text-sm">{uploadError}</p>}
           </form>
 
+          {/* Image List */}
           {Array.isArray(images) && images.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {images.map((img, idx) => (
-                <div key={idx} className="relative group">
-                  <Image
-                    src={`/gallery/${img.filename}`}
+                <div key={img._id || idx} className="relative group">
+                  {/* RENDER USING Base64 */}
+                  <img
+                    src={img.image_data}
                     alt={img.title || `Image ${idx}`}
                     width={250}
                     height={192}
                     className="w-full h-48 object-cover rounded shadow-md transition-transform duration-300 ease-in-out group-hover:scale-105"
-                    onContextMenu={(e) => e.preventDefault()}
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white text-xs p-1 text-center truncate">
                     {img.title || "Untitled"}
                     {img.tags?.length > 0 && (
                       <div className="mt-1 text-[10px] text-gray-300">
-                        {img.tags.join(", ")}
+                        {Array.isArray(img.tags) ? img.tags.join(", ") : img.tags}
                       </div>
                     )}
                   </div>
                   <button
-                    onClick={() => handleDeleteImage(img.filename)}
+                    onClick={() => handleDeleteImage(img._id)}
                     className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
                   >
                     Delete

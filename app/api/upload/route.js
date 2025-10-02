@@ -1,68 +1,61 @@
 import { NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
-// FIX: Changed from '@/lib/dbConnect' to '@/lib/db'
 import dbConnect from '@/lib/db'; 
-import ImageModel from '@/models/Image.js';
+import ImageModel from '@/models/Image'; 
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Helper function to convert a buffer to a data URI
-function bufferToDataURI(buffer) {
-  const base64 = buffer.toString('base64');
-  return `data:application/octet-stream;base64,${base64}`;
-}
+// IMPORTANT: Cloudinary imports are removed
 
 export async function POST(request) {
-  try {
-    await dbConnect();
+  // FIX 1: Using '@/lib/db' which resolves to lib/db.js
+  await dbConnect();
 
-    // The request body includes 'title' and the file data
+  try {
     const formData = await request.formData();
     const title = formData.get('title');
-    const file = formData.get('image');
+    const file = formData.get('image'); 
 
     if (!title || !file) {
       return NextResponse.json(
-        { success: false, message: 'Missing title or image file' },
+        { success: false, message: 'Missing title or image file in form data.' },
         { status: 400 }
       );
     }
+    
+    // Check file size (approximate check, MongoDB BSON limit is 16MB)
+    if (file.size > 15 * 1024 * 1024) { 
+        return NextResponse.json(
+            { success: false, message: 'Image file is too large. Please use a smaller file (under 15MB).' },
+            { status: 413 }
+        );
+    }
 
-    // Convert file to buffer and then to data URI for Cloudinary upload
+    // Convert File object to a Base64 data URI
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const dataUri = bufferToDataURI(buffer);
-
-    // Upload to Cloudinary
-    const cloudinaryResponse = await cloudinary.uploader.upload(dataUri, {
-      folder: 'my-village-uploads', // Customize your folder name
-      resource_type: 'auto',
-    });
-
-    // Save metadata to MongoDB
+    const base64Data = buffer.toString('base64');
+    const mimeType = file.type || 'image/jpeg'; 
+    const dataUri = `data:${mimeType};base64,${base64Data}`;
+    
+    // Save Base64 data and metadata to MongoDB
     const newImage = new ImageModel({
       title,
-      publicId: cloudinaryResponse.public_id,
-      secureUrl: cloudinaryResponse.secure_url,
+      image_data: dataUri, 
+      mime_type: mimeType,
     });
     await newImage.save();
 
     return NextResponse.json(
       { 
         success: true, 
-        message: 'Image uploaded successfully', 
+        message: 'Image uploaded successfully (stored as Base64 in MongoDB)', 
         image: newImage 
       },
       { status: 201 }
     );
   } catch (error) {
     console.error('Upload error:', error);
+    
     return NextResponse.json(
-      { success: false, message: 'Failed to upload image' },
+      { success: false, message: 'Failed to upload image due to a server error.' },
       { status: 500 }
     );
   }

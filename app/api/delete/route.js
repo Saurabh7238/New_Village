@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 // FIX: Changed from '@/lib/dbConnect' to '@/lib/db'
-import dbConnect from '@/lib/db'; 
+import dbConnect from '@/lib/db';
 import ImageModel from '@/models/Image.js';
 
 cloudinary.config({

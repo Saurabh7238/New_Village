@@ -2,12 +2,22 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      // This is the core fix for the alias: it maps @/ to the project root
-      "@/*": ["*"], 
-      // Explicitly map lib and models for robustness
+      // This maps "@/..." aliases to the root directory
+      "@/*": ["*"],
+      
+      // We explicitly map the common folders too for robustness
+      "@/components/*": ["components/*"],
       "@/lib/*": ["lib/*"],
       "@/models/*": ["models/*"]
     }
   },
-  "include": ["**/*.js", "**/*.jsx"]
+  "include": [
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

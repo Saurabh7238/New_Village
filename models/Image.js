@@ -3,22 +3,22 @@ import mongoose from 'mongoose';
 const ImageSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
+    required: [true, 'Please provide a title for the image.'],
+    maxlength: [60, 'Title cannot be more than 60 characters.'],
   },
-  // 🛑 CRITICAL: New fields for Cloudinary integration
-  publicId: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  secureUrl: {
+  // Stores the full Base64 data URI (e.g., 'data:image/png;base64,...')
+  image_data: { 
     type: String, 
     required: true,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  mime_type: {
+    type: String, 
+    required: true,
   },
-});
+  tags: {
+    type: [String],
+    default: [],
+  },
+}, { timestamps: true });
 
 export default mongoose.models.Image || mongoose.model('Image', ImageSchema);
