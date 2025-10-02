@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';  // Your MongoDB connection file
-import VoterData from '@/models/VoterData'; // The new Mongoose Model
+
+import dbConnect from '@/lib/db'; 
+import VoterData from '@/models/VoterData'; 
 import mongoose from 'mongoose'; 
 
-// List of valid types for validation
+
 const VALID_TYPES = ['vidhan-sabha', 'lok-sabha', 'gram-panchayat'];
 
-// --- GET: Fetch data from MongoDB ---
+
 export async function GET(request) {
-    // 1. Connect to the database
+    
     await dbConnect(); 
 
     try {

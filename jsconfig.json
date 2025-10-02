@@ -2,16 +2,34 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      // This maps "@/..." aliases to the root directory
-      "@/*": ["*"],
+      // ✅ Recommended Next.js convention: Map the @/ alias to the root directory (./)
+      "@/*": ["./*"] 
       
-      // We explicitly map the common folders too for robustness
-      "@/components/*": ["components/*"],
-      "@/lib/*": ["lib/*"],
-      "@/models/*": ["models/*"]
-    }
+      // NOTE: You no longer need the explicit mappings below. 
+      // "@/*": ["./*"] already covers "@/models/*" and "@/lib/*".
+      // "@/components/*": ["components/*"],
+      // "@/lib/*": ["lib/*"],
+      // "@/models/*": ["models/*"]
+    },
+    
+    // Add other common Next.js compiler options if this is a TypeScript project
+    // "target": "es5",
+    // "lib": ["dom", "dom.iterable", "esnext"],
+    // "allowJs": true,
+    // "skipLibCheck": true,
+    // "strict": true,
+    // "forceConsistentCasingInFileNames": true,
+    // "noEmit": true,
+    // "esModuleInterop": true,
+    // "module": "esnext",
+    // "moduleResolution": "node",
+    // "resolveJsonModule": true,
+    // "isolatedModules": true,
+    // "jsx": "preserve",
+    // "incremental": true
   },
   "include": [
+    "next-env.d.ts", // Include this for Next.js environment types (TS only)
     "**/*.js",
     "**/*.jsx",
     "**/*.ts",
