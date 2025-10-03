@@ -4,9 +4,9 @@ import Image from 'next/image';
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 
-// Define constants based on the Mongoose model for clarity
 const INFRA_TYPES = ['Street Light', 'Water Pump', 'Road', 'Solar Panel', 'Primary School', 'Primary Health Center', 'Other'];
 const INFRA_STATUSES = ['Operational', 'Under Maintenance', 'Broken', 'Planned'];
+const FALLBACK_IMAGE_URL = '/images/placeholder.svg';
 
 export default function AdminPanel() {
     const { data: session, status } = useSession();
@@ -15,14 +15,11 @@ export default function AdminPanel() {
     const [notifications, setNotifications] = useState([]);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    
-    // ⭐ NEW STATE for Editing Notifications ⭐
     const [editingNotification, setEditingNotification] = useState(null);
     const [editTitle, setEditTitle] = useState("");
     const [editDescription, setEditDescription] = useState("");
 
-
-    // --- GALLERY STATE (Kept for voter image logic, but simplified) ---
+    // --- GALLERY STATE ---
     const [images, setImages] = useState([]);
     const [selectedFile, setSelectedFile] = useState(null);
     const [imageTitle, setImageTitle] = useState("");
@@ -31,8 +28,8 @@ export default function AdminPanel() {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploading, setUploading] = useState(false);
     const [fileName, setFileName] = useState("No file chosen");
-    const [showVoterImagePicker, setShowVoterImagePicker] = useState(false); 
-
+    const [showVoterImagePicker, setShowVoterImagePicker] = useState(false);
+    const [editingImage, setEditingImage] = useState(null);
 
     // --- VOTER STATE / IMAGE PICKER STATE ---
     const [voterList, setVoterList] = useState([]);
@@ -43,7 +40,7 @@ export default function AdminPanel() {
     const [voterWardNo, setVoterWardNo] = useState("");
     const [voterConstituency, setVoterConstituency] = useState("");
     const [voterId, setVoterId] = useState("");
-    const [voterImage, setVoterImage] = useState(""); // Base64 or gallery image URL
+    const [voterImage, setVoterImage] = useState("");
 
     // --- INFRASTRUCTURE STATE ---
     const [infrastructureList, setInfrastructureList] = useState([]);
@@ -55,20 +52,17 @@ export default function AdminPanel() {
         location: { latitude: '', longitude: '', address: '' },
         cost: '',
         installationDate: '',
-        image: '', // Holds Base64 data from system storage 
+        image: '',
         details: {},
-        // Primary School Specific Fields
         schoolStudents: '',
         schoolWashrooms: '',
         schoolHandpumps: '',
-        // Primary Health Center Specific Fields
         healthCenterDoctors: '',
         healthCenterBeds: '',
         healthCenterAmbulances: '',
     });
     const [editingInfraId, setEditingInfraId] = useState(null);
     const [infraSubmitText, setInfraSubmitText] = useState("Add Infrastructure Item");
-
 
     // --- DATA FETCHING HOOKS ---
     useEffect(() => {
@@ -80,12 +74,10 @@ export default function AdminPanel() {
     useEffect(() => {
         let apiRoute = `/api/voter-data?type=${voterType}`;
         fetch(apiRoute).then((res) => res.json()).then((data) => setVoterList(Array.isArray(data) ? data : data.voters || []))
-            .catch((err) => {console.error("Failed to fetch voter list:", err);setVoterList([]);});
+            .catch((err) => { console.error("Failed to fetch voter list:", err); setVoterList([]); });
     }, [voterType]);
 
-
     // --- INFRASTRUCTURE CRUD HANDLERS ---
-
     const resetInfraForm = () => {
         setEditingInfraId(null);
         setInfraForm({
@@ -103,7 +95,6 @@ export default function AdminPanel() {
         setInfraForm(prev => ({ ...prev, [name]: value }));
 
         if (name === 'type') {
-            // Reset specific details when the type changes
             setInfraForm(prev => ({
                 ...prev,
                 details: {},
@@ -125,22 +116,19 @@ export default function AdminPanel() {
             location: { ...prev.location, [name]: value }
         }));
     };
-    
-    // Handles direct file selection and conversion to Base64 for infrastructure image
+
     const handleInfraImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // MongoDB document size limit is 16MB. We enforce a smaller limit (e.g., 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 alert("File size exceeds 5MB limit. Please choose a smaller image.");
-                e.target.value = null; // Clear the input
+                e.target.value = null;
                 setInfraForm(prev => ({ ...prev, image: '' }));
                 return;
             }
 
             const reader = new FileReader();
             reader.onloadend = () => {
-                // Save the Base64 Data URI string to the infraForm state
                 setInfraForm(prev => ({ ...prev, image: reader.result }));
             };
             reader.onerror = (error) => {
@@ -150,7 +138,7 @@ export default function AdminPanel() {
             reader.readAsDataURL(file);
         }
     };
-    
+
     const editInfrastructure = (item) => {
         const details = item.details || {};
 
@@ -165,9 +153,8 @@ export default function AdminPanel() {
             },
             cost: item.cost || '',
             installationDate: item.installationDate ? new Date(item.installationDate).toISOString().split('T')[0] : '',
-            image: item.image || '', // Load existing image (Base64)
+            image: item.image || '',
             details: details,
-            // Map specific details back to local state for easy editing
             schoolStudents: details.students || '',
             schoolWashrooms: details.washrooms || '',
             schoolHandpumps: details.handpumps || '',
@@ -182,14 +169,13 @@ export default function AdminPanel() {
         e.preventDefault();
 
         const isUpdating = editingInfraId !== null;
-        const method = "POST"; // Use POST for both CREATE and UPDATE, passing ID for update
+        const method = "POST";
 
         if (!infraForm.title.trim() || !infraForm.type || !infraForm.status) {
             alert("Title, Type, and Status are required fields.");
             return;
         }
 
-        // 1. Prepare generic fields
         const payload = {
             title: infraForm.title.trim(),
             description: infraForm.description.trim(),
@@ -200,13 +186,11 @@ export default function AdminPanel() {
                 ...(infraForm.location.longitude && { longitude: parseFloat(infraForm.location.longitude) }),
                 ...(infraForm.location.address && { address: infraForm.location.address.trim() }),
             },
-            // Include image, cost, and date
-            ...(infraForm.image && { image: infraForm.image }), // School Image (Base64)
+            ...(infraForm.image && { image: infraForm.image }),
             ...(infraForm.cost && { cost: parseFloat(infraForm.cost) }),
             ...(infraForm.installationDate && { installationDate: new Date(infraForm.installationDate) }),
         };
 
-        // 2. Prepare type-specific details object
         let details = {};
         if (infraForm.type === 'Primary School') {
             details = {
@@ -222,18 +206,16 @@ export default function AdminPanel() {
             };
         }
 
-        // 3. Attach details to payload
         const filteredDetails = Object.fromEntries(
             Object.entries(details).filter(([, v]) => v !== undefined && v !== null && v !== '')
         );
-        
+
         if (Object.keys(filteredDetails).length > 0) {
             payload.details = filteredDetails;
         }
 
-
         if (isUpdating) {
-            payload.id = editingInfraId; 
+            payload.id = editingInfraId;
         }
 
         try {
@@ -246,10 +228,10 @@ export default function AdminPanel() {
             const result = await res.json();
 
             if (res.ok) {
-                setInfrastructureList((prev) => 
-                    isUpdating 
-                    ? prev.map(item => (item._id === result._id ? result : item))
-                    : [result, ...prev]
+                setInfrastructureList((prev) =>
+                    isUpdating
+                        ? prev.map(item => (item._id === result._id ? result : item))
+                        : [result, ...prev]
                 );
                 resetInfraForm();
             } else {
@@ -320,7 +302,7 @@ export default function AdminPanel() {
         </fieldset>
     );
 
-    // --- Utility Component for Primary Health Center Specific Fields (Kept for completeness) ---
+    // --- Utility Component for Primary Health Center Specific Fields ---
     const PrimaryHealthCenterFields = () => (
         <fieldset className="border p-4 rounded-lg mt-4 bg-red-50 dark:bg-gray-700 dark:border-gray-600">
             <legend className="text-base font-medium text-red-700 dark:text-red-400 px-2">Primary Health Center Specific Details</legend>
@@ -352,23 +334,19 @@ export default function AdminPanel() {
             </div>
         </fieldset>
     );
-    
-    // --- NOTIFICATION CRUD HANDLERS (UPDATED) ---
 
-    // ⭐ NEW: Sets the state for editing
+    // --- NOTIFICATION CRUD HANDLERS ---
     const editNotification = (notification) => {
         setEditingNotification(notification);
         setEditTitle(notification.title);
         setEditDescription(notification.description);
-        // Clear the Add Form fields
         setTitle("");
         setDescription("");
     };
 
-    // ⭐ NEW: Handles the update/PUT request
     const updateNotification = async (e) => {
         e.preventDefault();
-        
+
         if (!editingNotification || !editTitle.trim() || !editDescription.trim()) {
             alert("Title and description are required for update.");
             return;
@@ -380,7 +358,6 @@ export default function AdminPanel() {
         };
 
         try {
-            // Send a PUT request with the ID in the URL query as configured in the API route
             const res = await fetch(`/api/notifications?id=${editingNotification.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
@@ -390,11 +367,9 @@ export default function AdminPanel() {
             const result = await res.json();
 
             if (res.ok) {
-                // Update the state with the new notification data
-                setNotifications((prev) => 
+                setNotifications((prev) =>
                     prev.map(n => (n.id === editingNotification.id ? result.notification : n))
                 );
-                // Reset the Edit Form
                 setEditingNotification(null);
                 setEditTitle("");
                 setEditDescription("");
@@ -406,21 +381,20 @@ export default function AdminPanel() {
             alert("A network error occurred during update.");
         }
     };
-    
-    // ⭐ UPDATED: Original delete function with confirmation and edit reset
-    const deleteNotification = async (id) => { 
+
+    const deleteNotification = async (id) => {
         const confirmed = confirm("Are you sure you want to delete this notification permanently?");
         if (!confirmed) return;
 
         try {
-            const res = await fetch("/api/notifications", { 
-                method: "DELETE", 
-                headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify({ id }), 
-            }); 
-            
+            const res = await fetch("/api/notifications", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id }),
+            });
+
             if (res.ok) {
-                setNotifications((prev) => prev.filter((n) => n.id !== id)); 
+                setNotifications((prev) => prev.filter((n) => n.id !== id));
                 if (editingNotification?.id === id) {
                     setEditingNotification(null);
                 }
@@ -429,79 +403,144 @@ export default function AdminPanel() {
                 alert(`Failed to delete item: ${error.message || 'Server Error'}`);
             }
         } catch (error) {
-             console.error("Delete Network Error:", error);
+            console.error("Delete Network Error:", error);
         }
     };
-    
-    // Original Add Notification (Kept)
-    const addNotification = async (e) => { 
-        e.preventDefault(); 
+
+    const addNotification = async (e) => {
+        e.preventDefault();
         if (!title.trim() || !description.trim()) {
             alert("Title and description cannot be empty.");
             return;
         }
-        const res = await fetch("/api/notifications", { 
-            method: "POST", 
-            headers: { "Content-Type": "application/json" }, 
-            body: JSON.stringify({ title, description }), 
-        }); 
-        const newItem = await res.json(); 
-        setNotifications((prev) => [newItem, ...prev]); // Add new item to the top
-        setTitle(""); 
-        setDescription(""); 
+        const res = await fetch("/api/notifications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, description }),
+        });
+        const newItem = await res.json();
+        setNotifications((prev) => [newItem, ...prev]);
+        setTitle("");
+        setDescription("");
     };
 
-    // --- Other Utility Components (Gallery/Voter Handlers - Kept) ---
-    const handleDeleteImage = async (imageId) => {
-        await fetch(`/api/images`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageId }) });
-        setImages((prev) => prev.filter((img) => img._id !== imageId));
+    // --- GALLERY CRUD HANDLERS ---
+    const resetImageForm = () => {
+        setSelectedFile(null);
+        setFileName("No file chosen");
+        setImageTitle("");
+        setImageTags("");
+        setEditingImage(null);
+        setUploadError("");
     };
-    const handleVoterImageSelect = (imageData) => {setVoterImage(imageData);setShowVoterImagePicker(false);}; 
-    
+
+    const editImage = (image) => {
+        setEditingImage(image);
+        setImageTitle(image.title || "");
+        setImageTags(image.tags?.join(', ') || "");
+        setSelectedFile(null);
+        setFileName("Existing file will be kept unless new one is chosen");
+    };
+
     const handleUpload = async (e) => {
         e.preventDefault();
         setUploadError("");
         setUploadProgress(0);
-        if (!selectedFile || !imageTitle) {
-            setUploadError("File and title required.");
+
+        const isUpdating = editingImage !== null;
+
+        if (!imageTitle) {
+            setUploadError("Title is required.");
             return;
         }
+
+        if (!isUpdating && !selectedFile) {
+            setUploadError("File is required for new uploads.");
+            return;
+        }
+
+        if (isUpdating && !selectedFile && imageTitle === editingImage.title && imageTags === (editingImage.tags?.join(', ') || '')) {
+            setUploadError("No changes detected.");
+            return;
+        }
+
         setUploading(true);
         const formData = new FormData();
-        formData.append("image", selectedFile);
+
         formData.append("title", imageTitle);
         formData.append("tags", imageTags);
 
+        if (selectedFile) {
+            formData.append("image", selectedFile);
+        }
+
+        const method = isUpdating ? "PUT" : "POST";
+        const url = isUpdating ? `/api/upload?id=${editingImage._id}` : "/api/upload";
+
         try {
-            const res = await fetch("/api/upload", {
-                method: "POST",
+            const res = await fetch(url, {
+                method: method,
                 body: formData
             });
 
             setUploadProgress(100);
             if (!res.ok) {
-                throw new Error((await res.json()).message || 'Upload failed');
+                throw new Error((await res.json()).message || 'Operation failed');
             }
 
             const result = await res.json();
-            setImages((prev) => [...prev, result.image]);
-            setSelectedFile(null);
-            setFileName("No file chosen");
-            setImageTitle("");
-            setImageTags("");
+
+            if (isUpdating) {
+                setImages((prev) => prev.map(img => (img._id === result.image._id ? result.image : img)));
+            } else {
+                setImages((prev) => [...prev, result.image]);
+            }
+
+            resetImageForm();
             setUploadProgress(0);
-            setUploadError("");
         } catch (error) {
-            console.error('Upload failed:', error);
-            setUploadError(error.message || "Failed to upload image.");
+            console.error('Gallery operation failed:', error);
+            setUploadError(error.message || (isUpdating ? "Failed to update image." : "Failed to upload image."));
         } finally {
             setUploading(false);
         }
     };
-    
-    const addVoter = async (e) => { e.preventDefault(); let voterData = { type: voterType, voterId, voterName, voterGuardianName, voterGender, image: voterImage, }; if (voterType === "gram-panchayat") { voterData = { ...voterData, voterWardNo }; } else { voterData = { ...voterData, voterConstituency }; } const res = await fetch("/api/voter-data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(voterData), }); const newVoter = await res.json(); setVoterList((prev) => [...prev, newVoter]); setVoterName(""); setVoterGuardianName(""); setVoterGender(""); setVoterWardNo(""); setVoterConstituency(""); setVoterId(""); setVoterImage(""); };
-    const deleteVoter = async (id) => { await fetch("/api/voter-data", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, type: voterType }), }); setVoterList((prev) => prev.filter((v) => v.id !== id)); };
 
+    const handleDeleteImage = async (imageId) => {
+        const confirmed = confirm("Are you sure you want to delete this gallery image?");
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(`/api/images`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ imageId })
+            });
+
+            if (res.ok) {
+                setImages((prev) => prev.filter((img) => img._id !== imageId));
+                if (editingImage?._id === imageId) {
+                    resetImageForm();
+                }
+            } else {
+                const error = await res.json();
+                alert(`Failed to delete item: ${error.message || 'Server Error'}`);
+            }
+        } catch (error) {
+            console.error("Delete Network Error:", error);
+            alert("A network error occurred during delete.");
+        }
+    };
+
+    // --- Other Utility Components (Voter Handlers - MINIMIZED) ---
+    const handleVoterImageSelect = (imageData) => { setVoterImage(imageData); setShowVoterImagePicker(false); };
+    const addVoter = async (e) => { e.preventDefault(); let voterData = { type: voterType, voterId, voterName, voterGuardianName, voterGender, image: voterImage, }; if (voterType === "gram-panchayat") { voterData = { ...voterData, voterWardNo }; } else { voterData = { ...voterData, voterConstituency }; } await fetch("/api/voter-data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(voterData), }); setVoterName(""); setVoterGuardianName(""); setVoterGender(""); setVoterWardNo(""); setVoterConstituency(""); setVoterId(""); setVoterImage(""); };
+    const deleteVoter = async (id) => {
+        const confirmed = confirm("Are you sure you want to delete this voter record?");
+        if (!confirmed) return;
+        await fetch("/api/voter-data", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, type: voterType }), });
+        setVoterList((prev) => prev.filter((v) => v.id !== id));
+    };
 
     if (status === "loading") {
         return <div className="p-8 text-center">Loading...</div>;
@@ -523,27 +562,26 @@ export default function AdminPanel() {
                     <button onClick={() => signOut()} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Sign Out</button>
                 </div>
 
-                {/* --- Notifications Section (UPDATED) --- */}
+                {/* --- Notifications Section --- */}
                 <section>
                     <h1 className="text-3xl font-bold mb-6 text-green-700 dark:text-yellow-400">Admin Notifications</h1>
-                    
+
                     {/* Conditional Form: Edit or Add */}
                     {editingNotification ? (
-                        // ⭐ EDIT FORM ⭐
                         <form onSubmit={updateNotification} className="mb-8 space-y-4 p-4 border rounded-lg bg-yellow-50 dark:bg-gray-700 dark:border-yellow-600">
                             <h3 className="text-xl font-semibold text-yellow-700 dark:text-yellow-400">Editing Notification: {editingNotification.title}</h3>
-                            <input 
-                                className="border p-2 w-full rounded dark:bg-gray-800 dark:border-gray-600 dark:text-white" 
-                                placeholder="Title" 
-                                value={editTitle} 
-                                onChange={(e) => setEditTitle(e.target.value)} 
+                            <input
+                                className="border p-2 w-full rounded dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                placeholder="Title"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
                                 required
                             />
-                            <textarea 
-                                className="border p-2 w-full rounded dark:bg-gray-800 dark:border-gray-600 dark:text-white" 
-                                placeholder="Description" 
-                                value={editDescription} 
-                                onChange={(e) => setEditDescription(e.target.value)} 
+                            <textarea
+                                className="border p-2 w-full rounded dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                placeholder="Description"
+                                value={editDescription}
+                                onChange={(e) => setEditDescription(e.target.value)}
                                 required
                             />
                             <div className="flex gap-4">
@@ -552,32 +590,31 @@ export default function AdminPanel() {
                             </div>
                         </form>
                     ) : (
-                        // ⭐ ADD FORM (Original) ⭐
                         <form onSubmit={addNotification} className="mb-8 space-y-4 p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
                             <h3 className="text-xl font-semibold text-green-700 dark:text-yellow-400">Add New Notification</h3>
-                            <input 
-                                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" 
-                                placeholder="Title" 
-                                value={title} 
-                                onChange={(e) => setTitle(e.target.value)} 
+                            <input
+                                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
                                 required
                             />
-                            <textarea 
-                                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" 
-                                placeholder="Description" 
-                                value={description} 
-                                onChange={(e) => setDescription(e.target.value)} 
+                            <textarea
+                                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
                                 required
                             />
                             <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Add Notification</button>
                         </form>
                     )}
 
-                    {/* Notification List (UPDATED to include action buttons) */}
+                    {/* Notification List */}
                     <ul className="space-y-4">
                         {notifications.map((n) => (
-                            <li 
-                                key={n.id} 
+                            <li
+                                key={n.id}
                                 className={`border rounded p-4 flex justify-between items-center dark:border-gray-700 ${editingNotification?.id === n.id ? 'bg-yellow-100 dark:bg-gray-600' : 'bg-white dark:bg-gray-800'}`}
                             >
                                 <div>
@@ -585,17 +622,15 @@ export default function AdminPanel() {
                                     <p className="text-gray-600 dark:text-gray-300 text-sm">{n.description}</p>
                                 </div>
                                 <div className="flex space-x-3">
-                                    {/* ⭐ EDIT BUTTON ⭐ */}
-                                    <button 
-                                        onClick={() => editNotification(n)} 
+                                    <button
+                                        onClick={() => editNotification(n)}
                                         className="text-indigo-500 hover:text-indigo-700 text-sm disabled:opacity-50"
                                         disabled={editingNotification !== null && editingNotification.id !== n.id}
                                     >
                                         Edit
                                     </button>
-                                    {/* ⭐ DELETE BUTTON ⭐ */}
-                                    <button 
-                                        onClick={() => deleteNotification(n.id)} 
+                                    <button
+                                        onClick={() => deleteNotification(n.id)}
                                         className="text-red-500 hover:text-red-700 text-sm"
                                     >
                                         Delete
@@ -608,167 +643,381 @@ export default function AdminPanel() {
 
                 <hr className="my-12 border-gray-300 dark:border-gray-700" />
 
-                {/* --- Voter List Section (Voter Management) --- */}
+                {/* --- GALLERY MANAGEMENT SECTION --- */}
                 <section>
-                    <h2 className="text-2xl font-bold mb-4 text-orange-700 dark:text-orange-400">Manage Voter List</h2>
-                    <form onSubmit={addVoter} className="mb-8 space-y-4">
-                        <select className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={voterType} onChange={(e) => setVoterType(e.target.value)}><option value="vidhan-sabha">Vidhan Sabha</option><option value="lok-sabha">Lok Sabha</option><option value="gram-panchayat">Gram Panchayat</option></select>
-                        <input className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Voter Name" value={voterName} onChange={(e) => setVoterName(e.target.value)} required/>
-                        <input className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Guardian Name" value={voterGuardianName} onChange={(e) => setVoterGuardianName(e.target.value)} required/>
-                        <input className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Gender" value={voterGender} onChange={(e) => setVoterGender(e.target.value)} required/>
-                        {voterType === "gram-panchayat" ? (<input className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ward Number" value={voterWardNo} onChange={(e) => setVoterWardNo(e.target.value)} required/>) : (<input className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Constituency" value={voterConstituency} onChange={(e) => setVoterConstituency(e.target.value)} required/>)}
-                        <input className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Voter ID" value={voterId} onChange={(e) => setVoterId(e.target.value)} required/>
-                        <div className="flex items-center gap-4">
-                            {voterImage && (<img src={voterImage} alt="Selected Voter" width={64} height={64} className="w-16 h-16 rounded-full object-cover"/>)}
-                            {/* Voter image still uses gallery for selection */}
-                            <button type="button" onClick={() => setShowVoterImagePicker(true)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">{voterImage ? "Change Image" : "Select Image from Gallery"}</button>
-                        </div>
-                        <button type="submit" className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">Add Voter</button>
-                    </form>
-                    <ul className="space-y-4">
-                        {voterList.length > 0 ? (voterList.map((voter, index) => (<li key={`${voter.id || 'voter'}-${index}`} className="border rounded p-4 flex justify-between items-center dark:border-gray-700 bg-white dark:bg-gray-800"><div className="flex items-center gap-4">{voter.image && (<img src={voter.image} alt={voter.name || voter.elector_name} width={64} height={64} className="w-16 h-16 rounded-full object-cover"/>)}<div><h3 className="font-semibold">{voter.name || voter.elector_name}</h3><p className="text-sm text-gray-600 dark:text-gray-300">ID: {voter.voter_id || voter.voterId}</p><p className="text-sm text-gray-600 dark:text-gray-300">{voter.constituency ? `Constituency: ${voter.constituency}` : `Ward: ${voter.house_number}`}</p></div></div><button onClick={() => deleteVoter(voter.id)} className="text-red-500 hover:underline">Delete</button></li>))) : (<p className="text-sm text-gray-500 dark:text-gray-400">No voters found.</p>)}
-                    </ul>
-                </section>
+                    <h2 className="text-3xl font-bold mb-6 text-indigo-700 dark:text-fuchsia-400">Manage Image Gallery</h2>
+                    {/* Image Upload/Edit Form */}
+                    <form onSubmit={handleUpload} className={`mb-8 space-y-4 p-4 border rounded-lg ${editingImage ? 'bg-indigo-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'} dark:border-gray-700`}>
+                        <h3 className="text-xl font-semibold text-indigo-700 dark:text-fuchsia-400">
+                            {editingImage ? `Editing Image: ${editingImage.title}` : "Upload New Image"}
+                        </h3>
 
-                <hr className="my-12 border-gray-300 dark:border-gray-700" />
-
-                {/* --- INFRASTRUCTURE MANAGEMENT SECTION --- */}
-                <section>
-                    <h2 className="text-3xl font-bold mb-6 text-indigo-700 dark:text-teal-400">Infrastructure Management</h2>
-
-                    {/* Infrastructure Form (Create/Update) */}
-                    <form id="infrastructure-form" onSubmit={submitInfrastructure} className="mb-10 p-6 border-2 border-indigo-200 rounded-xl shadow-lg bg-white dark:bg-gray-800 dark:border-gray-700">
-                        <h3 className="text-2xl font-semibold mb-5 text-indigo-600 dark:text-teal-400">{infraSubmitText}</h3>
-
-                        {/* Row 1: Title, Type, Status */}
-                        <div className="grid md:grid-cols-3 gap-4 mb-4">
-                            <input name="title" type="text" placeholder="Title / Identifier *" value={infraForm.title} onChange={handleInfraInputChange} required className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-                            <select name="type" value={infraForm.type} onChange={handleInfraInputChange} required className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                {INFRA_TYPES.map(type => (<option key={type} value={type}>{type}</option>))}
-                            </select>
-                            <select name="status" value={infraForm.status} onChange={handleInfraInputChange} required className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                {INFRA_STATUSES.map(status => (<option key={status} value={status}>{status}</option>))}
-                            </select>
-                        </div>
-
-                        {/* Row 2: Description */}
-                        <div className="mb-4">
-                            <textarea name="description" placeholder="Description (Optional)" value={infraForm.description} onChange={handleInfraInputChange} rows="2" className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-                        </div>
-
-                        {/* Row 3: Cost & Installation Date (Inauguration) */}
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
-                            <input name="cost" type="number" step="0.01" placeholder="Cost (in ₹, e.g., 150000)" value={infraForm.cost} onChange={handleInfraInputChange} className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-                            <input name="installationDate" type="date" placeholder="Inauguration / Installation Date" value={infraForm.installationDate} onChange={handleInfraInputChange} className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-                        </div>
-
-                        {/* CONDITIONAL SPECIFIC FIELDS: PRIMARY SCHOOL */}
-                        {infraForm.type === 'Primary School' && <PrimarySchoolFields />}
-                        {infraForm.type === 'Primary Health Center' && <PrimaryHealthCenterFields />}
-
-                        {/* Row 4: Location */}
-                        <fieldset className="border p-4 rounded-lg my-6 dark:border-gray-600">
-                            <legend className="text-base font-medium text-gray-700 dark:text-gray-300 px-2">Location Data (Optional)</legend>
-                            <div className="grid md:grid-cols-3 gap-4 mt-2">
-                                <input name="latitude" type="number" step="any" placeholder="Latitude" value={infraForm.location.latitude} onChange={handleInfraLocationChange} className="border p-2 w-full rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-                                <input name="longitude" type="number" step="any" placeholder="Longitude" value={infraForm.location.longitude} onChange={handleInfraLocationChange} className="border p-2 w-full rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-                                <input name="address" type="text" placeholder="Address/Landmark" value={infraForm.location.address} onChange={handleInfraLocationChange} className="border p-2 w-full rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
-                            </div>
-                        </fieldset>
-
-                        {/* UPDATED: IMAGE SELECTION FROM SYSTEM STORAGE */}
-                        <div className="flex items-center gap-4 mb-6 p-4 border rounded dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                            {infraForm.image ? (
-                                <img src={infraForm.image} alt="Infrastructure Image Preview" width={96} height={96} className="w-24 h-24 object-cover rounded shadow-md"/>
-                            ) : (
-                                <div className="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 text-xs">No Image</div>
-                            )}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Select Image from System Storage (.jpg, .png)</label>
-                                
-                                <input 
-                                    type="file" 
-                                    accept="image/png, image/jpeg" 
-                                    onChange={handleInfraImageUpload} 
-                                    className="block text-sm text-gray-900 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-200 file:text-indigo-700 hover:file:bg-indigo-300"
-                                />
-
-                                {infraForm.image && (
-                                    <button type="button" onClick={() => setInfraForm(prev => ({...prev, image: ''}))} className="text-red-500 hover:text-red-700 text-xs">Remove Image</button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Submission Buttons */}
-                        <div className="flex gap-4">
-                            <button type="submit" className="px-8 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-200">{infraSubmitText}</button>
-                            {editingInfraId && (<button type="button" onClick={resetInfraForm} className="px-8 py-3 bg-gray-400 text-white font-semibold rounded-lg shadow-md hover:bg-gray-500 transition duration-200">Cancel Edit</button>)}
-                        </div>
-                    </form>
-                </section>
-
-                <hr className="my-12 border-gray-300 dark:border-gray-700" />
-
-                {/* --- GALLERY MANAGEMENT SECTION (Simplified) --- */}
-                <section>
-                    <h2 className="text-3xl font-bold mb-6 text-pink-700 dark:text-purple-400">Gallery Image Upload</h2>
-                    <form onSubmit={handleUpload} className="mb-8 space-y-4 p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
-                        <h3 className="text-xl font-semibold text-pink-700 dark:text-purple-400">Upload New Image</h3>
-                        <input className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Image Title" value={imageTitle} onChange={(e) => setImageTitle(e.target.value)} required/>
-                        <input className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Tags (comma separated)" value={imageTags} onChange={(e) => setImageTags(e.target.value)} />
-                        
-                        <input 
-                            type="file" 
-                            accept="image/png, image/jpeg" 
-                            onChange={(e) => {
-                                setSelectedFile(e.target.files[0]);
-                                setFileName(e.target.files[0] ? e.target.files[0].name : "No file chosen");
-                            }}
-                            className="block text-sm text-gray-900 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-200 file:text-pink-700 hover:file:bg-pink-300"
+                        <input
+                            className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Title (e.g., Ward 5 Road Construction)"
+                            value={imageTitle}
+                            onChange={(e) => setImageTitle(e.target.value)}
+                            required
                         />
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Selected file: {fileName}</p>
 
-                        <button type="submit" className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700" disabled={uploading}>
-                            {uploading ? `Uploading... (${uploadProgress}%)` : "Upload to Gallery"}
-                        </button>
+                        <input
+                            className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Tags (comma separated, e.g., road, construction, ward5)"
+                            value={imageTags}
+                            onChange={(e) => setImageTags(e.target.value)}
+                        />
+
+                        <div className="flex items-center space-x-4">
+                            <label className="block w-full">
+                                <span className="sr-only">Choose profile photo</span>
+                                <input
+                                    type="file"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        setSelectedFile(file);
+                                        setFileName(file ? file.name : "No file chosen");
+                                    }}
+                                    className="block w-full text-sm text-gray-500 dark:text-gray-400
+                                        file:mr-4 file:py-2 file:px-4
+                                        file:rounded-full file:border-0
+                                        file:text-sm file:font-semibold
+                                        file:bg-indigo-50 file:text-indigo-700
+                                        hover:file:bg-indigo-100"
+                                    accept="image/*"
+                                />
+                            </label>
+                            <span className="text-sm text-gray-500 dark:text-gray-400 min-w-0 truncate">{fileName}</span>
+                        </div>
+
+
                         {uploadError && <p className="text-red-500 text-sm">{uploadError}</p>}
+                        {uploadProgress > 0 && uploading && uploadProgress < 100 && (
+                            <div className="w-full bg-gray-200 rounded-full dark:bg-gray-700">
+                                <div
+                                    className="bg-indigo-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
+                                    style={{ width: `${uploadProgress}%` }}
+                                >
+                                    {uploadProgress}%
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex gap-4">
+                            <button
+                                type="submit"
+                                className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 disabled:opacity-50"
+                                disabled={uploading}
+                            >
+                                {uploading ? 'Processing...' : (editingImage ? 'Update Image' : 'Upload Image')}
+                            </button>
+                            {editingImage && (
+                                <button
+                                    type="button"
+                                    onClick={resetImageForm}
+                                    className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 disabled:opacity-50"
+                                    disabled={uploading}
+                                >
+                                    Cancel Edit
+                                </button>
+                            )}
+                        </div>
                     </form>
 
-                    <h3 className="text-2xl font-semibold mb-4 text-pink-700 dark:text-purple-400">Existing Gallery Images</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* Image Gallery List */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {images.map((img) => (
-                            <div key={img._id} className="relative group overflow-hidden rounded-lg shadow-lg bg-white dark:bg-gray-800">
-                                <img src={img.image_data} alt={img.title} className="w-full h-32 object-cover"/>
-                                <div className="p-2">
-                                    <p className="text-xs font-medium truncate">{img.title}</p>
+                            <div key={img._id} className={`border rounded-lg overflow-hidden shadow-lg p-2 ${editingImage?._id === img._id ? 'border-4 border-indigo-500' : 'dark:border-gray-700 bg-white dark:bg-gray-800'}`}>
+                                <div className="relative w-full h-32">
+                                    <Image
+                                        src={img.url || FALLBACK_IMAGE_URL}
+                                        alt={img.title}
+                                        fill
+                                        style={{ objectFit: "cover" }}
+                                        className="rounded"
+                                        sizes="(max-width: 768px) 50vw, 25vw"
+                                        onError={(e) => { e.target.src = FALLBACK_IMAGE_URL; }}
+                                    />
                                 </div>
-                                <button onClick={() => handleDeleteImage(img._id)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
+                                <div className="pt-2">
+                                    <p className="text-sm font-semibold truncate dark:text-white" title={img.title}>{img.title}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{img.tags?.join(', ') || 'No Tags'}</p>
+                                    <div className="flex justify-between mt-2">
+                                        <button
+                                            onClick={() => editImage(img)}
+                                            className="text-indigo-500 hover:text-indigo-700 text-xs disabled:opacity-50"
+                                            disabled={editingImage !== null && editingImage._id !== img._id}
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteImage(img._id)}
+                                            className="text-red-500 hover:text-red-700 text-xs"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
                 </section>
-                
-                {/* Voter Image Picker Modal (Conditionally rendered) */}
+
+                <hr className="my-12 border-gray-300 dark:border-gray-700" />
+
+                {/* --- INFRASTRUCTURE MANAGEMENT SECTION (FIXED) --- */}
+                <section>
+                    <h2 className="text-3xl font-bold mb-6 text-orange-700 dark:text-teal-400">Manage Infrastructure</h2>
+                    {/* Add/Edit Infrastructure Form */}
+                    <form onSubmit={submitInfrastructure} className="mb-8 space-y-4 p-6 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
+                        <h3 className="text-xl font-semibold text-orange-700 dark:text-teal-400">{infraSubmitText}</h3>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <input
+                                name="title"
+                                type="text"
+                                placeholder="Title (e.g., Ward 1 Street Light Project)"
+                                value={infraForm.title}
+                                onChange={handleInfraInputChange}
+                                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                required
+                            />
+                            <select
+                                name="type"
+                                value={infraForm.type}
+                                onChange={handleInfraInputChange}
+                                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                required
+                            >
+                                {INFRA_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+                            </select>
+                        </div>
+
+                        <textarea
+                            name="description"
+                            placeholder="Description"
+                            value={infraForm.description}
+                            onChange={handleInfraInputChange}
+                            className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        />
+
+                        {/* Location Details */}
+                        <fieldset className="border p-4 rounded-lg bg-blue-50 dark:bg-gray-700 dark:border-gray-600">
+                            <legend className="text-base font-medium text-blue-700 dark:text-blue-400 px-2">Location & Status</legend>
+                            <div className="grid md:grid-cols-3 gap-4 mt-2">
+                                <input
+                                    name="latitude"
+                                    type="text"
+                                    placeholder="Latitude"
+                                    value={infraForm.location.latitude}
+                                    onChange={handleInfraLocationChange}
+                                    className="border p-2 w-full rounded text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                />
+                                <input
+                                    name="longitude"
+                                    type="text"
+                                    placeholder="Longitude"
+                                    value={infraForm.location.longitude}
+                                    onChange={handleInfraLocationChange}
+                                    className="border p-2 w-full rounded text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                />
+                                <select
+                                    name="status"
+                                    value={infraForm.status}
+                                    onChange={handleInfraInputChange}
+                                    className="border p-2 w-full rounded text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                    required
+                                >
+                                    {INFRA_STATUSES.map(status => <option key={status} value={status}>{status}</option>)}
+                                </select>
+                            </div>
+                            <input
+                                name="address"
+                                type="text"
+                                placeholder="Address / Landmark"
+                                value={infraForm.location.address}
+                                onChange={handleInfraLocationChange}
+                                className="border p-2 w-full rounded mt-4 text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                            />
+                        </fieldset>
+
+                        {/* Cost, Date, and Image */}
+                        <div className="grid md:grid-cols-3 gap-4">
+                            <input
+                                name="cost"
+                                type="number"
+                                placeholder="Cost (₹)"
+                                value={infraForm.cost}
+                                onChange={handleInfraInputChange}
+                                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            />
+                            <input
+                                name="installationDate"
+                                type="date"
+                                placeholder="Installation Date"
+                                value={infraForm.installationDate}
+                                onChange={handleInfraInputChange}
+                                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            />
+                            <label className="block">
+                                <span className="text-sm text-gray-500 dark:text-gray-400">Image (Max 5MB)</span>
+                                <input
+                                    type="file"
+                                    onChange={handleInfraImageUpload}
+                                    className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                                    accept="image/*"
+                                />
+                            </label>
+                        </div>
+
+                        {/* Display Infra Image Preview */}
+                        {infraForm.image && (
+                            <div className="mt-4 flex items-center space-x-4">
+                                <Image
+                                    src={infraForm.image}
+                                    alt="Infrastructure Preview"
+                                    width={100}
+                                    height={100}
+                                    className="rounded object-cover"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setInfraForm(prev => ({ ...prev, image: '' }))}
+                                    className="text-red-500 text-sm hover:text-red-700"
+                                >
+                                    Remove Image
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Conditional Specific Fields */}
+                        {infraForm.type === 'Primary School' && <PrimarySchoolFields />}
+                        {infraForm.type === 'Primary Health Center' && <PrimaryHealthCenterFields />}
+
+                        <div className="flex gap-4">
+                            <button type="submit" className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">{infraSubmitText}</button>
+                            {editingInfraId && (
+                                <button type="button" onClick={resetInfraForm} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel Edit</button>
+                            )}
+                        </div>
+                    </form>
+
+                    {/* Infrastructure List */}
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-semibold text-orange-700 dark:text-teal-400">Existing Infrastructure ({infrastructureList.length})</h3>
+                        {infrastructureList.map((item) => (
+                            <div key={item._id} className={`border rounded-lg p-4 flex justify-between items-center bg-white dark:bg-gray-800 dark:border-gray-700 ${editingInfraId === item._id ? 'border-2 border-orange-500' : ''}`}>
+                                <div>
+                                    <h4 className="font-bold">{item.title} ({item.type})</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Status: <span className={`font-semibold ${item.status === 'Operational' ? 'text-green-500' : item.status === 'Broken' ? 'text-red-500' : 'text-yellow-500'}`}>{item.status}</span></p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{item.location?.address || 'Location N/A'}</p>
+                                </div>
+                                <div className="flex space-x-3">
+                                    <button
+                                        onClick={() => editInfrastructure(item)}
+                                        className="text-indigo-500 hover:text-indigo-700 text-sm disabled:opacity-50"
+                                        disabled={editingInfraId !== null && editingInfraId !== item._id}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => deleteInfrastructure(item._id)}
+                                        className="text-red-500 hover:text-red-700 text-sm"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                <hr className="my-12 border-gray-300 dark:border-gray-700" />
+
+                {/* --- VOTER MANAGEMENT SECTION (MINIMIZED) --- */}
+                <section>
+                    <h2 className="text-3xl font-bold mb-6 text-pink-700 dark:text-cyan-400">Voter Data Management</h2>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Voter Type</label>
+                        <select
+                            value={voterType}
+                            onChange={(e) => setVoterType(e.target.value)}
+                            className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        >
+                            <option value="vidhan-sabha">Vidhan Sabha</option>
+                            <option value="gram-panchayat">Gram Panchayat</option>
+                        </select>
+                    </div>
+
+                    {/* Add Voter Form */}
+                    <form onSubmit={addVoter} className="mb-8 space-y-4 p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
+                        <h3 className="text-xl font-semibold text-pink-700 dark:text-cyan-400">Add New Voter ({voterType === "vidhan-sabha" ? "Vidhan Sabha" : "Gram Panchayat"})</h3>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Voter ID" value={voterId} onChange={(e) => setVoterId(e.target.value)} required />
+                            <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Name" value={voterName} onChange={(e) => setVoterName(e.target.value)} required />
+                            <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Guardian's Name" value={voterGuardianName} onChange={(e) => setVoterGuardianName(e.target.value)} />
+                            <select className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={voterGender} onChange={(e) => setVoterGender(e.target.value)} required>
+                                <option value="" disabled>Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            {voterType === "gram-panchayat" ? (
+                                <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ward No." value={voterWardNo} onChange={(e) => setVoterWardNo(e.target.value)} />
+                            ) : (
+                                <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Constituency" value={voterConstituency} onChange={(e) => setVoterConstituency(e.target.value)} />
+                            )}
+                            <div className="flex items-center space-x-2">
+                                <button type="button" onClick={() => setShowVoterImagePicker(true)} className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm">Select Image</button>
+                                {voterImage && <p className="text-sm text-green-600 dark:text-green-400">Image Selected</p>}
+                            </div>
+                        </div>
+                        <button type="submit" className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700">Add Voter</button>
+                    </form>
+
+                    {/* Voter List (Minimal Display) */}
+                    <div className="space-y-3">
+                        <h3 className="text-xl font-semibold text-pink-700 dark:text-cyan-400">Voter List ({voterList.length})</h3>
+                        {voterList.slice(0, 5).map((voter) => ( // Show only first 5 for brevity
+                            <div key={voter.id} className="border rounded p-3 flex justify-between items-center bg-white dark:bg-gray-800 dark:border-gray-700">
+                                <div>
+                                    <h4 className="font-bold">{voter.voterName} ({voter.voterId})</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Guardian: {voter.voterGuardianName}</p>
+                                </div>
+                                <button onClick={() => deleteVoter(voter.id)} className="text-red-500 hover:text-red-700 text-sm">Delete</button>
+                            </div>
+                        ))}
+                        {voterList.length > 5 && <p className="text-center text-gray-500 dark:text-gray-400 text-sm">...and {voterList.length - 5} more records.</p>}
+                    </div>
+                </section>
+
+                {/* --- Voter Image Picker Modal (MINIMIZED) --- */}
                 {showVoterImagePicker && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
-                            <h2 className="text-xl font-bold mb-4">Select Voter Image from Gallery</h2>
-                            <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-xl w-full">
+                            <h3 className="text-xl font-bold mb-4">Select Voter Image from Gallery</h3>
+                            <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto">
                                 {images.map((img) => (
-                                    <div key={img._id} onClick={() => handleVoterImageSelect(img.image_data)} className="relative group cursor-pointer border-4 border-transparent hover:border-indigo-500 rounded-lg overflow-hidden transition-colors">
-                                        <img src={img.image_data} alt={img.title} className="w-full h-24 object-cover"/>
-                                        <p className="text-xs text-center p-1 truncate dark:text-white">{img.title}</p>
+                                    <div
+                                        key={img._id}
+                                        onClick={() => handleVoterImageSelect(img.url)}
+                                        className="relative w-full h-24 cursor-pointer border-2 border-transparent hover:border-purple-500 rounded-lg overflow-hidden"
+                                    >
+                                        <Image
+                                            src={img.url || FALLBACK_IMAGE_URL}
+                                            alt={img.title}
+                                            fill
+                                            style={{ objectFit: "cover" }}
+                                            sizes="33vw"
+                                        />
                                     </div>
                                 ))}
                             </div>
-                            <button onClick={() => setShowVoterImagePicker(false)} className="mt-6 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Close</button>
+                            <div className="mt-4 flex justify-end">
+                                <button onClick={() => setShowVoterImagePicker(false)} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Close</button>
+                            </div>
                         </div>
                     </div>
                 )}
-
-
             </div>
         </div>
     );
