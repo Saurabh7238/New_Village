@@ -1,23 +1,29 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose from 'mongoose';
 
-// Define the schema for the notification
-const NotificationSchema = new Schema({
-    text: {
+const NotificationSchema = new mongoose.Schema({
+    title: {
         type: String,
-        required: [true, 'Notification text is required.'],
+        required: [true, "Notification title is required."],
         trim: true,
-        maxlength: [200, 'Text cannot exceed 200 characters.']
     },
-    href: {
+    description: {
         type: String,
-        required: [true, 'Link (href) is required.'],
-        trim: true
+        required: [true, "Notification description is required."],
+        trim: true,
+    },
+    isRead: {
+        type: Boolean,
+        default: false,
+    },
+    // Optional field to categorize the notification type (e.g., 'alert', 'info', 'update')
+    category: {
+        type: String,
+        required: false,
+        default: 'info',
     }
-}, {
-    timestamps: true 
-});
+}, { timestamps: true });
 
-// Important: Prevents Mongoose from re-compiling the model on hot-reload
-const NotificationModel = mongoose.models.Notification || mongoose.model('Notification', NotificationSchema);
+// Check if the model already exists before defining it
+const Notification = mongoose.models.Notification || mongoose.model('Notification', NotificationSchema);
 
-export default NotificationModel;
+export default Notification;
