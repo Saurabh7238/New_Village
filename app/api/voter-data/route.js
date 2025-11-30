@@ -1,110 +1,129 @@
-import { NextResponse } from 'next/server';
+'use client';
+import { useState, useEffect } from 'react';
 
-import dbConnect from '@/lib/db'; 
-import VoterData from '@/models/VoterData'; 
-import mongoose from 'mongoose'; 
+export default function VoterList() {
+  const [voters, setVoters] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [type, setType] = useState('vidhan-sabha');
 
+  // ✅ Fetch from CORRECT API
+  useEffect(() => {
+    fetchVoters();
+  }, [type]);
 
-const VALID_TYPES = ['vidhan-sabha', 'lok-sabha', 'gram-panchayat'];
+  const fetchVoters = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await fetch(`/api/voterdata?type=${type}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setVoters(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Voter fetch error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  if (loading) return <div className="p-8 text-center">Loading voters...</div>;
+  if (error) return <div className="p-8 text-red-500 text-center">Error: {error}</div>;
 
-export async function GET(request) {
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Voter List</h1>
+      
+      {/* Type Filter */}
+      <div className="mb-6 flex gap-4">
+        <select 
+          value={type} 
+          onChange={(e) => setType(e.target.value)}
+          className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2"
+        >
+          <option value="vidhan-sabha">Vidhan Sabha</option>
+          <option value="lok-sabha">Lok Sabha</option>
+          <option value="gram-panchayat">Gram Panchayat</option>
+        </select>
+        <button 
+          onClick={fetchVoters}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {/* Voters Table */}
+      {voters.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          No voters found for {type.replace('-', ' ')}
+        </div>
+      ) : (
+        <div className="overflow-x-auto shadow-lg rounded-lg">
+          <table className="min-w-full bg-white border border-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voter ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {voters.map((voter) => (
+                <tr key={voter.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {voter.name || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {voter.age || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {voter.gender || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {voter.voterId || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button 
+                      onClick={() => deleteVoter(voter.id, type)}
+                      className="text-red-600 hover:text-red-900 mr-3"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+
+  async function deleteVoter(id, type) {
+    if (!confirm('Delete this voter?')) return;
     
-    await dbConnect(); 
-
     try {
-        const { searchParams } = new URL(request.url);
-        const type = searchParams.get('type') || 'vidhan-sabha';
-
-        if (!VALID_TYPES.includes(type)) {
-            return NextResponse.json({ error: 'Invalid voter type' }, { status: 400 });
-        }
-
-        // 2. Query MongoDB, filtered by the document type
-        const data = await VoterData.find({ type: type }).exec();
-        
-        // 💡 FIX: Map Mongoose objects to include 'id' field for the frontend key prop
-        const mappedData = data.map(item => ({
-            ...item.toObject(),
-            id: item._id.toString(),
-            _id: item._id.toString(), // Keep _id for consistency, or omit
-        }));
-        
-        return NextResponse.json(mappedData);
-
-    } catch (error) {
-        console.error('Failed to fetch voter data from MongoDB:', error);
-        return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
+      const response = await fetch('/api/voterdata', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, type })
+      });
+      
+      if (response.ok) {
+        fetchVoters(); // Refresh list
+      } else {
+        alert('Delete failed');
+      }
+    } catch (err) {
+      alert('Delete error: ' + err.message);
     }
-}
-
-// --- POST: Add new item to MongoDB ---
-export async function POST(request) {
-    // 1. Connect to the database
-    await dbConnect(); 
-
-    try {
-        const body = await request.json();
-        const { type, ...newItem } = body;
-        
-        if (!VALID_TYPES.includes(type)) {
-            return NextResponse.json({ error: 'Invalid voter type' }, { status: 400 });
-        }
-
-        // 2. Create the new record in MongoDB
-        const newRecord = await VoterData.create({
-            type: type, // Assign the type discriminator
-            ...newItem // Spread the rest of the submitted fields
-        });
-        
-        // Return the mapped object to the frontend state
-        const mappedRecord = {
-            ...newRecord.toObject(),
-            id: newRecord._id.toString(),
-            _id: newRecord._id.toString(),
-        };
-
-        return NextResponse.json(mappedRecord, { status: 201 });
-
-    } catch (error) {
-        console.error('Failed to add voter item to MongoDB:', error);
-        return NextResponse.json({ error: 'Failed to add item' }, { status: 500 });
-    }
-}
-
-// --- DELETE: Remove item from MongoDB ---
-export async function DELETE(request) {
-    // 1. Connect to the database
-    await dbConnect(); 
-
-    try {
-        const body = await request.json();
-        const { id, type } = body; 
-        
-        if (!id || !type) {
-             return NextResponse.json({ error: 'ID and type are required for deletion' }, { status: 400 });
-        }
-
-        if (!VALID_TYPES.includes(type)) {
-            return NextResponse.json({ error: 'Invalid voter type' }, { status: 400 });
-        }
-
-        // Mongoose uses _id, so we assume the client is sending the MongoDB _id
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
-        }
-
-        // 2. Delete the record from MongoDB by its unique _id and the type
-        const result = await VoterData.deleteOne({ _id: id, type: type });
-
-        if (result.deletedCount === 0) {
-            return NextResponse.json({ error: 'Item not found or already deleted' }, { status: 404 });
-        }
-
-        return NextResponse.json({ message: 'Item deleted successfully' });
-
-    } catch (error) {
-        console.error('Failed to delete voter item from MongoDB:', error);
-        return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 });
-    }
+  }
 }
