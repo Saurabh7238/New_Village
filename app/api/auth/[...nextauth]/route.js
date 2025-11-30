@@ -58,28 +58,36 @@ const authOptions = {
         try {
           await connect();
         } catch (error) {
-          // If connection fails, prevent login attempt
-          console.error("Authorize failed: DB connection error.");
+          // If connection fails, prevent login attempt (this handles your 'bad auth' if it returns)
+          console.error("🚨 Authorize Failed: DB connection error. Check URI/IP Whitelist!");
           return null; 
         }
 
         const userFound = await User.findOne({ email: credentials.email });
 
-        if (!userFound) return null;
-
+        // 1. User Not Found Check
+        if (!userFound) {
+          console.log(`⚠️ Login Failed: User not found for email: ${credentials.email}`);
+          return null;
+        }
+        
+        // 2. Password Check
         const isMatch = await bcrypt.compare(
           credentials.password,
           userFound.password
         );
 
         if (isMatch) {
+          console.log(`✅ Login Success for user: ${userFound.email}`);
           return {
             id: userFound._id.toString(), // Ensure ID is a string
             email: userFound.email,
             role: userFound.role, // This is key for admin access
           };
         }
-
+        
+        // 3. Password Mismatch
+        console.log(`❌ Login Failed: Incorrect password for user: ${userFound.email}`);
         return null;
       },
     }),

@@ -56,8 +56,8 @@ export default function VoterSearchPage() {
           value={selectedConstituency}
           onChange={(e) => setSelectedConstituency(e.target.value)}
         >
-          {uniqueConstituencies.map((c) => (
-            <option key={c} value={c}>
+          {uniqueConstituencies.map((c, index) => (
+            <option key={`${c}-${index}`} value={c}>
               {c === "all" ? "All Constituencies" : c}
             </option>
           ))}

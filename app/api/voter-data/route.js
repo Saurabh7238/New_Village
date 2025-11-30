@@ -23,7 +23,14 @@ export async function GET(request) {
         // 2. Query MongoDB, filtered by the document type
         const data = await VoterData.find({ type: type }).exec();
         
-        return NextResponse.json(data);
+        // 💡 FIX: Map Mongoose objects to include 'id' field for the frontend key prop
+        const mappedData = data.map(item => ({
+            ...item.toObject(),
+            id: item._id.toString(),
+            _id: item._id.toString(), // Keep _id for consistency, or omit
+        }));
+        
+        return NextResponse.json(mappedData);
 
     } catch (error) {
         console.error('Failed to fetch voter data from MongoDB:', error);
@@ -50,7 +57,14 @@ export async function POST(request) {
             ...newItem // Spread the rest of the submitted fields
         });
         
-        return NextResponse.json(newRecord);
+        // Return the mapped object to the frontend state
+        const mappedRecord = {
+            ...newRecord.toObject(),
+            id: newRecord._id.toString(),
+            _id: newRecord._id.toString(),
+        };
+
+        return NextResponse.json(mappedRecord, { status: 201 });
 
     } catch (error) {
         console.error('Failed to add voter item to MongoDB:', error);

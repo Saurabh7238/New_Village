@@ -32,7 +32,7 @@ export default function Header() {
     ["Map", "/map"],
     ["Infra", "/infrastructure"],
   ];
-  
+
   if (session?.user?.role === "admin") {
     navItems.push(["Admin Panel", "/admin"]);
   }
@@ -45,9 +45,10 @@ export default function Header() {
           : "bg-gradient-to-r from-green-700 via-green-600 to-green-500"
       }`}
     >
+      {/* Scrolling Banner */}
       <div className="bg-green-600 overflow-hidden">
         <motion.div
-          className="py-2 text-sm font-semibold tracking-wide whitespace-nowrap text-white"
+          className="py-2 sm:py-3 text-sm font-semibold tracking-wide whitespace-nowrap text-white"
           animate={{ x: ["100%", "-100%"] }}
           transition={{
             ease: "linear",
@@ -55,25 +56,28 @@ export default function Header() {
             repeat: Infinity,
           }}
         >
-          🌟 Welcome to Gram Panchayat Portal — “सर्वजन हिताय, सर्वजन सुखाय” —
-          Efficient Governance for Every Citizen 🌟
+          🌟 Welcome to Gram Panchayat Portal — “सर्वजन हिताय, सर्वजन सुखाय” — Efficient Governance for Every Citizen 🌟
         </motion.div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 flex flex-wrap items-center justify-between py-3">
-        <div className="flex items-center gap-2">
+      {/* Main Header Section */}
+      <div className="max-w-6xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between py-4">
+        {/* Logo */}
+        <div className="flex items-center gap-3">
           <Link href="/" className="text-2xl font-bold tracking-wide text-white">
             Gram Panchayat
           </Link>
           <span className="text-sm text-green-100">Portal</span>
         </div>
 
-        <div className="relative flex items-center gap-4">
+        {/* Navigation & Buttons */}
+        <div className="relative flex items-center gap-3 md:gap-5">
+          {/* Auth Buttons */}
           {status === "loading" ? (
             <div className="text-white text-sm">Loading...</div>
           ) : session ? (
             <button
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={() => signOut({ callbackUrl: "/" })}
               className="px-4 py-2 bg-red-500 text-white rounded-md shadow hover:bg-red-600 transition font-semibold"
             >
               Sign Out
@@ -87,7 +91,7 @@ export default function Header() {
                 Register
               </Link>
               <button
-                onClick={() => signIn("credentials", { callbackUrl: '/admin' })}
+                onClick={() => signIn("credentials", { callbackUrl: "/admin" })}
                 className="px-4 py-2 bg-green-500 text-white rounded-md shadow hover:bg-green-600 transition font-semibold"
               >
                 Sign In
@@ -95,6 +99,7 @@ export default function Header() {
             </>
           )}
 
+          {/* Menu Toggle */}
           <button
             onClick={() => setOpen(!open)}
             className="px-4 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold"
@@ -104,6 +109,7 @@ export default function Header() {
             {open ? "✕ Close" : "☰ Menu"}
           </button>
 
+          {/* Dropdown Menu */}
           <AnimatePresence>
             {open && (
               <motion.ul
@@ -112,14 +118,14 @@ export default function Header() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="absolute right-0 top-full mt-2 w-56 bg-white rounded-md shadow-lg overflow-hidden"
+                className="absolute right-0 top-full mt-3 w-56 bg-white rounded-md shadow-lg overflow-hidden"
                 onMouseLeave={() => setOpen(false)}
               >
                 {navItems.map(([label, href]) => (
                   <li key={href}>
                     <Link
                       href={href}
-                      className={`block px-4 py-2 transition ${
+                      className={`block px-5 py-3 transition ${
                         pathname === href
                           ? "bg-green-100 text-green-800 font-semibold"
                           : "text-green-700 hover:bg-green-100"

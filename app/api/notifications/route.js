@@ -11,6 +11,7 @@ export async function GET() {
         
         // Map _id to id for front-end compatibility
         const responseData = notifications.map(n => ({
+            // Use toObject() for Mongoose documents and spread properties
             ...n.toObject(), 
             id: n._id.toString() 
         }));
@@ -19,6 +20,7 @@ export async function GET() {
 
     } catch (error) {
         console.error("GET Notifications Error:", error);
+        // Returns generic 500 error message (safest approach)
         return NextResponse.json({ message: "Failed to fetch notifications." }, { status: 500 });
     }
 }
@@ -81,7 +83,8 @@ export async function PUT(request) {
 
     } catch (error) {
         console.error("PUT Notification (Update) Error:", error);
-        return NextResponse.json({ message: "Failed to update notification.", details: error.message }, { status: 500 });
+        // REMOVED error.message from the response for security
+        return NextResponse.json({ message: "Failed to update notification." }, { status: 500 });
     }
 }
 
@@ -89,8 +92,10 @@ export async function PUT(request) {
 export async function DELETE(request) {
     try {
         await dbConnect();
-        // Note: Delete request bodies can be tricky; retrieving ID from URL is often more robust.
-        const { id } = await request.json(); 
+        
+        // 💡 UPDATED: Get ID from URL search parameters for robust DELETE handling
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
 
         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json({ message: "Valid notification ID is required for deletion." }, { status: 400 });
@@ -106,6 +111,7 @@ export async function DELETE(request) {
 
     } catch (error) {
         console.error("DELETE Notification Error:", error);
-        return NextResponse.json({ message: "Failed to delete notification.", details: error.message }, { status: 500 });
+        // REMOVED error.message from the response for security
+        return NextResponse.json({ message: "Failed to delete notification." }, { status: 500 });
     }
 }

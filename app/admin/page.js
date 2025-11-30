@@ -169,7 +169,7 @@ export default function AdminPanel() {
         e.preventDefault();
 
         const isUpdating = editingInfraId !== null;
-        const method = "POST";
+        const method = isUpdating ? "PUT" : "POST";
 
         if (!infraForm.title.trim() || !infraForm.type || !infraForm.status) {
             alert("Title, Type, and Status are required fields.");
@@ -213,13 +213,14 @@ export default function AdminPanel() {
         if (Object.keys(filteredDetails).length > 0) {
             payload.details = filteredDetails;
         }
-
+        
+        let url = "/api/infrastructure";
         if (isUpdating) {
-            payload.id = editingInfraId;
+            url = `/api/infrastructure?id=${editingInfraId}`;
         }
 
         try {
-            const res = await fetch("/api/infrastructure", {
+            const res = await fetch(url, {
                 method: method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -230,8 +231,8 @@ export default function AdminPanel() {
             if (res.ok) {
                 setInfrastructureList((prev) =>
                     isUpdating
-                        ? prev.map(item => (item._id === result._id ? result : item))
-                        : [result, ...prev]
+                        ? prev.map(item => (item._id === result.infrastructure._id ? result.infrastructure : item))
+                        : [result.infrastructure, ...prev]
                 );
                 resetInfraForm();
             } else {
@@ -249,10 +250,8 @@ export default function AdminPanel() {
         if (!confirmed) return;
 
         try {
-            const res = await fetch("/api/infrastructure", {
+            const res = await fetch(`/api/infrastructure?id=${id}`, {
                 method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id }),
             });
 
             if (res.ok) {
@@ -732,8 +731,8 @@ export default function AdminPanel() {
                                         alt={img.title}
                                         fill
                                         style={{ objectFit: "cover" }}
-                                        className="rounded"
                                         sizes="(max-width: 768px) 50vw, 25vw"
+                                        className="rounded"
                                         onError={(e) => { e.target.src = FALLBACK_IMAGE_URL; }}
                                     />
                                 </div>
@@ -787,6 +786,7 @@ export default function AdminPanel() {
                                 className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                 required
                             >
+                                {/* FIX: Added key prop */}
                                 {INFRA_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
                             </select>
                         </div>
@@ -826,6 +826,7 @@ export default function AdminPanel() {
                                     className="border p-2 w-full rounded text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                                     required
                                 >
+                                    {/* FIX: Added key prop */}
                                     {INFRA_STATUSES.map(status => <option key={status} value={status}>{status}</option>)}
                                 </select>
                             </div>
@@ -977,7 +978,7 @@ export default function AdminPanel() {
                     {/* Voter List (Minimal Display) */}
                     <div className="space-y-3">
                         <h3 className="text-xl font-semibold text-pink-700 dark:text-cyan-400">Voter List ({voterList.length})</h3>
-                        {voterList.slice(0, 5).map((voter) => ( // Show only first 5 for brevity
+                        {voterList.slice(0, 5).map((voter) => (
                             <div key={voter.id} className="border rounded p-3 flex justify-between items-center bg-white dark:bg-gray-800 dark:border-gray-700">
                                 <div>
                                     <h4 className="font-bold">{voter.voterName} ({voter.voterId})</h4>

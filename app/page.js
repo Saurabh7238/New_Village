@@ -1,8 +1,11 @@
+// /app/HomePage.jsx or /pages/index.jsx
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import ServiceCard from "../components/ServiceCard";
+// Ensure you have this file: ../components/ServiceCard.jsx
+import ServiceCard from "../components/ServiceCard"; 
 import { Globe, Moon, Sun, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -23,7 +26,7 @@ export default function HomePage() {
   const toggleModal = () => setShowModal(!showModal);
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
-  // visitor count API
+  // Visitor count API: Runs once on component mount
   useEffect(() => {
     fetch("/api/visit")
       .then((res) => res.json())
@@ -31,7 +34,7 @@ export default function HomePage() {
       .catch(() => setVisitCount(0));
   }, []);
 
-  // notifications API – safe
+  // Notifications API: Runs once on component mount
   useEffect(() => {
     fetch("/api/notifications")
       .then((res) => {
@@ -45,12 +48,12 @@ export default function HomePage() {
       });
   }, []);
 
-  // dark mode toggle
+  // Dark mode toggle: Runs when darkMode state changes
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
-  // close dropdown if clicked outside
+  // Close dropdown if clicked outside: Runs once on mount
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -124,12 +127,19 @@ export default function HomePage() {
 
   const images = ["/slide.png", "/voter.png", "/panchayat.jpg"];
 
+  // Dynamic padding-top for main content to avoid overlap with fixed banner
+  const mainContentPaddingTop = showBanner ? 'pt-16' : 'pt-4'; 
+  // Dynamic top position for fixed icons to appear below the banner
+  const fixedIconsTop = showBanner ? 'top-12' : 'top-2'; 
+  // Top padding for the whole page when banner is active to push content down
+  const wrapperPaddingTop = showBanner ? 'pt-12' : 'pt-0'; 
+
   return (
     <div className={`${darkMode ? "dark" : ""}`}>
       <div
         className={`min-h-screen ${
           darkMode ? "bg-gray-900 text-white" : "bg-white text-black"
-        } relative`}
+        } relative ${wrapperPaddingTop}`} // Use wrapperPaddingTop to push content down
       >
         {/* Notification Banner */}
         {showBanner && (
@@ -145,73 +155,72 @@ export default function HomePage() {
         )}
 
         {/* Top-right icons */}
-        {!showBanner && (
-          <div className="fixed z-[60] right-2 top-2 flex gap-2 transition-all duration-300">
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={toggleDropdown}
-                className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow"
-                title={t.notificationsTitle}
-              >
-                <Bell className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-              </button>
-              {notifications.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
-                  {notifications.length}
-                </span>
-              )}
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 shadow-lg rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 z-50">
-                  <div className="p-2 text-sm font-bold border-b border-gray-200 dark:border-gray-700">
-                    {t.notificationsTitle}
-                  </div>
-                  <ul>
-                    {notifications.length > 0 ? (
-                      notifications.map((note) => (
-                        <li
-                          key={note.id}
-                          className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer"
-                          onClick={() =>
-                            router.push(note.link || "/notifications")
-                          }
-                        >
-                          {note.title}
-                        </li>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-gray-500 text-sm">
-                        {t.noNotifications}
-                      </div>
-                    )}
-                  </ul>
+        <div className={`fixed z-[60] right-2 flex gap-2 transition-all duration-300 ${fixedIconsTop}`}>
+          
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={toggleDropdown}
+              className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow"
+              title={t.notificationsTitle}
+            >
+              <Bell className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+            </button>
+            {notifications.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
+                {notifications.length}
+              </span>
+            )}
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 shadow-lg rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 z-50">
+                <div className="p-2 text-sm font-bold border-b border-gray-200 dark:border-gray-700">
+                  {t.notificationsTitle}
                 </div>
-              )}
-            </div>
-
-            <button
-              onClick={toggleLanguage}
-              className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow"
-              title={t.lang}
-            >
-              <Globe className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-            </button>
-
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow"
-              title={t.dark}
-            >
-              {darkMode ? (
-                <Sun className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-              ) : (
-                <Moon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-              )}
-            </button>
+                <ul>
+                  {notifications.length > 0 ? (
+                    notifications.map((note) => (
+                      <li
+                        key={note.id}
+                        className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer"
+                        onClick={() =>
+                          router.push(note.link || "/notifications")
+                        }
+                      >
+                        {note.title}
+                      </li>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-gray-500 text-sm">
+                      {t.noNotifications}
+                    </div>
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
-        )}
+
+          <button
+            onClick={toggleLanguage}
+            className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow"
+            title={t.lang}
+          >
+            <Globe className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+          </button>
+
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow"
+            title={t.dark}
+          >
+            {darkMode ? (
+              <Sun className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+            ) : (
+              <Moon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+            )}
+          </button>
+        </div>
 
         {/* Main Content */}
-        <div className="pb-16 transition-all duration-500 pt-20">
+        <div className={`pb-16 transition-all duration-500 ${mainContentPaddingTop}`}>
           <section className="text-center py-2 bg-gradient-to-r from-green-100 via-blue-100 to-yellow-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600">
             <h1 className="text-xl font-bold text-green-700 dark:text-yellow-400">
               {t.welcome}
