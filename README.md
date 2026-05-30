@@ -1,37 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Gram Panchayat Portal
 
-## Getting Started
+Next.js app for village portal features (notifications, infrastructure, voters, gallery, admin).
 
-First, run the development server:
+## Setup (first time)
+
+```bash
+npm install
+copy .env.example .env.local
+```
+
+Edit `.env.local` with your MongoDB Atlas URI and a `NEXTAUTH_SECRET` (32+ random characters).
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Push to GitHub (safe workflow)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Do not commit** MongoDB files under `data/` (only `data/*.json` seed files belong in Git).
+2. After you change code:
 
-## Learn More
+```bash
+git add .
+git status
+npm run verify
+git commit -m "describe your change"
+git push
+```
 
-To learn more about Next.js, take a look at the following resources:
+`npm run verify` runs lint + production build so pushes are less likely to fail CI.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Repository: [Saurabh7238/my-village](https://github.com/Saurabh7238/my-village)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy (Vercel)
 
-## Deploy on Vercel
+Connect the GitHub repo on [Vercel](https://vercel.com). Add the same variables as `.env.example` in **Project → Settings → Environment Variables**. Without `MONGODB_URI` and `NEXTAUTH_SECRET`, deploy checks may show a red X even when `git push` succeeds.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-#
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run verify` | Lint + build (run before push) |
