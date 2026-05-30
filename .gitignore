@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local MongoDB database files (never commit — can exceed GitHub 100MB limit)
+data/WiredTiger
+data/WiredTiger.lock
+data/WiredTiger.turtle
+data/WiredTiger.wt
+data/WiredTigerHS.wt
+data/_mdb_catalog.wt
+data/mongod.lock
+data/storage.bson
+data/sizeStorer.wt
+data/*.wt
+data/journal/
+data/diagnostic.data/
+data/collection-*
+data/index-*
