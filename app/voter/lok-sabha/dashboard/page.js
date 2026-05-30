@@ -12,16 +12,25 @@ import {
   Legend,
 } from "chart.js";
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend);
+ChartJS.register(
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  ArcElement,
+  Tooltip,
+  Legend
+);
 
 export default function LokSabhaDashboard() {
   const [voters, setVoters] = useState([]);
 
   useEffect(() => {
-    // 💡 Fetch data from the new API route for Lok Sabha voters
-    fetch("/api/lok-sabha-voters")
+    fetch("/api/voterdata?type=lok-sabha")
       .then((res) => res.json())
-      .then((data) => setVoters(data));
+      .then((data) => setVoters(Array.isArray(data) ? data : []))
+      .catch((err) =>
+        console.error("Failed to load Lok Sabha voters:", err)
+      );
   }, []);
 
   const ageGroups = {
@@ -38,14 +47,16 @@ export default function LokSabhaDashboard() {
   };
 
   voters.forEach((v) => {
-    const age = v.age;
-    if (age <= 30) ageGroups["18–30"]++;
-    else if (age <= 45) ageGroups["31–45"]++;
-    else if (age <= 60) ageGroups["46–60"]++;
-    else ageGroups["60+"]++;
+    const age = Number(v.age);
+    if (!Number.isNaN(age)) {
+      if (age <= 30) ageGroups["18–30"]++;
+      else if (age <= 45) ageGroups["31–45"]++;
+      else if (age <= 60) ageGroups["46–60"]++;
+      else ageGroups["60+"]++;
+    }
 
-    if (v.gender === "पु") genderCount.male++;
-    else if (v.gender === "म") genderCount.female++;
+    if (v.gender === "पु" || v.gender === "Male") genderCount.male++;
+    else if (v.gender === "म" || v.gender === "Female") genderCount.female++;
     else genderCount.other++;
   });
 
@@ -73,7 +84,9 @@ export default function LokSabhaDashboard() {
 
   return (
     <div className="pt-20 px-4 max-w-4xl mx-auto">
-      <h2 className="text-xl font-bold text-blue-700 mb-6">Lok Sabha Voter Dashboard</h2>
+      <h2 className="text-xl font-bold text-blue-700 mb-6">
+        Lok Sabha Voter Dashboard
+      </h2>
 
       <div className="mb-10">
         <Bar data={ageData} />

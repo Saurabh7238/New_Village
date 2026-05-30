@@ -1,7 +1,16 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  parseVoterListResponse,
+  getVoterName,
+  getVoterId,
+  getVoterGuardian,
+  getVoterGender,
+  getVoterConstituency,
+  getVoterWard,
+  getVoterImage,
+} from "@/lib/voterDisplay";
 
 export default function VoterSearchPage() {
   const [voters, setVoters] = useState([]);
@@ -9,11 +18,9 @@ export default function VoterSearchPage() {
   const [selectedConstituency, setSelectedConstituency] = useState("all");
 
   useEffect(() => {
-    fetch("/api/voter-data")
+    fetch("/api/voter-data?type=vidhan-sabha")
       .then((res) => res.json())
-      .then((data) => {
-        setVoters(Array.isArray(data) ? data : []);
-      })
+      .then((data) => setVoters(parseVoterListResponse(data)))
       .catch((error) => {
         console.error("Failed to fetch voter data:", error);
         setVoters([]);
@@ -22,20 +29,23 @@ export default function VoterSearchPage() {
 
   const uniqueConstituencies = [
     "all",
-    ...new Set(voters.map((voter) => voter.constituency)),
+    ...new Set(
+      voters.map((voter) => getVoterConstituency(voter)?.toLowerCase()).filter(Boolean)
+    ),
   ];
 
   const filteredVoters = voters.filter((voter) => {
-    const name = voter.elector_name?.toLowerCase() || "";
-    const id = voter.voter_id?.toLowerCase() || "";
-    const constituency = voter.constituency?.toLowerCase() || "";
+    const name = getVoterName(voter).toLowerCase();
+    const id = getVoterId(voter).toLowerCase();
+    const constituency = getVoterConstituency(voter).toLowerCase();
     const searchLower = searchTerm.toLowerCase();
 
     const matchesSearchTerm =
       name.includes(searchLower) || id.includes(searchLower);
 
     const matchesConstituency =
-      selectedConstituency === "all" || constituency === selectedConstituency;
+      selectedConstituency === "all" ||
+      constituency === selectedConstituency.toLowerCase();
 
     return matchesSearchTerm && matchesConstituency;
   });
@@ -66,36 +76,48 @@ export default function VoterSearchPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {filteredVoters.length > 0 ? (
-          filteredVoters.map((voter) => (
-            <div
-              key={voter.id}
-              className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center text-center"
-            >
-              {voter.image && (
-                <Image
-                  src={voter.image}
-                  alt={voter.elector_name}
-                  width={100}
-                  height={100}
-                  className="rounded-full w-24 h-24 object-cover mb-2"
-                />
-              )}
-              <h3 className="font-semibold text-lg">{voter.elector_name}</h3>
-              <p className="text-sm text-gray-600">ID: {voter.voter_id}</p>
-              <p className="text-sm text-gray-600">Gender: {voter.gender}</p>
-              {voter.house_number && (
-                <p className="text-sm text-gray-600">Ward: {voter.house_number}</p>
-              )}
-              {voter.constituency && (
+          filteredVoters.map((voter, index) => {
+            const imageSrc = getVoterImage(voter);
+            return (
+              <div
+                key={voter.id || index}
+                className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center text-center"
+              >
+                {imageSrc && (
+                  <img
+                    src={imageSrc}
+                    alt={getVoterName(voter)}
+                    className="rounded-full w-24 h-24 object-cover mb-2"
+                  />
+                )}
+                <h3 className="font-semibold text-lg">{getVoterName(voter)}</h3>
                 <p className="text-sm text-gray-600">
-                  Constituency: {voter.constituency}
+                  ID: {getVoterId(voter) || "N/A"}
                 </p>
-              )}
-            </div>
-          ))
+                <p className="text-sm text-gray-600">
+                  Guardian: {getVoterGuardian(voter) || "N/A"}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Gender: {getVoterGender(voter) || "N/A"}
+                </p>
+                {getVoterWard(voter) && (
+                  <p className="text-sm text-gray-600">
+                    Ward: {getVoterWard(voter)}
+                  </p>
+                )}
+                {getVoterConstituency(voter) && (
+                  <p className="text-sm text-gray-600">
+                    Constituency: {getVoterConstituency(voter)}
+                  </p>
+                )}
+              </div>
+            );
+          })
         ) : (
           <div className="col-span-full text-center py-10">
-            <p className="text-gray-500">No voters found. Try a different search.</p>
+            <p className="text-gray-500">
+              No voters found. Try a different search.
+            </p>
           </div>
         )}
       </div>

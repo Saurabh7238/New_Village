@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
+import { readFile } from "fs/promises";
+import path from "path";
 import dbConnect from "@/lib/db";
 import Notification from "@/models/Notification"; 
 import mongoose from "mongoose"; // Import mongoose for ID validation
+
+async function getFallbackNotifications() {
+    const filePath = path.join(process.cwd(), "app", "data", "notifications.json");
+    const raw = JSON.parse(await readFile(filePath, "utf8"));
+    return raw.map((n) => ({
+        id: String(n.id),
+        title: n.text,
+        description: n.text,
+        link: n.href,
+    }));
+}
 
 // --- GET (FETCH ALL NOTIFICATIONS) ---
 export async function GET() {
@@ -20,8 +33,13 @@ export async function GET() {
 
     } catch (error) {
         console.error("GET Notifications Error:", error);
-        // Returns generic 500 error message (safest approach)
-        return NextResponse.json({ message: "Failed to fetch notifications." }, { status: 500 });
+        try {
+            const fallback = await getFallbackNotifications();
+            return NextResponse.json(fallback, { status: 200 });
+        } catch (fallbackError) {
+            console.error("GET Notifications fallback error:", fallbackError);
+            return NextResponse.json([], { status: 200 });
+        }
     }
 }
 

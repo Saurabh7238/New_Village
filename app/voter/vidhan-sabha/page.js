@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
+import {
+  parseVoterListResponse,
+  getVoterName,
+  getVoterId,
+  getVoterGuardian,
+  getVoterGender,
+  getVoterConstituency,
+  getVoterImage,
+} from "@/lib/voterDisplay";
 
 export default function VidhanSabhaPage() {
   const [voters, setVoters] = useState([]);
@@ -13,25 +20,31 @@ export default function VidhanSabhaPage() {
   useEffect(() => {
     fetch("/api/voter-data?type=vidhan-sabha")
       .then((res) => res.json())
-      .then((data) => {
-        setVoters(data.voters || []);
-      })
+      .then((data) => setVoters(parseVoterListResponse(data)))
       .catch((err) => console.error("Failed to load Vidhan Sabha voter list:", err));
   }, []);
 
-  const uniqueConstituencies = [...new Set(voters.map((v) => v.constituency || v.voterConstituency).filter(Boolean))];
+  const uniqueConstituencies = [
+    ...new Set(voters.map((v) => getVoterConstituency(v)).filter(Boolean)),
+  ];
 
   const filteredVoters = voters.filter((voter) => {
-    const name = (voter?.elector_name || voter?.voterName)?.toLowerCase?.() || "";
-    const matchesSearch = name.includes(search.toLowerCase());
-    const matchesConstituency = constituencyFilter ? (voter.constituency || voter.voterConstituency) === constituencyFilter : true;
+    const name = getVoterName(voter).toLowerCase();
+    const id = getVoterId(voter).toLowerCase();
+    const matchesSearch =
+      name.includes(search.toLowerCase()) || id.includes(search.toLowerCase());
+    const constituency = getVoterConstituency(voter);
+    const matchesConstituency = constituencyFilter
+      ? constituency === constituencyFilter
+      : true;
     return matchesSearch && matchesConstituency;
   });
 
   const labels = {
     en: {
       title: "Vidhan Sabha Voter Details",
-      search: "Search by name...",
+      search: "Search by name or voter ID...",
+      voterId: "Voter ID",
       constituency: "Constituency",
       guardian: "Guardian",
       gender: "Gender",
@@ -42,7 +55,8 @@ export default function VidhanSabhaPage() {
     },
     hi: {
       title: "विधानसभा मतदाता विवरण",
-      search: "नाम से खोजें...",
+      search: "नाम या मतदाता आईडी से खोजें...",
+      voterId: "मतदाता आईडी",
       constituency: "निर्वाचन क्षेत्र",
       guardian: "अभिभावक",
       gender: "लिंग",
@@ -56,6 +70,7 @@ export default function VidhanSabhaPage() {
   const t = labels[language];
 
   const normalizeGender = (g) => {
+    if (!g) return "N/A";
     if (language === "hi") return g;
     if (g === "पु" || g === "Male") return "Male";
     if (g === "म" || g === "Female") return "Female";
@@ -96,25 +111,39 @@ export default function VidhanSabhaPage() {
       </select>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {filteredVoters.map((voter, index) => (
-          <div
-            key={voter.id || `voter-${index}`}
-            className="bg-white border border-gray-200 rounded-lg p-4 shadow hover:shadow-lg transition duration-200"
-          >
-            {voter.image && (
-              <img
-                src={voter.image}
-                alt={voter.elector_name || voter.voterName}
-                className="w-full h-48 object-cover rounded mb-4"
-              />
-            )}
-            <h2 className="text-lg font-semibold text-purple-700">{voter.elector_name || voter.voterName || "Unnamed Voter"}</h2>
-            <p className="text-sm text-gray-600">{t.constituency}: {voter.constituency || voter.voterConstituency || "Unknown"}</p>
-            <p className="text-sm text-gray-600">{t.guardian}: {voter.guardian_name || voter.voterGuardianName || "N/A"}</p>
-            <p className="text-sm text-gray-600">{t.gender}: {normalizeGender(voter.gender || voter.voterGender) || "N/A"}</p>
-            <p className="text-sm text-gray-600">{t.age}: {voter.age || "N/A"}</p>
-          </div>
-        ))}
+        {filteredVoters.map((voter, index) => {
+          const imageSrc = getVoterImage(voter);
+          return (
+            <div
+              key={voter.id || `voter-${index}`}
+              className="bg-white border border-gray-200 rounded-lg p-4 shadow hover:shadow-lg transition duration-200"
+            >
+              {imageSrc && (
+                <img
+                  src={imageSrc}
+                  alt={getVoterName(voter)}
+                  className="w-full h-48 object-cover rounded mb-4"
+                />
+              )}
+              <h2 className="text-lg font-semibold text-purple-700">{getVoterName(voter)}</h2>
+              <p className="text-sm text-gray-600">
+                {t.voterId}: {getVoterId(voter) || "N/A"}
+              </p>
+              <p className="text-sm text-gray-600">
+                {t.constituency}: {getVoterConstituency(voter) || "Unknown"}
+              </p>
+              <p className="text-sm text-gray-600">
+                {t.guardian}: {getVoterGuardian(voter) || "N/A"}
+              </p>
+              <p className="text-sm text-gray-600">
+                {t.gender}: {normalizeGender(getVoterGender(voter))}
+              </p>
+              <p className="text-sm text-gray-600">
+                {t.age}: {voter.age || "N/A"}
+              </p>
+            </div>
+          );
+        })}
         {filteredVoters.length === 0 && (
           <p className="text-gray-500">{t.noResults}</p>
         )}

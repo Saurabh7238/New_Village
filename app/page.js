@@ -37,15 +37,9 @@ export default function HomePage() {
   // Notifications API: Runs once on component mount
   useEffect(() => {
     fetch("/api/notifications")
-      .then((res) => {
-        if (!res.ok) throw new Error("Bad response");
-        return res.json();
-      })
-      .then((data) => setNotifications(data))
-      .catch((err) => {
-        console.error(err);
-        setNotifications([]);
-      });
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setNotifications(Array.isArray(data) ? data : []))
+      .catch(() => setNotifications([]));
   }, []);
 
   // Dark mode toggle: Runs when darkMode state changes

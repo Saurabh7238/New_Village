@@ -1,129 +1,124 @@
-'use client';
-import { useState, useEffect } from 'react';
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/db";
+import VoterData from "@/models/VoterData";
 
-export default function VoterList() {
-  const [voters, setVoters] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [type, setType] = useState('vidhan-sabha');
+const VALID_TYPES = ["vidhan-sabha", "lok-sabha", "gram-panchayat"];
 
-  // ✅ Fetch from CORRECT API
-  useEffect(() => {
-    fetchVoters();
-  }, [type]);
+export async function GET(request) {
+  await dbConnect();
 
-  const fetchVoters = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const response = await fetch(`/api/voterdata?type=${type}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      setVoters(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Voter fetch error:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  try {
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type") || "vidhan-sabha";
+
+    if (!VALID_TYPES.includes(type)) {
+      return NextResponse.json({ error: "Invalid voter type" }, { status: 400 });
     }
-  };
 
-  if (loading) return <div className="p-8 text-center">Loading voters...</div>;
-  if (error) return <div className="p-8 text-red-500 text-center">Error: {error}</div>;
+    const data = await VoterData.find({ type }).exec();
 
-  return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Voter List</h1>
-      
-      {/* Type Filter */}
-      <div className="mb-6 flex gap-4">
-        <select 
-          value={type} 
-          onChange={(e) => setType(e.target.value)}
-          className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2"
-        >
-          <option value="vidhan-sabha">Vidhan Sabha</option>
-          <option value="lok-sabha">Lok Sabha</option>
-          <option value="gram-panchayat">Gram Panchayat</option>
-        </select>
-        <button 
-          onClick={fetchVoters}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Refresh
-        </button>
-      </div>
+    const mapped = data.map((item) => ({
+      ...item.toObject(),
+      id: item._id.toString(),
+      _id: item._id.toString(),
+    }));
 
-      {/* Voters Table */}
-      {voters.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          No voters found for {type.replace('-', ' ')}
-        </div>
-      ) : (
-        <div className="overflow-x-auto shadow-lg rounded-lg">
-          <table className="min-w-full bg-white border border-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voter ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {voters.map((voter) => (
-                <tr key={voter.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {voter.name || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {voter.age || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {voter.gender || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {voter.voterId || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      onClick={() => deleteVoter(voter.id, type)}
-                      className="text-red-600 hover:text-red-900 mr-3"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
+    return NextResponse.json(mapped);
+  } catch (error) {
+    console.error("Failed to fetch voter data:", error);
+    return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
+  }
+}
 
-  async function deleteVoter(id, type) {
-    if (!confirm('Delete this voter?')) return;
-    
-    try {
-      const response = await fetch('/api/voterdata', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, type })
-      });
-      
-      if (response.ok) {
-        fetchVoters(); // Refresh list
-      } else {
-        alert('Delete failed');
-      }
-    } catch (err) {
-      alert('Delete error: ' + err.message);
+export async function POST(request) {
+  await dbConnect();
+
+  try {
+    const body = await request.json();
+    const {
+      type,
+      voterId,
+      voterName,
+      voterGuardianName,
+      voterGender,
+      image,
+      voterWardNo,
+      voterConstituency,
+    } = body;
+
+    if (!type || !VALID_TYPES.includes(type)) {
+      return NextResponse.json({ error: "Invalid voter type" }, { status: 400 });
     }
+
+    if (!voterId?.trim() || !voterName?.trim()) {
+      return NextResponse.json(
+        { error: "Voter ID and name are required" },
+        { status: 400 }
+      );
+    }
+
+    const record = {
+      type,
+      voterId: voterId.trim(),
+      voterName: voterName.trim(),
+      voterGuardianName: voterGuardianName?.trim() || "",
+      voterGender: voterGender || "",
+      image: image || "",
+      name: voterName.trim(),
+    };
+
+    if (type === "gram-panchayat" && voterWardNo) {
+      record.voterWardNo = voterWardNo;
+      record.ward = voterWardNo;
+    }
+
+    if (type !== "gram-panchayat" && voterConstituency) {
+      record.voterConstituency = voterConstituency;
+      record.constituency = voterConstituency;
+      record.elector_name = voterName.trim();
+      record.guardian_name = voterGuardianName?.trim() || "";
+    }
+
+    const created = await VoterData.create(record);
+    const mapped = {
+      ...created.toObject(),
+      id: created._id.toString(),
+      _id: created._id.toString(),
+    };
+
+    return NextResponse.json(mapped, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create voter:", error);
+    return NextResponse.json({ error: "Failed to add voter" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  await dbConnect();
+
+  try {
+    const body = await request.json();
+    const { id, type } = body;
+
+    if (!id || !type || !VALID_TYPES.includes(type)) {
+      return NextResponse.json(
+        { error: "ID and valid type are required" },
+        { status: 400 }
+      );
+    }
+
+    const result = await VoterData.deleteOne({ _id: id, type });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { error: "Item not found or already deleted" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ message: "Item deleted successfully" });
+  } catch (error) {
+    console.error("Failed to delete voter:", error);
+    return NextResponse.json({ error: "Failed to delete item" }, { status: 500 });
   }
 }

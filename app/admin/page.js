@@ -169,7 +169,6 @@ export default function AdminPanel() {
         e.preventDefault();
 
         const isUpdating = editingInfraId !== null;
-        const method = isUpdating ? "PUT" : "POST";
 
         if (!infraForm.title.trim() || !infraForm.type || !infraForm.status) {
             alert("Title, Type, and Status are required fields.");
@@ -213,15 +212,14 @@ export default function AdminPanel() {
         if (Object.keys(filteredDetails).length > 0) {
             payload.details = filteredDetails;
         }
-        
-        let url = "/api/infrastructure";
+
         if (isUpdating) {
-            url = `/api/infrastructure?id=${editingInfraId}`;
+            payload.id = editingInfraId;
         }
 
         try {
-            const res = await fetch(url, {
-                method: method,
+            const res = await fetch("/api/infrastructure", {
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             });
@@ -231,8 +229,8 @@ export default function AdminPanel() {
             if (res.ok) {
                 setInfrastructureList((prev) =>
                     isUpdating
-                        ? prev.map(item => (item._id === result.infrastructure._id ? result.infrastructure : item))
-                        : [result.infrastructure, ...prev]
+                        ? prev.map((item) => (String(item._id) === String(result._id) ? result : item))
+                        : [result, ...prev]
                 );
                 resetInfraForm();
             } else {
@@ -250,8 +248,10 @@ export default function AdminPanel() {
         if (!confirmed) return;
 
         try {
-            const res = await fetch(`/api/infrastructure?id=${id}`, {
+            const res = await fetch("/api/infrastructure", {
                 method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id }),
             });
 
             if (res.ok) {
@@ -386,10 +386,8 @@ export default function AdminPanel() {
         if (!confirmed) return;
 
         try {
-            const res = await fetch("/api/notifications", {
+            const res = await fetch(`/api/notifications?id=${id}`, {
                 method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id }),
             });
 
             if (res.ok) {
@@ -533,7 +531,49 @@ export default function AdminPanel() {
 
     // --- Other Utility Components (Voter Handlers - MINIMIZED) ---
     const handleVoterImageSelect = (imageData) => { setVoterImage(imageData); setShowVoterImagePicker(false); };
-    const addVoter = async (e) => { e.preventDefault(); let voterData = { type: voterType, voterId, voterName, voterGuardianName, voterGender, image: voterImage, }; if (voterType === "gram-panchayat") { voterData = { ...voterData, voterWardNo }; } else { voterData = { ...voterData, voterConstituency }; } await fetch("/api/voter-data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(voterData), }); setVoterName(""); setVoterGuardianName(""); setVoterGender(""); setVoterWardNo(""); setVoterConstituency(""); setVoterId(""); setVoterImage(""); };
+
+    const addVoter = async (e) => {
+        e.preventDefault();
+        let voterData = {
+            type: voterType,
+            voterId,
+            voterName,
+            voterGuardianName,
+            voterGender,
+            image: voterImage,
+        };
+        if (voterType === "gram-panchayat") {
+            voterData = { ...voterData, voterWardNo };
+        } else {
+            voterData = { ...voterData, voterConstituency };
+        }
+
+        try {
+            const res = await fetch("/api/voter-data", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(voterData),
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert(data.error || "Failed to add voter.");
+                return;
+            }
+
+            setVoterList((prev) => [data, ...prev]);
+            setVoterName("");
+            setVoterGuardianName("");
+            setVoterGender("");
+            setVoterWardNo("");
+            setVoterConstituency("");
+            setVoterId("");
+            setVoterImage("");
+        } catch (error) {
+            console.error("Add voter error:", error);
+            alert("A network error occurred while adding the voter.");
+        }
+    };
     const deleteVoter = async (id) => {
         const confirmed = confirm("Are you sure you want to delete this voter record?");
         if (!confirmed) return;
@@ -1000,11 +1040,11 @@ export default function AdminPanel() {
                                 {images.map((img) => (
                                     <div
                                         key={img._id}
-                                        onClick={() => handleVoterImageSelect(img.url)}
+                                        onClick={() => handleVoterImageSelect(img.image_data || img.url)}
                                         className="relative w-full h-24 cursor-pointer border-2 border-transparent hover:border-purple-500 rounded-lg overflow-hidden"
                                     >
                                         <Image
-                                            src={img.url || FALLBACK_IMAGE_URL}
+                                            src={img.image_data || img.url || FALLBACK_IMAGE_URL}
                                             alt={img.title}
                                             fill
                                             style={{ objectFit: "cover" }}
