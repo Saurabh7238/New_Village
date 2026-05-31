@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { INFRA_TYPES, INFRA_STATUSES } from '@/lib/infrastructureDisplay';
 
 const InfrastructureSchema = new mongoose.Schema({
     title: { 
@@ -12,20 +13,18 @@ const InfrastructureSchema = new mongoose.Schema({
     type: { 
         type: String, 
         required: true, 
-        // Ensure 'Primary School' is in the allowed enum values
-        enum: ['Street Light', 'Water Pump', 'Road', 'Solar Panel', 'Primary School', 'Primary Health Center', 'Other'] 
+        enum: INFRA_TYPES,
     },
     status: { 
         type: String, 
         required: true, 
-        enum: ['Operational', 'Under Maintenance', 'Broken', 'Planned'] 
+        enum: INFRA_STATUSES,
     },
     location: {
         latitude: { type: Number },
         longitude: { type: Number },
         address: { type: String },
     },
-    // --- FIELDS FOR SCHOOL IMAGE, COST, & INSTALLATION DATE ---
     cost: { 
         type: Number, 
         default: 0 
@@ -35,9 +34,7 @@ const InfrastructureSchema = new mongoose.Schema({
     },
     image: { 
         type: String 
-    }, // Stores Base64 Data URI from the gallery
-    
-    // CRITICAL: This object stores the school-specific fields (students, washrooms, handpumps)
+    },
     details: { 
         type: Object, 
         default: {} 
@@ -47,7 +44,6 @@ const InfrastructureSchema = new mongoose.Schema({
     timestamps: true 
 });
 
-// Check if the model already exists to prevent 'OverwriteModelError'
 const Infrastructure = mongoose.models.Infrastructure || mongoose.model('Infrastructure', InfrastructureSchema);
 
 export default Infrastructure;

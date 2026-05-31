@@ -11,6 +11,11 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import {
+  parseVoterListResponse,
+  getVoterAge,
+  classifyVoterGender,
+} from "@/lib/voterDisplay";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend);
 
@@ -18,9 +23,15 @@ export default function VidhanSabhaDashboard() {
   const [voters, setVoters] = useState([]);
 
   useEffect(() => {
-    fetch("/vidhanSabhaVoters.json")
-      .then((res) => res.json())
-      .then((data) => setVoters(data));
+    fetch("/api/voter-data?type=vidhan-sabha")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load Vidhan Sabha voters");
+        return res.json();
+      })
+      .then((data) => setVoters(parseVoterListResponse(data)))
+      .catch((err) =>
+        console.error("Failed to load Vidhan Sabha voters:", err)
+      );
   }, []);
 
   const ageGroups = {
@@ -37,15 +48,15 @@ export default function VidhanSabhaDashboard() {
   };
 
   voters.forEach((v) => {
-    const age = v.age;
-    if (age <= 30) ageGroups["18–30"]++;
-    else if (age <= 45) ageGroups["31–45"]++;
-    else if (age <= 60) ageGroups["46–60"]++;
-    else ageGroups["60+"]++;
+    const age = getVoterAge(v);
+    if (age !== null) {
+      if (age <= 30) ageGroups["18–30"]++;
+      else if (age <= 45) ageGroups["31–45"]++;
+      else if (age <= 60) ageGroups["46–60"]++;
+      else ageGroups["60+"]++;
+    }
 
-    if (v.gender === "पु") genderCount.male++;
-    else if (v.gender === "म") genderCount.female++;
-    else genderCount.other++;
+    genderCount[classifyVoterGender(v)]++;
   });
 
   const ageData = {

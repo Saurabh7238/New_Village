@@ -7,6 +7,8 @@ import {
   getVoterId,
   getVoterGuardian,
   getVoterGender,
+  getVoterAge,
+  classifyVoterGender,
   getVoterConstituency,
   getVoterImage,
 } from "@/lib/voterDisplay";
@@ -19,9 +21,14 @@ export default function VidhanSabhaPage() {
 
   useEffect(() => {
     fetch("/api/voter-data?type=vidhan-sabha")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load Vidhan Sabha voters");
+        return res.json();
+      })
       .then((data) => setVoters(parseVoterListResponse(data)))
-      .catch((err) => console.error("Failed to load Vidhan Sabha voter list:", err));
+      .catch((err) =>
+        console.error("Failed to load Vidhan Sabha voter list:", err)
+      );
   }, []);
 
   const uniqueConstituencies = [
@@ -69,11 +76,13 @@ export default function VidhanSabhaPage() {
 
   const t = labels[language];
 
-  const normalizeGender = (g) => {
+  const normalizeGender = (voter) => {
+    const g = getVoterGender(voter);
     if (!g) return "N/A";
     if (language === "hi") return g;
-    if (g === "पु" || g === "Male") return "Male";
-    if (g === "म" || g === "Female") return "Female";
+    const category = classifyVoterGender(voter);
+    if (category === "male") return "Male";
+    if (category === "female") return "Female";
     return g;
   };
 
@@ -113,6 +122,7 @@ export default function VidhanSabhaPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {filteredVoters.map((voter, index) => {
           const imageSrc = getVoterImage(voter);
+          const age = getVoterAge(voter);
           return (
             <div
               key={voter.id || `voter-${index}`}
@@ -136,10 +146,10 @@ export default function VidhanSabhaPage() {
                 {t.guardian}: {getVoterGuardian(voter) || "N/A"}
               </p>
               <p className="text-sm text-gray-600">
-                {t.gender}: {normalizeGender(getVoterGender(voter))}
+                {t.gender}: {normalizeGender(voter)}
               </p>
               <p className="text-sm text-gray-600">
-                {t.age}: {voter.age || "N/A"}
+                {t.age}: {age !== null ? age : "N/A"}
               </p>
             </div>
           );

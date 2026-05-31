@@ -41,6 +41,7 @@ export async function POST(request) {
       voterName,
       voterGuardianName,
       voterGender,
+      voterAge,
       image,
       voterWardNo,
       voterConstituency,
@@ -66,6 +67,15 @@ export async function POST(request) {
       image: image || "",
       name: voterName.trim(),
     };
+
+    if (voterAge !== undefined && voterAge !== null && voterAge !== "") {
+      const parsedAge = Number(voterAge);
+      if (Number.isNaN(parsedAge)) {
+        return NextResponse.json({ error: "Invalid age" }, { status: 400 });
+      }
+      record.age = parsedAge;
+      record.voterAge = parsedAge;
+    }
 
     if (type === "gram-panchayat" && voterWardNo) {
       record.voterWardNo = voterWardNo;

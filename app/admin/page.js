@@ -3,9 +3,17 @@
 import Image from 'next/image';
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-
-const INFRA_TYPES = ['Street Light', 'Water Pump', 'Road', 'Solar Panel', 'Primary School', 'Primary Health Center', 'Other'];
-const INFRA_STATUSES = ['Operational', 'Under Maintenance', 'Broken', 'Planned'];
+import {
+    getVoterName,
+    getVoterId,
+    getVoterGuardian,
+} from "@/lib/voterDisplay";
+import { INFRA_TYPES, INFRA_STATUSES } from "@/lib/infrastructureDisplay";
+const VOTER_TYPE_LABELS = {
+    "vidhan-sabha": "Vidhan Sabha",
+    "lok-sabha": "Lok Sabha",
+    "gram-panchayat": "Gram Panchayat",
+};
 const FALLBACK_IMAGE_URL = '/images/placeholder.svg';
 
 export default function AdminPanel() {
@@ -18,6 +26,12 @@ export default function AdminPanel() {
     const [editingNotification, setEditingNotification] = useState(null);
     const [editTitle, setEditTitle] = useState("");
     const [editDescription, setEditDescription] = useState("");
+
+    // --- REVIEW STATE ---
+    const [reviews, setReviews] = useState([]);
+    const [reviewName, setReviewName] = useState("");
+    const [reviewWard, setReviewWard] = useState("");
+    const [reviewMessage, setReviewMessage] = useState("");
 
     // --- GALLERY STATE ---
     const [images, setImages] = useState([]);
@@ -37,6 +51,7 @@ export default function AdminPanel() {
     const [voterName, setVoterName] = useState("");
     const [voterGuardianName, setVoterGuardianName] = useState("");
     const [voterGender, setVoterGender] = useState("");
+    const [voterAge, setVoterAge] = useState("");
     const [voterWardNo, setVoterWardNo] = useState("");
     const [voterConstituency, setVoterConstituency] = useState("");
     const [voterId, setVoterId] = useState("");
@@ -62,13 +77,24 @@ export default function AdminPanel() {
         healthCenterAmbulances: '',
     });
     const [editingInfraId, setEditingInfraId] = useState(null);
+    const [infraTypeFilter, setInfraTypeFilter] = useState("all");
     const [infraSubmitText, setInfraSubmitText] = useState("Add Infrastructure Item");
 
     // --- DATA FETCHING HOOKS ---
     useEffect(() => {
         fetch("/api/notifications").then((res) => res.json()).then((data) => setNotifications(data));
+        fetch("/api/reviews").then((res) => res.json()).then((data) => setReviews(Array.isArray(data) ? data : []));
         fetch("/api/images").then((res) => res.json()).then((data) => setImages(Array.isArray(data) ? data : data.images || []));
-        fetch("/api/infrastructure").then((res) => res.json()).then((data) => setInfrastructureList(data)).catch((err) => console.error("Failed to fetch infra:", err));
+        fetch("/api/infrastructure")
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to fetch infrastructure");
+                return res.json();
+            })
+            .then((data) => setInfrastructureList(Array.isArray(data) ? data : []))
+            .catch((err) => {
+                console.error("Failed to fetch infra:", err);
+                setInfrastructureList([]);
+            });
     }, []);
 
     useEffect(() => {
@@ -81,7 +107,9 @@ export default function AdminPanel() {
     const resetInfraForm = () => {
         setEditingInfraId(null);
         setInfraForm({
-            title: '', description: '', type: INFRA_TYPES[0], status: INFRA_STATUSES[0],
+            title: '', description: '',
+            type: infraTypeFilter !== "all" ? infraTypeFilter : INFRA_TYPES[0],
+            status: INFRA_STATUSES[0],
             location: { latitude: '', longitude: '', address: '' }, cost: '', installationDate: '', image: '',
             details: {},
             schoolStudents: '', schoolWashrooms: '', schoolHandpumps: '',
@@ -89,6 +117,27 @@ export default function AdminPanel() {
         });
         setInfraSubmitText("Add Infrastructure Item");
     };
+
+    const handleInfraTypeFilterChange = (e) => {
+        const value = e.target.value;
+        setInfraTypeFilter(value);
+        if (editingInfraId) {
+            resetInfraForm();
+        } else if (value !== "all") {
+            setInfraForm((prev) => ({
+                ...prev,
+                type: value,
+                details: {},
+                schoolStudents: '', schoolWashrooms: '', schoolHandpumps: '',
+                healthCenterDoctors: '', healthCenterBeds: '', healthCenterAmbulances: '',
+            }));
+        }
+    };
+
+    const filteredInfrastructure =
+        infraTypeFilter === "all"
+            ? infrastructureList
+            : infrastructureList.filter((item) => item.type === infraTypeFilter);
 
     const handleInfraInputChange = (e) => {
         const { name, value } = e.target;
@@ -410,15 +459,77 @@ export default function AdminPanel() {
             alert("Title and description cannot be empty.");
             return;
         }
-        const res = await fetch("/api/notifications", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, description }),
-        });
-        const newItem = await res.json();
-        setNotifications((prev) => [newItem, ...prev]);
-        setTitle("");
-        setDescription("");
+
+        try {
+            const res = await fetch("/api/notifications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, description }),
+            });
+            const newItem = await res.json();
+
+            if (res.ok) {
+                setNotifications((prev) => [newItem, ...prev]);
+                setTitle("");
+                setDescription("");
+            } else {
+                alert(`Failed to add notification: ${newItem.message || "Server Error"}`);
+            }
+        } catch (error) {
+            console.error("Add notification error:", error);
+            alert("A network error occurred while adding the notification.");
+        }
+    };
+
+    const addReview = async (e) => {
+        e.preventDefault();
+        if (!reviewName.trim() || !reviewMessage.trim()) {
+            alert("Name and review message are required.");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/reviews", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: reviewName,
+                    ward: reviewWard,
+                    message: reviewMessage,
+                }),
+            });
+            const newItem = await res.json();
+
+            if (res.ok) {
+                setReviews((prev) => [newItem, ...prev]);
+                setReviewName("");
+                setReviewWard("");
+                setReviewMessage("");
+            } else {
+                alert(`Failed to add review: ${newItem.message || "Server Error"}`);
+            }
+        } catch (error) {
+            console.error("Add review error:", error);
+            alert("A network error occurred while adding the review.");
+        }
+    };
+
+    const deleteReview = async (id) => {
+        const confirmed = confirm("Delete this review permanently?");
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(`/api/reviews?id=${id}`, { method: "DELETE" });
+            if (res.ok) {
+                setReviews((prev) => prev.filter((r) => r.id !== id));
+            } else {
+                const result = await res.json();
+                alert(`Failed to delete review: ${result.message || "Server Error"}`);
+            }
+        } catch (error) {
+            console.error("Delete review error:", error);
+            alert("A network error occurred while deleting the review.");
+        }
     };
 
     // --- GALLERY CRUD HANDLERS ---
@@ -541,6 +652,7 @@ export default function AdminPanel() {
             voterGuardianName,
             voterGender,
             image: voterImage,
+            ...(voterAge.trim() && { voterAge: voterAge.trim() }),
         };
         if (voterType === "gram-panchayat") {
             voterData = { ...voterData, voterWardNo };
@@ -565,6 +677,7 @@ export default function AdminPanel() {
             setVoterName("");
             setVoterGuardianName("");
             setVoterGender("");
+            setVoterAge("");
             setVoterWardNo("");
             setVoterConstituency("");
             setVoterId("");
@@ -577,8 +690,24 @@ export default function AdminPanel() {
     const deleteVoter = async (id) => {
         const confirmed = confirm("Are you sure you want to delete this voter record?");
         if (!confirmed) return;
-        await fetch("/api/voter-data", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, type: voterType }), });
-        setVoterList((prev) => prev.filter((v) => v.id !== id));
+
+        try {
+            const res = await fetch("/api/voter-data", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, type: voterType }),
+            });
+
+            if (res.ok) {
+                setVoterList((prev) => prev.filter((v) => v.id !== id));
+            } else {
+                const error = await res.json();
+                alert(`Failed to delete voter: ${error.error || error.message || "Server Error"}`);
+            }
+        } catch (error) {
+            console.error("Delete voter error:", error);
+            alert("A network error occurred while deleting the voter.");
+        }
     };
 
     if (status === "loading") {
@@ -675,6 +804,63 @@ export default function AdminPanel() {
                                         Delete
                                     </button>
                                 </div>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+
+                <hr className="my-12 border-gray-300 dark:border-gray-700" />
+
+                {/* --- Reviews Section --- */}
+                <section>
+                    <h1 className="text-3xl font-bold mb-6 text-green-700 dark:text-yellow-400">Citizen Reviews</h1>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Reviews appear live on the home page. New submissions update every 15 seconds for visitors.
+                    </p>
+
+                    <form onSubmit={addReview} className="mb-8 space-y-4 p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
+                        <h3 className="text-xl font-semibold text-green-700 dark:text-yellow-400">Add Review</h3>
+                        <input
+                            className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Name (e.g. Rekha Devi)"
+                            value={reviewName}
+                            onChange={(e) => setReviewName(e.target.value)}
+                            required
+                        />
+                        <input
+                            className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Ward (optional)"
+                            value={reviewWard}
+                            onChange={(e) => setReviewWard(e.target.value)}
+                        />
+                        <textarea
+                            className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Review message"
+                            value={reviewMessage}
+                            onChange={(e) => setReviewMessage(e.target.value)}
+                            required
+                        />
+                        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Add Review</button>
+                    </form>
+
+                    <ul className="space-y-4">
+                        {reviews.map((r) => (
+                            <li
+                                key={r.id}
+                                className="border rounded p-4 flex justify-between items-start gap-4 dark:border-gray-700 bg-white dark:bg-gray-800"
+                            >
+                                <div>
+                                    <p className="italic text-gray-800 dark:text-gray-200">&ldquo;{r.message}&rdquo;</p>
+                                    <p className="text-sm font-semibold text-green-700 dark:text-yellow-400 mt-2">
+                                        — {r.name}{r.ward ? `, ${r.ward}` : ""}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => deleteReview(r.id)}
+                                    className="text-red-500 hover:text-red-700 text-sm shrink-0"
+                                >
+                                    Delete
+                                </button>
                             </li>
                         ))}
                     </ul>
@@ -805,6 +991,33 @@ export default function AdminPanel() {
                 {/* --- INFRASTRUCTURE MANAGEMENT SECTION (FIXED) --- */}
                 <section>
                     <h2 className="text-3xl font-bold mb-6 text-orange-700 dark:text-teal-400">Manage Infrastructure</h2>
+
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Filter by section
+                        </label>
+                        <select
+                            value={infraTypeFilter}
+                            onChange={handleInfraTypeFilterChange}
+                            className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        >
+                            <option value="all">All Sections ({infrastructureList.length})</option>
+                            {INFRA_TYPES.map((type) => {
+                                const count = infrastructureList.filter((item) => item.type === type).length;
+                                return (
+                                    <option key={type} value={type}>
+                                        {type} ({count})
+                                    </option>
+                                );
+                            })}
+                        </select>
+                        {infraTypeFilter !== "all" && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                Managing <span className="font-semibold">{infraTypeFilter}</span> — new items will use this type by default.
+                            </p>
+                        )}
+                    </div>
+
                     {/* Add/Edit Infrastructure Form */}
                     <form onSubmit={submitInfrastructure} className="mb-8 space-y-4 p-6 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
                         <h3 className="text-xl font-semibold text-orange-700 dark:text-teal-400">{infraSubmitText}</h3>
@@ -943,15 +1156,23 @@ export default function AdminPanel() {
 
                     {/* Infrastructure List */}
                     <div className="space-y-4">
-                        <h3 className="text-xl font-semibold text-orange-700 dark:text-teal-400">Existing Infrastructure ({infrastructureList.length})</h3>
-                        {infrastructureList.map((item) => (
+                        <h3 className="text-xl font-semibold text-orange-700 dark:text-teal-400">
+                            {infraTypeFilter === "all" ? "All Infrastructure" : infraTypeFilter} ({filteredInfrastructure.length})
+                        </h3>
+                        {filteredInfrastructure.length === 0 ? (
+                            <p className="text-center text-gray-500 dark:text-gray-400 text-sm">
+                                No items in this section yet. Use the form above to add one.
+                            </p>
+                        ) : (
+                            <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                                {filteredInfrastructure.map((item) => (
                             <div key={item._id} className={`border rounded-lg p-4 flex justify-between items-center bg-white dark:bg-gray-800 dark:border-gray-700 ${editingInfraId === item._id ? 'border-2 border-orange-500' : ''}`}>
                                 <div>
                                     <h4 className="font-bold">{item.title} ({item.type})</h4>
                                     <p className="text-sm text-gray-600 dark:text-gray-300">Status: <span className={`font-semibold ${item.status === 'Operational' ? 'text-green-500' : item.status === 'Broken' ? 'text-red-500' : 'text-yellow-500'}`}>{item.status}</span></p>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">{item.location?.address || 'Location N/A'}</p>
                                 </div>
-                                <div className="flex space-x-3">
+                                <div className="flex space-x-3 shrink-0 ml-2">
                                     <button
                                         onClick={() => editInfrastructure(item)}
                                         className="text-indigo-500 hover:text-indigo-700 text-sm disabled:opacity-50"
@@ -967,7 +1188,9 @@ export default function AdminPanel() {
                                     </button>
                                 </div>
                             </div>
-                        ))}
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -985,13 +1208,14 @@ export default function AdminPanel() {
                             className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
                             <option value="vidhan-sabha">Vidhan Sabha</option>
+                            <option value="lok-sabha">Lok Sabha</option>
                             <option value="gram-panchayat">Gram Panchayat</option>
                         </select>
                     </div>
 
                     {/* Add Voter Form */}
                     <form onSubmit={addVoter} className="mb-8 space-y-4 p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
-                        <h3 className="text-xl font-semibold text-pink-700 dark:text-cyan-400">Add New Voter ({voterType === "vidhan-sabha" ? "Vidhan Sabha" : "Gram Panchayat"})</h3>
+                        <h3 className="text-xl font-semibold text-pink-700 dark:text-cyan-400">Add New Voter ({VOTER_TYPE_LABELS[voterType]})</h3>
                         <div className="grid md:grid-cols-2 gap-4">
                             <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Voter ID" value={voterId} onChange={(e) => setVoterId(e.target.value)} required />
                             <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Name" value={voterName} onChange={(e) => setVoterName(e.target.value)} required />
@@ -1002,6 +1226,15 @@ export default function AdminPanel() {
                                 <option value="Female">Female</option>
                                 <option value="Other">Other</option>
                             </select>
+                            <input
+                                type="number"
+                                min="0"
+                                max="150"
+                                className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Age"
+                                value={voterAge}
+                                onChange={(e) => setVoterAge(e.target.value)}
+                            />
                             {voterType === "gram-panchayat" ? (
                                 <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ward No." value={voterWardNo} onChange={(e) => setVoterWardNo(e.target.value)} />
                             ) : (
@@ -1015,19 +1248,24 @@ export default function AdminPanel() {
                         <button type="submit" className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700">Add Voter</button>
                     </form>
 
-                    {/* Voter List (Minimal Display) */}
+                    {/* Voter List */}
                     <div className="space-y-3">
                         <h3 className="text-xl font-semibold text-pink-700 dark:text-cyan-400">Voter List ({voterList.length})</h3>
-                        {voterList.slice(0, 5).map((voter) => (
-                            <div key={voter.id} className="border rounded p-3 flex justify-between items-center bg-white dark:bg-gray-800 dark:border-gray-700">
-                                <div>
-                                    <h4 className="font-bold">{voter.voterName} ({voter.voterId})</h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">Guardian: {voter.voterGuardianName}</p>
-                                </div>
-                                <button onClick={() => deleteVoter(voter.id)} className="text-red-500 hover:text-red-700 text-sm">Delete</button>
+                        {voterList.length === 0 ? (
+                            <p className="text-center text-gray-500 dark:text-gray-400 text-sm">No voters for this type yet.</p>
+                        ) : (
+                            <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                                {voterList.map((voter) => (
+                                    <div key={voter.id} className="border rounded p-3 flex justify-between items-center bg-white dark:bg-gray-800 dark:border-gray-700">
+                                        <div>
+                                            <h4 className="font-bold">{getVoterName(voter)} ({getVoterId(voter) || "N/A"})</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300">Guardian: {getVoterGuardian(voter) || "N/A"}</p>
+                                        </div>
+                                        <button onClick={() => deleteVoter(voter.id)} className="text-red-500 hover:text-red-700 text-sm shrink-0 ml-2">Delete</button>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                        {voterList.length > 5 && <p className="text-center text-gray-500 dark:text-gray-400 text-sm">...and {voterList.length - 5} more records.</p>}
+                        )}
                     </div>
                 </section>
 

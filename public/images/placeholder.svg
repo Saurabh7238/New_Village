@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" role="img" aria-label="Image placeholder">
+  <rect width="400" height="300" fill="#e5e7eb"/>
+  <rect x="140" y="90" width="120" height="90" rx="6" fill="#d1d5db"/>
+  <circle cx="175" cy="125" r="14" fill="#9ca3af"/>
+  <path d="M140 165 L185 130 L215 155 L260 115 L260 180 L140 180 Z" fill="#9ca3af"/>
+  <text x="200" y="215" text-anchor="middle" fill="#6b7280" font-family="system-ui, sans-serif" font-size="16">No image</text>
+</svg>

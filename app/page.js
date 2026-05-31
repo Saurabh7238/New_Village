@@ -18,6 +18,12 @@ export default function HomePage() {
   const [visitCount, setVisitCount] = useState(null);
   const [showBanner, setShowBanner] = useState(true);
   const [notifications, setNotifications] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [reviewName, setReviewName] = useState("");
+  const [reviewWard, setReviewWard] = useState("");
+  const [reviewMessage, setReviewMessage] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewFeedback, setReviewFeedback] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef();
 
@@ -26,12 +32,45 @@ export default function HomePage() {
   const toggleModal = () => setShowModal(!showModal);
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
-  // Visitor count API: Runs once on component mount
+  const loadReviews = () => {
+    fetch("/api/reviews")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setReviews(Array.isArray(data) ? data : []))
+      .catch(() => setReviews([]));
+  };
+
+  // Visitor count: record once per browser session, then poll count
   useEffect(() => {
-    fetch("/api/visit")
-      .then((res) => res.json())
-      .then((data) => setVisitCount(data.count))
-      .catch(() => setVisitCount(0));
+    const recordVisit = async () => {
+      try {
+        const alreadyVisited = sessionStorage.getItem("gp_visit_recorded");
+        if (!alreadyVisited) {
+          const res = await fetch("/api/visit", { method: "POST" });
+          const data = await res.json();
+          setVisitCount(data.count ?? 0);
+          sessionStorage.setItem("gp_visit_recorded", "1");
+        } else {
+          const res = await fetch("/api/visit");
+          const data = await res.json();
+          setVisitCount(data.count ?? 0);
+        }
+      } catch {
+        setVisitCount(0);
+      }
+    };
+
+    recordVisit();
+    const visitInterval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/visit");
+        const data = await res.json();
+        setVisitCount(data.count ?? 0);
+      } catch {
+        /* keep last count */
+      }
+    }, 30000);
+
+    return () => clearInterval(visitInterval);
   }, []);
 
   // Notifications API: Runs once on component mount
@@ -41,6 +80,48 @@ export default function HomePage() {
       .then((data) => setNotifications(Array.isArray(data) ? data : []))
       .catch(() => setNotifications([]));
   }, []);
+
+  // Reviews: load on mount and refresh every 15s for real-time updates
+  useEffect(() => {
+    loadReviews();
+    const reviewInterval = setInterval(loadReviews, 15000);
+    return () => clearInterval(reviewInterval);
+  }, []);
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewName.trim() || !reviewMessage.trim()) return;
+
+    setReviewSubmitting(true);
+    setReviewFeedback("");
+
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: reviewName,
+          ward: reviewWard,
+          message: reviewMessage,
+        }),
+      });
+
+      if (res.ok) {
+        const newReview = await res.json();
+        setReviews((prev) => [newReview, ...prev.filter((r) => r.id !== newReview.id)]);
+        setReviewName("");
+        setReviewWard("");
+        setReviewMessage("");
+        setReviewFeedback(t.reviewSuccess);
+      } else {
+        setReviewFeedback(t.reviewError);
+      }
+    } catch {
+      setReviewFeedback(t.reviewError);
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
 
   // Dark mode toggle: Runs when darkMode state changes
   useEffect(() => {
@@ -79,6 +160,15 @@ export default function HomePage() {
       bannerMessage: "📢 Special Gram Sabha will be held on September 25 at Panchayat Bhavan.",
       notificationsTitle: "Notifications",
       noNotifications: "No notifications",
+      reviewsTitle: "Citizen Reviews",
+      reviewsSubtitle: "What people say about our portal",
+      reviewName: "Your name",
+      reviewWard: "Ward (optional)",
+      reviewMessage: "Your review",
+      reviewSubmit: "Submit Review",
+      reviewSuccess: "Thank you! Your review is live.",
+      reviewError: "Could not submit review. Please try again.",
+      noReviews: "No reviews yet. Be the first to share!",
     },
     hi: {
       welcome: "ग्राम पंचायत पोर्टल में आपका स्वागत है",
@@ -100,6 +190,15 @@ export default function HomePage() {
       bannerMessage: "📢 पंचायत भवन में 25 सितंबर को विशेष ग्रामसभा आयोजित की जाएगी।",
       notificationsTitle: "सूचनाएँ",
       noNotifications: "कोई सूचनाएँ नहीं",
+      reviewsTitle: "नागरिक समीक्षाएँ",
+      reviewsSubtitle: "लोग हमारे पोर्टल के बारे में क्या कहते हैं",
+      reviewName: "आपका नाम",
+      reviewWard: "वार्ड (वैकल्पिक)",
+      reviewMessage: "आपकी समीक्षा",
+      reviewSubmit: "समीक्षा भेजें",
+      reviewSuccess: "धन्यवाद! आपकी समीक्षा प्रकाशित हो गई।",
+      reviewError: "समीक्षा भेज नहीं सकी। कृपया पुनः प्रयास करें।",
+      noReviews: "अभी कोई समीक्षा नहीं। पहले अपना अनुभव साझा करें!",
     },
   };
 
@@ -269,6 +368,77 @@ export default function HomePage() {
                 />
               ))}
             </div>
+          </section>
+
+          <section className="max-w-6xl mx-auto px-2 py-6 border-t border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-bold text-center text-green-700 dark:text-yellow-400">
+              {t.reviewsTitle}
+            </h2>
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-4">
+              {t.reviewsSubtitle}
+            </p>
+
+            {reviews.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                {reviews.map((review) => (
+                  <blockquote
+                    key={review.id}
+                    className="bg-green-50 dark:bg-gray-700 border border-green-200 dark:border-gray-600 rounded-lg p-4 text-left shadow-sm"
+                  >
+                    <p className="text-sm italic text-gray-800 dark:text-gray-200">
+                      &ldquo;{review.message}&rdquo;
+                    </p>
+                    <footer className="mt-2 text-xs font-semibold text-green-700 dark:text-yellow-400">
+                      — {review.name}
+                      {review.ward ? `, ${review.ward}` : ""}
+                    </footer>
+                  </blockquote>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
+                {t.noReviews}
+              </p>
+            )}
+
+            <form
+              onSubmit={submitReview}
+              className="max-w-xl mx-auto space-y-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm"
+            >
+              <input
+                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                placeholder={t.reviewName}
+                value={reviewName}
+                onChange={(e) => setReviewName(e.target.value)}
+                required
+              />
+              <input
+                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                placeholder={t.reviewWard}
+                value={reviewWard}
+                onChange={(e) => setReviewWard(e.target.value)}
+              />
+              <textarea
+                className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                placeholder={t.reviewMessage}
+                value={reviewMessage}
+                onChange={(e) => setReviewMessage(e.target.value)}
+                rows={3}
+                required
+              />
+              <button
+                type="submit"
+                disabled={reviewSubmitting}
+                className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition disabled:opacity-60 text-sm"
+              >
+                {reviewSubmitting ? "..." : t.reviewSubmit}
+              </button>
+              {reviewFeedback && (
+                <p className="text-xs text-center text-green-700 dark:text-yellow-400">
+                  {reviewFeedback}
+                </p>
+              )}
+            </form>
           </section>
         </div>
 

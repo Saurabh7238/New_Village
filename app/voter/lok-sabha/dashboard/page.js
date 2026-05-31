@@ -11,6 +11,11 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import {
+  parseVoterListResponse,
+  getVoterAge,
+  classifyVoterGender,
+} from "@/lib/voterDisplay";
 
 ChartJS.register(
   BarElement,
@@ -25,9 +30,12 @@ export default function LokSabhaDashboard() {
   const [voters, setVoters] = useState([]);
 
   useEffect(() => {
-    fetch("/api/voterdata?type=lok-sabha")
-      .then((res) => res.json())
-      .then((data) => setVoters(Array.isArray(data) ? data : []))
+    fetch("/api/voter-data?type=lok-sabha")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load Lok Sabha voters");
+        return res.json();
+      })
+      .then((data) => setVoters(parseVoterListResponse(data)))
       .catch((err) =>
         console.error("Failed to load Lok Sabha voters:", err)
       );
@@ -47,17 +55,15 @@ export default function LokSabhaDashboard() {
   };
 
   voters.forEach((v) => {
-    const age = Number(v.age);
-    if (!Number.isNaN(age)) {
+    const age = getVoterAge(v);
+    if (age !== null) {
       if (age <= 30) ageGroups["18–30"]++;
       else if (age <= 45) ageGroups["31–45"]++;
       else if (age <= 60) ageGroups["46–60"]++;
       else ageGroups["60+"]++;
     }
 
-    if (v.gender === "पु" || v.gender === "Male") genderCount.male++;
-    else if (v.gender === "म" || v.gender === "Female") genderCount.female++;
-    else genderCount.other++;
+    genderCount[classifyVoterGender(v)]++;
   });
 
   const ageData = {
