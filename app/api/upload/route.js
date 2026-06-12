@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
+import dbConnect from '@/lib/dbConnect';
 import ImageModel from '@/models/Image';
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
@@ -20,9 +20,9 @@ async function fileToDataUri(file) {
 }
 
 export async function POST(request) {
-  await dbConnect();
-
   try {
+    await dbConnect();
+
     const formData = await request.formData();
     const title = formData.get('title');
     const file = formData.get('image');
@@ -60,19 +60,19 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('Upload error:', error.message || error);
 
     return NextResponse.json(
-      { success: false, message: 'Failed to upload image due to a server error.' },
+      { success: false, message: 'Failed to upload image due to a server error.', error: error.message },
       { status: 500 }
     );
   }
 }
 
 export async function PUT(request) {
-  await dbConnect();
-
   try {
+    await dbConnect();
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -133,10 +133,10 @@ export async function PUT(request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Update error:', error);
+    console.error('Update error:', error.message || error);
 
     return NextResponse.json(
-      { success: false, message: 'Failed to update image due to a server error.' },
+      { success: false, message: 'Failed to update image due to a server error.', error: error.message },
       { status: 500 }
     );
   }

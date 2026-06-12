@@ -24,7 +24,7 @@ const VOTER_TYPE_LABELS = {
 
 async function fetchVotersByType(type) {
   const res = await fetch(`/api/voter-data?type=${type}`);
-  if (!res.ok) throw new Error(`Failed to load ${VOTER_TYPE_LABELS[type]} voters`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to load ${VOTER_TYPE_LABELS[type]} voters`);
   const data = await res.json();
   return parseVoterListResponse(data);
 }

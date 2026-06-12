@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
-import dbConnect from "@/lib/db";
+import dbConnect from "@/lib/dbConnect";
 import Notification from "@/models/Notification"; 
 import mongoose from "mongoose"; // Import mongoose for ID validation
 
@@ -62,6 +62,7 @@ export async function POST(request) {
 
     } catch (error) {
         console.error("POST Notification (Create) Error:", error);
+        // Hide internal error details for security
         return NextResponse.json({ message: "Failed to create notification." }, { status: 500 });
     }
 }

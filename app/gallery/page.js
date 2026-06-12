@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-// Do NOT import Next's Image component here, we will use a standard <img> tag
 
 const GalleryPage = () => {
     const [images, setImages] = useState([]);
@@ -9,13 +8,28 @@ const GalleryPage = () => {
 
     useEffect(() => {
         fetch('/api/images')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        console.error('[Gallery] Error response body:', text);
+                        try {
+                            const data = JSON.parse(text);
+                            throw new Error(data.error || `API error: ${res.status} ${res.statusText}`);
+                        } catch (e) {
+                            throw new Error(`API error: ${res.status} - ${text.substring(0, 200)}`);
+                        }
+                    });
+                }
+                return res.json();
+            })
             .then(data => {
                 const imageArray = Array.isArray(data) ? data : data.images || [];
+                console.log(`[Gallery] Loaded ${imageArray.length} images from API`);
                 setImages(imageArray);
             })
             .catch(error => {
                 console.error("Failed to fetch gallery images:", error);
+                setImages([]);
             })
             .finally(() => setLoading(false));
     }, []);
@@ -33,39 +47,69 @@ const GalleryPage = () => {
             <h1 className="text-4xl font-bold text-center mb-10 text-blue-700 dark:text-blue-400">Village Gallery</h1>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
                 {images.map((img, index) => {
-                    
-                    // CRITICAL CHANGE: Use img.image_data which contains the Base64 URI
-                    const imageUrl = img.image_data;
                     const altText = img.title || `Gallery ${index + 1}`;
-
-                    if (!imageUrl) {
-                        console.warn(`Image record ID ${img._id} is missing image_data and will be skipped.`);
-                        return null; // Skip rendering if Base64 data is missing
-                    }
-
                     return (
-                        // Replace <Image> with <img> for Base64 compatibility
-                        <div 
+                        <LazyImageCard 
                             key={img._id || index} 
-                            className="relative group cursor-pointer overflow-hidden rounded-lg shadow-lg"
-                            // Use window.open with the image data directly if needed, or link to a dedicated viewer
-                            onClick={() => window.open(imageUrl, "_blank")}
-                        >
-                            <img
-                                src={imageUrl}
-                                alt={altText}
-                                // You must set explicit width and height for CSS layout
-                                width={300} 
-                                height={200}
-                                className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-end p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <p className="text-white text-sm font-semibold truncate">{altText}</p>
-                            </div>
-                        </div>
+                            image={img}
+                            altText={altText}
+                        />
                     );
                 })}
             </div>
+        </div>
+    );
+};
+
+// Lazy load image data on demand
+const LazyImageCard = ({ image, altText }) => {
+    const [imageSrc, setImageSrc] = useState(null);
+    const [loaded, setLoaded] = useState(false);
+
+    useEffect(() => {
+        // Fetch image data when component mounts
+        fetch(`/api/images?id=${image._id}`)
+            .then(res => {
+                if (!res.ok) throw new Error(`Failed to load image ${image._id}`);
+                return res.json();
+            })
+            .then(data => {
+                if (data.image_data) {
+                    setImageSrc(data.image_data);
+                }
+                setLoaded(true);
+            })
+            .catch(error => {
+                console.error(`[LazyImageCard] Error loading image ${image._id}:`, error);
+                setLoaded(true);
+            });
+    }, [image._id]);
+
+    return (
+        <div 
+            className="relative group cursor-pointer overflow-hidden rounded-lg shadow-lg"
+            onClick={() => imageSrc && window.open(imageSrc, "_blank")}
+        >
+            {!loaded ? (
+                <div className="w-full h-48 bg-gray-300 animate-pulse" />
+            ) : imageSrc ? (
+                <>
+                    <img
+                        src={imageSrc}
+                        alt={altText}
+                        width={300} 
+                        height={200}
+                        className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-end p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-white text-sm font-semibold truncate">{altText}</p>
+                    </div>
+                </>
+            ) : (
+                <div className="w-full h-48 bg-gray-300 flex items-center justify-center">
+                    <p className="text-gray-500 text-sm">Failed to load image</p>
+                </div>
+            )}
         </div>
     );
 };

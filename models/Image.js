@@ -21,4 +21,7 @@ const ImageSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-export default mongoose.models.Image || mongoose.model('Image', ImageSchema);
+// Ensure the model is only created once in development
+const ImageModel = mongoose.models.Image || mongoose.model('Image', ImageSchema);
+
+export default ImageModel;

@@ -2,47 +2,8 @@ import { NextResponse } from "next/server";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
-
-// --- Database Connection Function ---
-const connect = async () => {
-  // Check if Mongoose is already connected (prevents warnings/errors in Next.js)
-  if (mongoose.connections[0].readyState) return; 
-  
-  try {
-    // Attempt to connect using the URI from environment variables
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("MongoDB connected successfully.");
-  } catch (error) {
-    console.error("MongoDB Connection Failed:", error.message);
-    // Throw a specific error to catch during authorize
-    throw new Error("Connection Failed!");
-  }
-};
-
-// --- Mongoose User Schema and Model (Must be defined only once) ---
-const UserSchema = new mongoose.Schema(
-  {
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
-    role: {
-      type: String,
-      default: "user",
-    },
-  },
-  { timestamps: true }
-);
-
-// Use existing model or create new one
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
-
+import dbConnect from "@/lib/dbConnect";
+import User from "@/models/User";
 
 // --- NextAuth Configuration ---
 const authOptions = {
@@ -54,66 +15,86 @@ const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // CRITICAL: Ensure database connection is ready
         try {
-          await connect();
+          console.log(`[Auth] Attempting login for email: ${credentials.email}`);
+          
+          // Ensure database connection is ready
+          try {
+            await dbConnect();
+            console.log("[Auth] Database connected");
+          } catch (error) {
+            console.error("[Auth] DB connection error:", error.message);
+            return null; 
+          }
+
+          // Find user by email
+          const userFound = await User.findOne({ email: credentials.email });
+
+          if (!userFound) {
+            console.log(`[Auth] User not found for email: ${credentials.email}`);
+            return null;
+          }
+
+          console.log(`[Auth] User found: ${userFound.email}, checking password...`);
+          
+          // Check if password exists
+          if (!userFound.password) {
+            console.log(`[Auth] User has no password set: ${credentials.email}`);
+            return null;
+          }
+
+          // Compare passwords
+          const isMatch = await bcrypt.compare(
+            credentials.password,
+            userFound.password
+          );
+
+          if (isMatch) {
+            console.log(`[Auth] ✅ Password match! Login success for: ${userFound.email}`);
+            return {
+              id: userFound._id.toString(),
+              email: userFound.email,
+              name: userFound.name,
+              role: userFound.role,
+              uniqueId: userFound.uniqueId,
+            };
+          }
+
+          console.log(`[Auth] ❌ Password mismatch for: ${userFound.email}`);
+          return null;
         } catch (error) {
-          // If connection fails, prevent login attempt (this handles your 'bad auth' if it returns)
-          console.error("🚨 Authorize Failed: DB connection error. Check URI/IP Whitelist!");
-          return null; 
-        }
-
-        const userFound = await User.findOne({ email: credentials.email });
-
-        // 1. User Not Found Check
-        if (!userFound) {
-          console.log(`⚠️ Login Failed: User not found for email: ${credentials.email}`);
+          console.error("[Auth] Authorize error:", error.message);
           return null;
         }
-        
-        // 2. Password Check
-        const isMatch = await bcrypt.compare(
-          credentials.password,
-          userFound.password
-        );
-
-        if (isMatch) {
-          console.log(`✅ Login Success for user: ${userFound.email}`);
-          return {
-            id: userFound._id.toString(), // Ensure ID is a string
-            email: userFound.email,
-            role: userFound.role, // This is key for admin access
-          };
-        }
-        
-        // 3. Password Mismatch
-        console.log(`❌ Login Failed: Incorrect password for user: ${userFound.email}`);
-        return null;
       },
     }),
   ],
   pages: {
     signIn: "/signin",
-    error: '/signin', // Redirect to signin on error
+    error: '/signin',
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
         token.email = user.email;
+        token.name = user.name;
         token.role = user.role;
+        token.uniqueId = user.uniqueId;
       }
       return token;
     },
     async session({ session, token }) {
-      // Ensure session.user exists before assigning properties
       if (session.user) {
+        session.user.id = token.id;
         session.user.email = token.email;
+        session.user.name = token.name;
         session.user.role = token.role;
+        session.user.uniqueId = token.uniqueId;
       }
       return session;
     },
   },
-  // Ensure we use the NEXTAUTH_SECRET from environment
   secret: process.env.NEXTAUTH_SECRET,
 };
 

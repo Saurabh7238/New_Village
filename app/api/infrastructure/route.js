@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Infrastructure from '@/models/Infrastructure'; 
-import connectDB from '@/lib/db'; // <-- FIXED: Correct import path
+import mongoose from 'mongoose';
+import connectDB from '@/lib/dbConnect';
 
 // Handler for POST (Create) and PUT (Update) requests
 export async function POST(request) {
@@ -13,6 +14,10 @@ export async function POST(request) {
             title, description, type, status, location, cost, 
             installationDate, image, details // 'details' is the object with specific data
         } = data;
+
+        if (id && !mongoose.Types.ObjectId.isValid(id)) {
+            return NextResponse.json({ message: "Invalid infrastructure ID format." }, { status: 400 });
+        }
 
         // Common payload structure
         const payload = {
@@ -38,9 +43,7 @@ export async function POST(request) {
 
     } catch (error) {
         console.error("API POST/PUT Error:", error);
-        // Provide helpful error details for debugging the client
-        const errorMessage = error.message || "Server Error";
-        return NextResponse.json({ message: "Failed to process infrastructure item.", details: errorMessage }, { status: 500 });
+        return NextResponse.json({ message: "Failed to process infrastructure item." }, { status: 500 });
     }
 }
 
@@ -60,8 +63,13 @@ export async function GET() {
 export async function DELETE(request) {
     await connectDB();
     try {
-        const { id } = await request.json();
+        const data = await request.json().catch(() => ({}));
+        const { id } = data;
         
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            return NextResponse.json({ message: "A valid ID is required for deletion." }, { status: 400 });
+        }
+
         const deletedItem = await Infrastructure.findByIdAndDelete(id);
 
         if (!deletedItem) {

@@ -99,7 +99,12 @@ export default function AdminPanel() {
 
     useEffect(() => {
         let apiRoute = `/api/voter-data?type=${voterType}`;
-        fetch(apiRoute).then((res) => res.json()).then((data) => setVoterList(Array.isArray(data) ? data : data.voters || []))
+        fetch(apiRoute)
+            .then((res) => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch voter list`);
+                return res.json();
+            })
+            .then((data) => setVoterList(Array.isArray(data) ? data : data.voters || []))
             .catch((err) => { console.error("Failed to fetch voter list:", err); setVoterList([]); });
     }, [voterType]);
 

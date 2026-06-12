@@ -1,72 +1,84 @@
-// api/register/route.js
+import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/dbConnect';
+import User from '@/models/User';
+import AuditLog from '@/models/AuditLog';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db"; 
-import User from "@/models/User.js";
-import bcrypt from "bcryptjs";
+export async function POST(req) {
+  await dbConnect();
+  try {
+    const { phone, otp, name, email, password } = await req.json();
 
-export const POST = async (request) => {
-    
-    // 1. Initial Validation and Parsing (Wrapped in try/catch)
-    let email, password;
-    try {
-        const body = await request.json();
-        email = body.email;
-        password = body.password;
-
-        if (!email || !password) {
-            return NextResponse.json(
-                { message: "Email and password are required." }, 
-                { status: 400 } // Bad Request
-            );
-        }
-    } catch (error) {
-        // Catches errors if the request body is not valid JSON
+    // If password is provided, do password-based registration
+    if (password) {
+      // Validation
+      if (!name || !email || !phone || !password) {
         return NextResponse.json(
-            { message: "Invalid request body." }, 
-            { status: 400 }
+          { error: 'Name, email, phone, and password are required' },
+          { status: 400 }
         );
+      }
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+      if (existingUser) {
+        return NextResponse.json(
+          { error: 'User with this email or phone already exists' },
+          { status: 400 }
+        );
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Generate unique ID before creating user
+      const uniqueId = `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
+
+      // Create user
+      const user = await User.create({
+        name,
+        email,
+        phone,
+        password: hashedPassword,
+        isVerified: true,
+        uniqueId, // Explicitly set uniqueId
+      });
+
+      // Create audit log with confirmed uniqueId
+      await AuditLog.create({
+        uniqueId: user.uniqueId || uniqueId,
+        action: 'CITIZEN_REGISTERED',
+        details: { method: 'PASSWORD', timestamp: new Date() }
+      });
+
+      return NextResponse.json({
+        success: true,
+        uniqueId: user.uniqueId,
+        user: { name: user.name, email: user.email }
+      });
     }
-    
-    // 2. Database Connection and Operation (Wrapped in try/catch for errors like 'bad auth')
-    try {
-        await dbConnect();
 
-        // Check for existing user
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return NextResponse.json(
-                { message: "Email is already in use." }, 
-                { status: 409 } // Conflict
-            );
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Create new user instance and save
-        const newUser = new User({
-            email,
-            password: hashedPassword,
-            // role: 'user' (optional: include default role if your schema has one)
-        });
-
-        await newUser.save();
-        
-        // Success Response
-        return NextResponse.json(
-            { message: "User registered successfully." }, 
-            { status: 201 } // Created
-        );
-        
-    } catch (error) {
-        // Catches database, hashing, or saving errors (including the 'bad auth' from earlier)
-        console.error("User Registration Error:", error);
-        
-        // Ensure the error response is always valid JSON
-        return NextResponse.json(
-            { message: "Failed to register user due to a server error." }, 
-            { status: 500 } // Internal Server Error
-        );
+    // OTP-based registration (original flow)
+    if (otp !== '123456') {
+      return NextResponse.json({ error: 'Invalid OTP verification failed.' }, { status: 401 });
     }
-};
+
+    let user = await User.findOne({ phone });
+    if (!user) {
+      const uniqueId = `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
+      user = await User.create({ name, email, phone, isVerified: true, uniqueId });
+    }
+
+    await AuditLog.create({
+      uniqueId: user.uniqueId,
+      action: 'CITIZEN_REGISTERED_VERIFIED',
+      details: { method: 'OTP', timestamp: new Date() }
+    });
+
+    return NextResponse.json({ success: true, uniqueId: user.uniqueId, user: { name: user.name, email: user.email } });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}

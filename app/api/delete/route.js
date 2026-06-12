@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
-// FIX: Changed from '@/lib/dbConnect' to '@/lib/db'
-import dbConnect from '@/lib/db';
+import dbConnect from '@/lib/dbConnect';
 import ImageModel from '@/models/Image.js';
 
 cloudinary.config({
@@ -11,10 +10,9 @@ cloudinary.config({
 });
 
 export async function POST(request) {
-  // Your existing logic starts here...
-  await dbConnect();
-
   try {
+    await dbConnect();
+
     const { publicId, _id } = await request.json();
 
     if (!publicId || !_id) {
@@ -35,9 +33,9 @@ export async function POST(request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Deletion error:', error);
+    console.error('Deletion error:', error.message || error);
     return NextResponse.json(
-      { success: false, message: 'Failed to delete image' },
+      { success: false, message: 'Failed to delete image', error: error.message },
       { status: 500 }
     );
   }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
+import dbConnect from "@/lib/dbConnect";
 import VoterData from "@/models/VoterData";
 
 const VALID_TYPES = ["vidhan-sabha", "lok-sabha", "gram-panchayat"];
