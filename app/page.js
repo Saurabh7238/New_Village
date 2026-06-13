@@ -147,7 +147,7 @@ export default function HomePage() {
       lang: "हिंदी",
       dark: "Dark Mode",
       slogan: "Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen",
-      footer: "© 2025 Gram Panchayat | Powered by Local Governance",
+      footer: "© 2026 Gram Panchayat | Powered by Local Governance",
       fab: "📞",
       whatsappLink:
         "https://wa.me/qr/D5EKI63JQJHLC1?text=Hello%20Gram%20Panchayat%20Team%2C%20I%20have%20a%20query.",
@@ -177,7 +177,7 @@ export default function HomePage() {
       lang: "English",
       dark: "डार्क मोड",
       slogan: "पंचायत विकास, सर्वजन सुखाय 🌞 | Efficient Governance For Every Citizen",
-      footer: "© 2025 ग्राम पंचायत | स्थानीय शासन द्वारा संचालित",
+      footer: "© 2026 ग्राम पंचायत | स्थानीय शासन द्वारा संचालित",
       fab: "📞",
       whatsappLink:
         "https://wa.me/qr/D5EKI63JQJHLC1?text=नमस्ते%20ग्राम%20पंचायत%20टीम%2C%20मुझे%20एक%20सवाल%20है।",
