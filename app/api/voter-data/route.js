@@ -45,6 +45,10 @@ export async function POST(request) {
       image,
       voterWardNo,
       voterConstituency,
+      serialNumber,
+      poolingBooth,
+      relationship,
+      dateOfBirth,
     } = body;
 
     if (!type || !VALID_TYPES.includes(type)) {
@@ -66,6 +70,10 @@ export async function POST(request) {
       voterGender: voterGender || "",
       image: image || "",
       name: voterName.trim(),
+      ...(serialNumber?.trim() && { serialNumber: serialNumber.trim() }),
+      ...(poolingBooth?.trim() && { poolingBooth: poolingBooth.trim() }),
+      ...(relationship?.trim() && { relationship: relationship.trim() }),
+      ...(dateOfBirth?.trim() && { dateOfBirth: dateOfBirth.trim() }),
     };
 
     if (voterAge !== undefined && voterAge !== null && voterAge !== "") {

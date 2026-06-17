@@ -29,7 +29,6 @@ export default function RegisterPage() {
     setError(null);
     setSuccess(null);
 
-    // Validation
     if (!formData.name.trim()) {
       setError("Name is required");
       return;
@@ -38,8 +37,8 @@ export default function RegisterPage() {
       setError("Valid email is required");
       return;
     }
-    if (!formData.phone || formData.phone.length < 10) {
-      setError("Valid phone number is required");
+    if (!formData.phone || formData.phone.replace(/\D/g, "").length < 10) {
+      setError("Valid 10-digit mobile number is required");
       return;
     }
     if (formData.password.length < 6) {
@@ -72,7 +71,7 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Registration successful! Redirecting to signin...");
+      setSuccess("Registration successful! Redirecting to sign in...");
       setTimeout(() => {
         router.push("/signin");
       }, 2000);
@@ -121,7 +120,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Phone Number
+              Mobile Number
             </label>
             <input
               type="tel"
@@ -129,7 +128,8 @@ export default function RegisterPage() {
               value={formData.phone}
               onChange={handleChange}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              placeholder="Enter your phone number"
+              placeholder="10-digit mobile number"
+              maxLength={10}
               required
             />
           </div>

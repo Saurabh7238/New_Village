@@ -9,6 +9,11 @@ import {
     getVoterGuardian,
 } from "@/lib/voterDisplay";
 import { INFRA_TYPES, INFRA_STATUSES } from "@/lib/infrastructureDisplay";
+import {
+    BUDGET_STATUSES,
+    formatBudgetAmount,
+    formatLastUpdated,
+} from "@/lib/budgetDisplay";
 const VOTER_TYPE_LABELS = {
     "vidhan-sabha": "Vidhan Sabha",
     "lok-sabha": "Lok Sabha",
@@ -56,6 +61,10 @@ export default function AdminPanel() {
     const [voterConstituency, setVoterConstituency] = useState("");
     const [voterId, setVoterId] = useState("");
     const [voterImage, setVoterImage] = useState("");
+    const [serialNumber, setSerialNumber] = useState("");
+    const [poolingBooth, setPoolingBooth] = useState("");
+    const [relationship, setRelationship] = useState("");
+    const [dateOfBirth, setDateOfBirth] = useState("");
 
     // --- INFRASTRUCTURE STATE ---
     const [infrastructureList, setInfrastructureList] = useState([]);
@@ -80,6 +89,27 @@ export default function AdminPanel() {
     const [infraTypeFilter, setInfraTypeFilter] = useState("all");
     const [infraSubmitText, setInfraSubmitText] = useState("Add Infrastructure Item");
 
+    // --- BUDGET STATE ---
+    const [budgetList, setBudgetList] = useState([]);
+    const [budgetForm, setBudgetForm] = useState({
+        financialYear: "",
+        schemeName: "",
+        totalAllocation: "",
+        amountReceived: "",
+        status: BUDGET_STATUSES[0],
+        workDescription: "",
+        startDate: "",
+        endDate: "",
+        beneficiaryCount: "",
+        documentData: "",
+        documentName: "",
+        documentMimeType: "application/pdf",
+    });
+    const [editingBudgetId, setEditingBudgetId] = useState(null);
+    const [budgetSubmitText, setBudgetSubmitText] = useState("Add Budget Record");
+    const [budgetPdfFileName, setBudgetPdfFileName] = useState("No PDF chosen");
+    const [removeBudgetDocument, setRemoveBudgetDocument] = useState(false);
+
     // --- DATA FETCHING HOOKS ---
     useEffect(() => {
         fetch("/api/notifications").then((res) => res.json()).then((data) => setNotifications(data));
@@ -95,6 +125,16 @@ export default function AdminPanel() {
                 console.error("Failed to fetch infra:", err);
                 setInfrastructureList([]);
             });
+        fetch("/api/budget")
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to fetch budget");
+                return res.json();
+            })
+            .then((data) => setBudgetList(Array.isArray(data) ? data : []))
+            .catch((err) => {
+                console.error("Failed to fetch budget:", err);
+                setBudgetList([]);
+            });
     }, []);
 
     useEffect(() => {
@@ -107,6 +147,173 @@ export default function AdminPanel() {
             .then((data) => setVoterList(Array.isArray(data) ? data : data.voters || []))
             .catch((err) => { console.error("Failed to fetch voter list:", err); setVoterList([]); });
     }, [voterType]);
+
+    // --- BUDGET CRUD HANDLERS ---
+    const resetBudgetForm = () => {
+        setEditingBudgetId(null);
+        setBudgetForm({
+            financialYear: "",
+            schemeName: "",
+            totalAllocation: "",
+            amountReceived: "",
+            status: BUDGET_STATUSES[0],
+            workDescription: "",
+            startDate: "",
+            endDate: "",
+            beneficiaryCount: "",
+            documentData: "",
+            documentName: "",
+            documentMimeType: "application/pdf",
+        });
+        setBudgetSubmitText("Add Budget Record");
+        setBudgetPdfFileName("No PDF chosen");
+        setRemoveBudgetDocument(false);
+    };
+
+    const handleBudgetPdfChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.type !== "application/pdf") {
+            alert("Please upload a PDF file only.");
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            alert("PDF file is too large. Maximum size is 10MB.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setBudgetForm((prev) => ({
+                ...prev,
+                documentData: reader.result,
+                documentName: file.name,
+                documentMimeType: file.type || "application/pdf",
+            }));
+            setRemoveBudgetDocument(false);
+            setBudgetPdfFileName(file.name);
+        };
+        reader.onerror = () => alert("Could not read the PDF file.");
+        reader.readAsDataURL(file);
+    };
+
+    const editBudget = (item) => {
+        setEditingBudgetId(item._id);
+        setBudgetForm({
+            financialYear: item.financialYear || "",
+            schemeName: item.schemeName || "",
+            totalAllocation: item.totalAllocation ?? "",
+            amountReceived: item.amountReceived ?? "",
+            status: item.status || BUDGET_STATUSES[0],
+            workDescription: item.workDescription || "",
+            startDate: item.startDate
+                ? new Date(item.startDate).toISOString().split("T")[0]
+                : "",
+            endDate: item.endDate
+                ? new Date(item.endDate).toISOString().split("T")[0]
+                : "",
+            beneficiaryCount: item.beneficiaryCount ?? "",
+            documentData: "",
+            documentName: item.documentName || "",
+            documentMimeType: item.documentMimeType || "application/pdf",
+        });
+        setBudgetSubmitText("Update Budget Record");
+        setBudgetPdfFileName(item.documentName || "Existing PDF attached");
+        setRemoveBudgetDocument(false);
+    };
+
+    const submitBudget = async (e) => {
+        e.preventDefault();
+
+        const isUpdating = editingBudgetId !== null;
+
+        if (!budgetForm.financialYear.trim() || !budgetForm.schemeName.trim()) {
+            alert("Financial year and scheme name are required.");
+            return;
+        }
+
+        const payload = {
+            financialYear: budgetForm.financialYear.trim(),
+            schemeName: budgetForm.schemeName.trim(),
+            totalAllocation: budgetForm.totalAllocation,
+            amountReceived: budgetForm.amountReceived,
+            status: budgetForm.status,
+            workDescription: budgetForm.workDescription.trim(),
+            startDate: budgetForm.startDate || undefined,
+            endDate: budgetForm.endDate || undefined,
+            beneficiaryCount: budgetForm.beneficiaryCount,
+        };
+
+        if (budgetForm.documentData) {
+            payload.documentData = budgetForm.documentData;
+            payload.documentName = budgetForm.documentName;
+            payload.documentMimeType = budgetForm.documentMimeType;
+        }
+
+        if (removeBudgetDocument) {
+            payload.removeDocument = true;
+        }
+
+        if (isUpdating) {
+            payload.id = editingBudgetId;
+        }
+
+        try {
+            const res = await fetch("/api/budget", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            const result = await res.json();
+
+            if (res.ok) {
+                setBudgetList((prev) =>
+                    isUpdating
+                        ? prev.map((item) =>
+                              String(item._id) === String(result._id) ? result : item
+                          )
+                        : [result, ...prev]
+                );
+                resetBudgetForm();
+            } else {
+                alert(`Operation Failed: ${result.message || "Server Error"}`);
+            }
+        } catch (error) {
+            console.error("Budget network error:", error);
+            alert("A network error occurred.");
+        }
+    };
+
+    const deleteBudget = async (id) => {
+        const confirmed = confirm("Are you sure you want to delete this budget record?");
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch("/api/budget", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id }),
+            });
+
+            if (res.ok) {
+                setBudgetList((prev) => prev.filter((item) => item._id !== id));
+                if (editingBudgetId === id) resetBudgetForm();
+            } else {
+                const result = await res.json();
+                alert(`Delete Failed: ${result.message || "Server Error"}`);
+            }
+        } catch (error) {
+            console.error("Budget delete error:", error);
+            alert("A network error occurred.");
+        }
+    };
+
+    const computedBudgetBalance =
+        (Number(budgetForm.totalAllocation) || 0) -
+        (Number(budgetForm.amountReceived) || 0);
 
     // --- INFRASTRUCTURE CRUD HANDLERS ---
     const resetInfraForm = () => {
@@ -658,6 +865,10 @@ export default function AdminPanel() {
             voterGender,
             image: voterImage,
             ...(voterAge.trim() && { voterAge: voterAge.trim() }),
+            ...(serialNumber.trim() && { serialNumber: serialNumber.trim() }),
+            ...(poolingBooth.trim() && { poolingBooth: poolingBooth.trim() }),
+            ...(relationship.trim() && { relationship: relationship.trim() }),
+            ...(dateOfBirth.trim() && { dateOfBirth: dateOfBirth.trim() }),
         };
         if (voterType === "gram-panchayat") {
             voterData = { ...voterData, voterWardNo };
@@ -687,6 +898,10 @@ export default function AdminPanel() {
             setVoterConstituency("");
             setVoterId("");
             setVoterImage("");
+            setSerialNumber("");
+            setPoolingBooth("");
+            setRelationship("");
+            setDateOfBirth("");
         } catch (error) {
             console.error("Add voter error:", error);
             alert("A network error occurred while adding the voter.");
@@ -993,6 +1208,268 @@ export default function AdminPanel() {
 
                 <hr className="my-12 border-gray-300 dark:border-gray-700" />
 
+                {/* --- BUDGET MANAGEMENT SECTION --- */}
+                <section>
+                    <h2 className="text-3xl font-bold mb-6 text-emerald-700 dark:text-emerald-400">
+                        Manage Budget
+                    </h2>
+
+                    <form
+                        onSubmit={submitBudget}
+                        className="mb-8 space-y-4 p-6 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700"
+                    >
+                        <h3 className="text-xl font-semibold text-emerald-700 dark:text-emerald-400">
+                            {budgetSubmitText}
+                        </h3>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    Financial Year
+                                </label>
+                                <input
+                                    className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    placeholder="e.g. 2024-25"
+                                    value={budgetForm.financialYear}
+                                    onChange={(e) =>
+                                        setBudgetForm({ ...budgetForm, financialYear: e.target.value })
+                                    }
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    Budget Head / Scheme Name
+                                </label>
+                                <input
+                                    className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    placeholder="Scheme name"
+                                    value={budgetForm.schemeName}
+                                    onChange={(e) =>
+                                        setBudgetForm({ ...budgetForm, schemeName: e.target.value })
+                                    }
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    Total Allocation (₹)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    value={budgetForm.totalAllocation}
+                                    onChange={(e) =>
+                                        setBudgetForm({ ...budgetForm, totalAllocation: e.target.value })
+                                    }
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    Amount Received (₹)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    value={budgetForm.amountReceived}
+                                    onChange={(e) =>
+                                        setBudgetForm({ ...budgetForm, amountReceived: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    Balance (₹)
+                                </label>
+                                <input
+                                    type="text"
+                                    readOnly
+                                    className="border p-2 rounded w-full bg-gray-100 dark:bg-gray-900 dark:border-gray-600 dark:text-white"
+                                    value={formatBudgetAmount(computedBudgetBalance)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    Status
+                                </label>
+                                <select
+                                    className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    value={budgetForm.status}
+                                    onChange={(e) =>
+                                        setBudgetForm({ ...budgetForm, status: e.target.value })
+                                    }
+                                >
+                                    {BUDGET_STATUSES.map((status) => (
+                                        <option key={status} value={status}>
+                                            {status}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    Start Date
+                                </label>
+                                <input
+                                    type="date"
+                                    className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    value={budgetForm.startDate}
+                                    onChange={(e) =>
+                                        setBudgetForm({ ...budgetForm, startDate: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    End Date
+                                </label>
+                                <input
+                                    type="date"
+                                    className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    value={budgetForm.endDate}
+                                    onChange={(e) =>
+                                        setBudgetForm({ ...budgetForm, endDate: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    Beneficiary Count
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    value={budgetForm.beneficiaryCount}
+                                    onChange={(e) =>
+                                        setBudgetForm({ ...budgetForm, beneficiaryCount: e.target.value })
+                                    }
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                    PDF Document
+                                </label>
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    onChange={handleBudgetPdfChange}
+                                    className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">{budgetPdfFileName}</p>
+                                {budgetForm.documentName && editingBudgetId && (
+                                    <label className="flex items-center gap-2 mt-2 text-sm text-red-600">
+                                        <input
+                                            type="checkbox"
+                                            checked={removeBudgetDocument}
+                                            onChange={(e) => setRemoveBudgetDocument(e.target.checked)}
+                                        />
+                                        Remove existing PDF
+                                    </label>
+                                )}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                                Work Description
+                            </label>
+                            <textarea
+                                className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                rows={3}
+                                placeholder="Describe the work under this budget head"
+                                value={budgetForm.workDescription}
+                                onChange={(e) =>
+                                    setBudgetForm({ ...budgetForm, workDescription: e.target.value })
+                                }
+                            />
+                        </div>
+
+                        <div className="flex gap-4">
+                            <button
+                                type="submit"
+                                className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700"
+                            >
+                                {budgetSubmitText}
+                            </button>
+                            {editingBudgetId && (
+                                <button
+                                    type="button"
+                                    onClick={resetBudgetForm}
+                                    className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                                >
+                                    Cancel Edit
+                                </button>
+                            )}
+                        </div>
+                    </form>
+
+                    <div className="space-y-3">
+                        <h3 className="text-xl font-semibold text-emerald-700 dark:text-emerald-400">
+                            Budget Records ({budgetList.length})
+                        </h3>
+                        {budgetList.length === 0 ? (
+                            <p className="text-gray-500 dark:text-gray-400">No budget records yet.</p>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm border dark:border-gray-700">
+                                    <thead className="bg-emerald-50 dark:bg-gray-800">
+                                        <tr>
+                                            <th className="p-2 text-left">Year</th>
+                                            <th className="p-2 text-left">Scheme</th>
+                                            <th className="p-2 text-left">Allocation</th>
+                                            <th className="p-2 text-left">Received</th>
+                                            <th className="p-2 text-left">Balance</th>
+                                            <th className="p-2 text-left">Status</th>
+                                            <th className="p-2 text-left">Last Updated</th>
+                                            <th className="p-2 text-left">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {budgetList.map((item) => (
+                                            <tr
+                                                key={item._id}
+                                                className={`border-t dark:border-gray-700 ${
+                                                    editingBudgetId === item._id
+                                                        ? "bg-emerald-50 dark:bg-gray-700"
+                                                        : ""
+                                                }`}
+                                            >
+                                                <td className="p-2">{item.financialYear}</td>
+                                                <td className="p-2">{item.schemeName}</td>
+                                                <td className="p-2">{formatBudgetAmount(item.totalAllocation)}</td>
+                                                <td className="p-2">{formatBudgetAmount(item.amountReceived)}</td>
+                                                <td className="p-2">{formatBudgetAmount(item.balance)}</td>
+                                                <td className="p-2">{item.status}</td>
+                                                <td className="p-2">{formatLastUpdated(item.updatedAt)}</td>
+                                                <td className="p-2 space-x-2 whitespace-nowrap">
+                                                    <button
+                                                        onClick={() => editBudget(item)}
+                                                        className="text-indigo-500 hover:text-indigo-700"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteBudget(item._id)}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                <hr className="my-12 border-gray-300 dark:border-gray-700" />
+
                 {/* --- INFRASTRUCTURE MANAGEMENT SECTION (FIXED) --- */}
                 <section>
                     <h2 className="text-3xl font-bold mb-6 text-orange-700 dark:text-teal-400">Manage Infrastructure</h2>
@@ -1222,9 +1699,11 @@ export default function AdminPanel() {
                     <form onSubmit={addVoter} className="mb-8 space-y-4 p-4 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
                         <h3 className="text-xl font-semibold text-pink-700 dark:text-cyan-400">Add New Voter ({VOTER_TYPE_LABELS[voterType]})</h3>
                         <div className="grid md:grid-cols-2 gap-4">
-                            <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Voter ID" value={voterId} onChange={(e) => setVoterId(e.target.value)} required />
+                            <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Voter ID / EPIC Number" value={voterId} onChange={(e) => setVoterId(e.target.value)} required />
                             <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Name" value={voterName} onChange={(e) => setVoterName(e.target.value)} required />
+                            <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Serial Number" value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
                             <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Guardian's Name" value={voterGuardianName} onChange={(e) => setVoterGuardianName(e.target.value)} />
+                            <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Relationship" value={relationship} onChange={(e) => setRelationship(e.target.value)} />
                             <select className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={voterGender} onChange={(e) => setVoterGender(e.target.value)} required>
                                 <option value="" disabled>Select Gender</option>
                                 <option value="Male">Male</option>
@@ -1240,8 +1719,18 @@ export default function AdminPanel() {
                                 value={voterAge}
                                 onChange={(e) => setVoterAge(e.target.value)}
                             />
+                            <input
+                                type="date"
+                                className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Date of Birth"
+                                value={dateOfBirth}
+                                onChange={(e) => setDateOfBirth(e.target.value)}
+                            />
                             {voterType === "gram-panchayat" ? (
-                                <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ward No." value={voterWardNo} onChange={(e) => setVoterWardNo(e.target.value)} />
+                                <>
+                                    <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ward No. / House No." value={voterWardNo} onChange={(e) => setVoterWardNo(e.target.value)} />
+                                    <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Pooling Booth" value={poolingBooth} onChange={(e) => setPoolingBooth(e.target.value)} />
+                                </>
                             ) : (
                                 <input className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Constituency" value={voterConstituency} onChange={(e) => setVoterConstituency(e.target.value)} />
                             )}

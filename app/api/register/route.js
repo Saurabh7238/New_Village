@@ -1,84 +1,73 @@
-import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
-import AuditLog from '@/models/AuditLog';
-import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/dbConnect";
+import User from "@/models/User";
+import AuditLog from "@/models/AuditLog";
+import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
+import { isValidIndianMobile, normalizePhone } from "@/lib/phoneValidation";
 
 export async function POST(req) {
   await dbConnect();
+
   try {
-    const { phone, otp, name, email, password } = await req.json();
+    const { name, email, phone: rawPhone, password } = await req.json();
 
-    // If password is provided, do password-based registration
-    if (password) {
-      // Validation
-      if (!name || !email || !phone || !password) {
-        return NextResponse.json(
-          { error: 'Name, email, phone, and password are required' },
-          { status: 400 }
-        );
-      }
+    const phone = normalizePhone(rawPhone);
 
-      // Check if user already exists
-      const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
-      if (existingUser) {
-        return NextResponse.json(
-          { error: 'User with this email or phone already exists' },
-          { status: 400 }
-        );
-      }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Generate unique ID before creating user
-      const uniqueId = `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
-
-      // Create user
-      const user = await User.create({
-        name,
-        email,
-        phone,
-        password: hashedPassword,
-        isVerified: true,
-        uniqueId, // Explicitly set uniqueId
-      });
-
-      // Create audit log with confirmed uniqueId
-      await AuditLog.create({
-        uniqueId: user.uniqueId || uniqueId,
-        action: 'CITIZEN_REGISTERED',
-        details: { method: 'PASSWORD', timestamp: new Date() }
-      });
-
-      return NextResponse.json({
-        success: true,
-        uniqueId: user.uniqueId,
-        user: { name: user.name, email: user.email }
-      });
+    if (!name || !email || !phone || !password) {
+      return NextResponse.json(
+        { error: "Name, email, mobile number, and password are required" },
+        { status: 400 }
+      );
     }
 
-    // OTP-based registration (original flow)
-    if (otp !== '123456') {
-      return NextResponse.json({ error: 'Invalid OTP verification failed.' }, { status: 401 });
+    if (!isValidIndianMobile(rawPhone)) {
+      return NextResponse.json(
+        { error: "Enter a valid 10-digit mobile number" },
+        { status: 400 }
+      );
     }
 
-    let user = await User.findOne({ phone });
-    if (!user) {
-      const uniqueId = `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
-      user = await User.create({ name, email, phone, isVerified: true, uniqueId });
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters" },
+        { status: 400 }
+      );
     }
+
+    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "User with this email or mobile number already exists" },
+        { status: 400 }
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const uniqueId = `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
+
+    const user = await User.create({
+      name,
+      email,
+      phone,
+      password: hashedPassword,
+      isVerified: true,
+      uniqueId,
+    });
 
     await AuditLog.create({
       uniqueId: user.uniqueId,
-      action: 'CITIZEN_REGISTERED_VERIFIED',
-      details: { method: 'OTP', timestamp: new Date() }
+      action: "CITIZEN_REGISTERED",
+      details: { method: "PASSWORD", timestamp: new Date() },
     });
 
-    return NextResponse.json({ success: true, uniqueId: user.uniqueId, user: { name: user.name, email: user.email } });
+    return NextResponse.json({
+      success: true,
+      uniqueId: user.uniqueId,
+      user: { name: user.name, email: user.email },
+    });
   } catch (error) {
-    console.error('Registration error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("Registration error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

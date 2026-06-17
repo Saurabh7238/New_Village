@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
           <ScrollToTopButton />
           <footer className="bg-gradient-to-r from-green-700 via-green-600 to-green-500 text-white mt-8">
             <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm">
-              © {new Date().getFullYear()} Gram Panchayat Portal — Built by Saurabh
+              © {new Date().getFullYear()} Gram Panchayat Portal
             </div>
           </footer>
         </Providers>
