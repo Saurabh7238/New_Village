@@ -37,16 +37,14 @@ export default function Header() {
     navItems.push(["Admin Panel", "/admin"]);
   }
 
+  const baseClass = "fixed top-0 left-0 w-full z-50 transition-all duration-300";
+  const scrolledClass = scrolled
+    ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
+    : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
+
   return (
-    <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-green-700/90 backdrop-blur shadow-lg"
-          : "bg-gradient-to-r from-green-700 via-green-600 to-green-500"
-      }`}
-    >
-      {/* Scrolling Banner */}
-      <div className="bg-green-600 overflow-hidden">
+    <header className={`${baseClass} ${scrolledClass}`}>
+      <div className="bg-green-600 dark:bg-green-800 overflow-hidden">
         <motion.div
           className="py-2 sm:py-3 text-sm font-semibold tracking-wide whitespace-nowrap text-white"
           animate={{ x: ["100%", "-100%"] }}
@@ -56,13 +54,11 @@ export default function Header() {
             repeat: Infinity,
           }}
         >
-          🌟 Welcome to Gram Panchayat Portal — “सर्वजन हिताय, सर्वजन सुखाय” — Efficient Governance for Every Citizen 🌟
+          🌟 Welcome to Gram Panchayat Portal — Efficient Governance for Every Citizen 🌟
         </motion.div>
       </div>
 
-      {/* Main Header Section */}
       <div className="max-w-6xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between py-4">
-        {/* Logo */}
         <div className="flex items-center gap-3">
           <Link href="/" className="text-2xl font-bold tracking-wide text-white">
             Gram Panchayat
@@ -70,9 +66,7 @@ export default function Header() {
           <span className="text-sm text-green-100">Portal</span>
         </div>
 
-        {/* Navigation & Buttons */}
         <div className="relative flex items-center gap-3 md:gap-5">
-          {/* Auth Buttons */}
           {status === "loading" ? (
             <div className="text-white text-sm">Loading...</div>
           ) : session ? (
@@ -99,7 +93,6 @@ export default function Header() {
             </>
           )}
 
-          {/* Menu Toggle */}
           <button
             onClick={() => setOpen(!open)}
             className="px-4 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold"
@@ -109,7 +102,6 @@ export default function Header() {
             {open ? "✕ Close" : "☰ Menu"}
           </button>
 
-          {/* Dropdown Menu */}
           <AnimatePresence>
             {open && (
               <motion.ul
@@ -118,7 +110,7 @@ export default function Header() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="absolute right-0 top-full mt-3 w-56 bg-white rounded-md shadow-lg overflow-hidden"
+                className="absolute right-0 top-full mt-3 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden"
                 onMouseLeave={() => setOpen(false)}
               >
                 {navItems.map(([label, href]) => (
@@ -127,8 +119,8 @@ export default function Header() {
                       href={href}
                       className={`block px-5 py-3 transition ${
                         pathname === href
-                          ? "bg-green-100 text-green-800 font-semibold"
-                          : "text-green-700 hover:bg-green-100"
+                          ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 font-semibold"
+                          : "text-green-700 dark:text-green-100 hover:bg-green-100 dark:hover:bg-green-900"
                       }`}
                       onClick={() => setOpen(false)}
                     >

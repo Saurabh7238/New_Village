@@ -950,6 +950,34 @@ export default function AdminPanel() {
                     <button onClick={() => signOut()} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Sign Out</button>
                 </div>
 
+                {/* Quick Navigation */}
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-8">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Management Sections</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <a href="/admin/members" className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-center text-sm font-medium transition">
+                            👥 Members
+                        </a>
+                        <a href="#notifications" className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-center text-sm font-medium transition">
+                            📢 Notifications
+                        </a>
+                        <a href="#reviews" className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-center text-sm font-medium transition">
+                            ⭐ Reviews
+                        </a>
+                        <a href="#gallery" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-center text-sm font-medium transition">
+                            🖼️ Gallery
+                        </a>
+                        <a href="#budget" className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded text-center text-sm font-medium transition">
+                            💰 Budget
+                        </a>
+                        <a href="#infrastructure" className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded text-center text-sm font-medium transition">
+                            🏗️ Infrastructure
+                        </a>
+                        <a href="#voters" className="bg-pink-600 hover:bg-pink-700 text-white px-3 py-2 rounded text-center text-sm font-medium transition">
+                            🗳️ Voters
+                        </a>
+                    </div>
+                </div>
+
                 {/* --- Notifications Section --- */}
                 <section>
                     <h1 className="text-3xl font-bold mb-6 text-green-700 dark:text-yellow-400">Admin Notifications</h1>
