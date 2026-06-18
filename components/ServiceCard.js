@@ -8,10 +8,14 @@ import {
   FaMapMarkedAlt,
   FaMoneyBillWave,
   FaCogs,
+  FaClipboard,
+  FaSearch,
 } from "react-icons/fa";
 
 // Icon mapping by title
 const iconMap = {
+  "Raise Query / शिकायत दर्ज": FaClipboard,
+  "Track Query / शिकायत ट्रैक करें": FaSearch,
   "Birth Certificates": FaFileAlt,
   "Death Certificates": FaFileAlt,
   "Aadhar Create / Update": FaCogs,

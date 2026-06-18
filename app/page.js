@@ -205,6 +205,8 @@ export default function HomePage() {
   const t = labels[language];
 
   const services = [
+    { title: "Raise Query / शिकायत दर्ज", href: "/grievance" },
+    { title: "Track Query / शिकायत ट्रैक करें", href: "/track" },
     { title: "Birth Certificates", href: "/birth" },
     { title: "Death Certificates", href: "/death" },
     { title: "Aadhar Create / Update", href: "/aadhar" },
@@ -367,6 +369,93 @@ export default function HomePage() {
                   index={i}
                 />
               ))}
+            </div>
+          </section>
+
+          <section className="max-w-6xl mx-auto px-2 py-6 bg-gradient-to-r from-blue-50 to-green-50 dark:from-gray-700 dark:to-gray-800 rounded-lg border border-blue-200 dark:border-gray-600 shadow-sm">
+            <h2 className="text-lg font-bold text-center mb-4 text-green-700 dark:text-yellow-400">
+              📍 About Chiutahara Village
+            </h2>
+
+            {/* Key Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Population (2011 Census)</p>
+                <p className="text-2xl font-bold text-blue-600">1,768</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Male: 795 | Female: 973</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-green-500">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Households</p>
+                <p className="text-2xl font-bold text-green-600">269</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Code: 195584</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Schools</p>
+                <p className="text-2xl font-bold text-purple-600">3</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Education Priority</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-orange-500">
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Ward Members</p>
+                <p className="text-2xl font-bold text-orange-600">12</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Elected Representatives</p>
+              </div>
+            </div>
+
+            {/* Gram Panchayat Overview */}
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-indigo-500 mb-4">
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏘️ Gram Panchayat Overview</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>State:</strong> Uttar Pradesh</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>District:</strong> Azamgarh</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Block:</strong> Lalganj</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Gram Panchayat:</strong> Chiutahra</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Villages Served:</strong> 3</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Chiutahara, Lauhara, Malikan</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><strong>Sarpanch:</strong> </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400"><em>Part of Panchayati Raj system, working at grassroots level for local administrative matters and village-level planning.</em></p>
+            </div>
+
+            {/* Governance & Admin */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏛️ Local Governance</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">Assembly:</span> Lalganj Constituency</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">Parliament:</span> Lalganj Constituency</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">Sub-District:</span> Lalganj</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🗳️ Political Representatives</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">MLA:</span> Shri Bechai Saroj (Samajwadi Party)</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">MP:</span> Daroga Prasad Saroj (Samajwadi Party)</p>
+              </div>
+            </div>
+
+            {/* Cultural Heritage & Famous For */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙏 Famous For</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Hanuman Mandir</strong> - Sacred temple dedicated to Lord Hanuman (God of Strength). People from nearby and far-off villages visit regularly to worship and offer prayers, especially on special occasions.</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🎨 Cultural Heritage</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Traditional Dress:</strong> Dhoti Kurta<br/><strong>Traditional Food:</strong> Dal Chawal<br/><strong>Traditional Ornaments:</strong> Bichhiya</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">📮 Postal & Location Info</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Pincode:</strong> 276203</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Postal Area Code:</strong> 276123</p>
+              </div>
+            </div>
+
+            {/* Beliefs & Customs */}
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-yellow-500">
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙌 Beliefs & Customs</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">The community believes that Lord Hanuman protects the village and its people from all harm. Worship at Hanuman Mandir is a regular practice, strengthening the cultural and spiritual fabric of the village.</p>
             </div>
           </section>
 
