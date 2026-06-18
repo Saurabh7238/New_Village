@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { formatDate, formatCurrency, calculateDaysRemaining, getStatusBgClass } from "@/lib/developmentDisplay";
 import { useTheme } from "@/app/theme-provider";
@@ -62,9 +63,9 @@ export default function DevelopmentDetailPage({ params }) {
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <a href="/development" className="text-green-600 hover:text-green-700 mb-4 inline-block">
+          <Link href="/development" className="text-green-600 hover:text-green-700 mb-4 inline-block">
             ← Back to Projects
-          </a>
+          </Link>
           <h1 className="text-4xl font-bold mb-4 text-green-700 dark:text-yellow-400">{project.title}</h1>
           <div className="flex gap-4 items-center">
             <span className={`px-4 py-2 rounded-full font-semibold text-sm ${getStatusBgClass(project.status)}`}>

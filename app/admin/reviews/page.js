@@ -77,7 +77,7 @@ export default function AdminReviewsPage() {
           {reviews.map((r) => (
             <div key={r.id} className="border rounded p-4 flex justify-between items-start gap-4 dark:border-gray-700 bg-white dark:bg-gray-800">
               <div>
-                <p className="italic text-gray-800 dark:text-gray-200">"{r.message}"</p>
+                <p className="italic text-gray-800 dark:text-gray-200">&quot;{r.message}&quot;</p>
                 <p className="text-sm font-semibold text-purple-700 dark:text-yellow-400 mt-2">— {r.name}{r.ward ? `, ${r.ward}` : ""}</p>
               </div>
               <button onClick={() => deleteReview(r.id)} className="text-red-500 hover:text-red-700 text-sm shrink-0">Delete</button>
