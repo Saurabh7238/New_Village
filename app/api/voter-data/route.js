@@ -15,10 +15,16 @@ export async function GET(request) {
       return NextResponse.json({ error: "Invalid voter type" }, { status: 400 });
     }
 
-    const data = await VoterData.find({ type }).exec();
+    const data = await VoterData.find({
+      $or: [
+        { type: type },
+        { type: { $exists: false } },
+      ],
+    }).exec();
 
     const mapped = data.map((item) => ({
       ...item.toObject(),
+      type: item.type || type,
       id: item._id.toString(),
       _id: item._id.toString(),
     }));
@@ -28,6 +34,10 @@ export async function GET(request) {
     console.error("Failed to fetch voter data:", error);
     return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
   }
+}
+
+function normalizeStr(val) {
+  return typeof val === "string" ? val.trim() : val;
 }
 
 export async function POST(request) {
@@ -42,12 +52,14 @@ export async function POST(request) {
       voterGuardianName,
       voterGender,
       voterAge,
-      image,
+      serialNumber,
+      houseNo,
+      svnNo,
+      relationType,
+      relationship,
       voterWardNo,
       voterConstituency,
-      serialNumber,
-      poolingBooth,
-      relationship,
+      image,
       dateOfBirth,
     } = body;
 
@@ -55,7 +67,10 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid voter type" }, { status: 400 });
     }
 
-    if (!voterId?.trim() || !voterName?.trim()) {
+    const voterIdTrim = normalizeStr(voterId);
+    const voterNameTrim = normalizeStr(voterName);
+
+    if (!voterIdTrim?.trim() || !voterNameTrim?.trim()) {
       return NextResponse.json(
         { error: "Voter ID and name are required" },
         { status: 400 }
@@ -64,25 +79,59 @@ export async function POST(request) {
 
     const record = {
       type,
-      voterId: voterId.trim(),
-      voterName: voterName.trim(),
-      voterGuardianName: voterGuardianName?.trim() || "",
-      voterGender: voterGender || "",
+
+      // Canonical fields required by UI
+      svn_no: svnNo ? String(svnNo).trim() : "",
+      serial_number: serialNumber ? String(serialNumber).trim() : "",
+      house_no: houseNo ? String(houseNo).trim() : "",
+      elector_name: voterNameTrim.trim(),
+
+      parent_name: voterGuardianName ? String(voterGuardianName).trim() : "",
+      relation_type: relationType ? String(relationType).trim() : "",
+      relationship: relationship ? String(relationship).trim() : "",
+
+      // If relationship (guardian name) is not explicitly provided, fall back to voterGuardianName
+      relationship:
+        relationship && String(relationship).trim().length > 0
+          ? String(relationship).trim()
+          : voterGuardianName
+            ? String(voterGuardianName).trim()
+            : "",
+
+      gender: voterGender ? String(voterGender).trim() : "",
+
+
+      ...(voterAge !== undefined && voterAge !== null && voterAge !== ""
+        ? (() => {
+            const parsedAge = Number(voterAge);
+            if (Number.isNaN(parsedAge)) return { __ageErr: true };
+            return { age: parsedAge };
+          })()
+        : {}),
+
+      // Backward compatible aliases used by existing UI
+      voterId: voterIdTrim.trim(),
+      voterName: voterNameTrim.trim(),
+      voterGuardianName: voterGuardianName ? String(voterGuardianName).trim() : "",
+      voterGender: voterGender ? String(voterGender).trim() : "",
+      voterAge:
+        voterAge !== undefined && voterAge !== null && voterAge !== ""
+          ? Number(voterAge)
+          : undefined,
+      name: voterNameTrim.trim(),
+
       image: image || "",
-      name: voterName.trim(),
-      ...(serialNumber?.trim() && { serialNumber: serialNumber.trim() }),
-      ...(poolingBooth?.trim() && { poolingBooth: poolingBooth.trim() }),
-      ...(relationship?.trim() && { relationship: relationship.trim() }),
-      ...(dateOfBirth?.trim() && { dateOfBirth: dateOfBirth.trim() }),
+      dateOfBirth: dateOfBirth || "",
     };
 
-    if (voterAge !== undefined && voterAge !== null && voterAge !== "") {
-      const parsedAge = Number(voterAge);
-      if (Number.isNaN(parsedAge)) {
-        return NextResponse.json({ error: "Invalid age" }, { status: 400 });
-      }
-      record.age = parsedAge;
-      record.voterAge = parsedAge;
+    if (record.__ageErr) {
+      return NextResponse.json({ error: "Invalid age" }, { status: 400 });
+    }
+    if (record.age !== undefined) record.voterAge = record.age;
+
+    // Keep backward-compatible alias for guardian name
+    if (!record.voterGuardianName && record.relationship) {
+      record.voterGuardianName = record.relationship;
     }
 
     if (type === "gram-panchayat" && voterWardNo) {
@@ -93,18 +142,17 @@ export async function POST(request) {
     if (type !== "gram-panchayat" && voterConstituency) {
       record.voterConstituency = voterConstituency;
       record.constituency = voterConstituency;
-      record.elector_name = voterName.trim();
-      record.guardian_name = voterGuardianName?.trim() || "";
     }
 
     const created = await VoterData.create(record);
-    const mapped = {
-      ...created.toObject(),
-      id: created._id.toString(),
-      _id: created._id.toString(),
-    };
-
-    return NextResponse.json(mapped, { status: 201 });
+    return NextResponse.json(
+      {
+        ...created.toObject(),
+        id: created._id.toString(),
+        _id: created._id.toString(),
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Failed to create voter:", error);
     return NextResponse.json({ error: "Failed to add voter" }, { status: 500 });
@@ -140,3 +188,108 @@ export async function DELETE(request) {
     return NextResponse.json({ error: "Failed to delete item" }, { status: 500 });
   }
 }
+
+export async function PUT(request) {
+  await dbConnect();
+
+  try {
+    const body = await request.json();
+    const {
+      id,
+      type,
+      voterId,
+      voterName,
+      voterGuardianName,
+      voterGender,
+      voterAge,
+      voterWardNo,
+      voterConstituency,
+      serialNumber,
+      houseNo,
+      svnNo,
+      relationType,
+      relationship,
+    } = body;
+
+    if (!id || !type || !VALID_TYPES.includes(type)) {
+      return NextResponse.json(
+        { error: "ID and valid type are required" },
+        { status: 400 }
+      );
+    }
+
+    const voterIdTrim = normalizeStr(voterId);
+    const voterNameTrim = normalizeStr(voterName);
+
+    if (!voterIdTrim?.trim() || !voterNameTrim?.trim()) {
+      return NextResponse.json(
+        { error: "Voter ID and name are required" },
+        { status: 400 }
+      );
+    }
+
+    const updateData = {
+      voterId: voterIdTrim.trim(),
+      voterName: voterNameTrim.trim(),
+      voterGuardianName: voterGuardianName ? String(voterGuardianName).trim() : "",
+      voterGender: voterGender ? String(voterGender).trim() : "",
+      name: voterNameTrim.trim(),
+
+      // Canonical fields
+      svn_no: svnNo ? String(svnNo).trim() : voterIdTrim.trim(),
+      serial_number: serialNumber ? String(serialNumber).trim() : "",
+      house_no: houseNo ? String(houseNo).trim() : "",
+      elector_name: voterNameTrim.trim(),
+      parent_name: voterGuardianName ? String(voterGuardianName).trim() : "",
+      relation_type: relationType ? String(relationType).trim() : "",
+      relationship:
+        relationship && String(relationship).trim().length > 0
+          ? String(relationship).trim()
+          : voterGuardianName
+            ? String(voterGuardianName).trim()
+            : "",
+      gender: voterGender ? String(voterGender).trim() : "",
+
+      image: body.image || undefined,
+      dateOfBirth: body.dateOfBirth || undefined,
+    };
+
+    if (voterAge !== undefined && voterAge !== null && voterAge !== "") {
+      const parsedAge = Number(voterAge);
+      if (Number.isNaN(parsedAge)) {
+        return NextResponse.json({ error: "Invalid age" }, { status: 400 });
+      }
+      updateData.age = parsedAge;
+      updateData.voterAge = parsedAge;
+    }
+
+    if (type === "gram-panchayat" && voterWardNo) {
+      updateData.voterWardNo = voterWardNo;
+      updateData.ward = voterWardNo;
+    }
+
+    if (type !== "gram-panchayat" && voterConstituency) {
+      updateData.voterConstituency = voterConstituency;
+      updateData.constituency = voterConstituency;
+    }
+
+    const updated = await VoterData.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!updated) {
+      return NextResponse.json({ error: "Voter not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(
+      {
+        ...updated.toObject(),
+        id: updated._id.toString(),
+        _id: updated._id.toString(),
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Failed to update voter:", error);
+    return NextResponse.json({ error: "Failed to update voter" }, { status: 500 });
+  }
+}
+

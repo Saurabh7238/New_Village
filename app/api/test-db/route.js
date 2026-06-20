@@ -1,42 +1,49 @@
-import dbConnect from "@/lib/dbConnect";
-import Image from "@/models/Image.js";
+import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 
-export async function GET() {
+export async function GET(request) {
   try {
-    console.log('[test-db] Testing database connection...');
-    await dbConnect();
-    console.log('[test-db] Connected! Counting documents...');
-    
-    const count = await Image.countDocuments();
-    console.log(`[test-db] Found ${count} images`);
-    
-    if (count > 0) {
-      // Try to fetch one without the large image_data field
-      const sample = await Image.findOne({}).select('-image_data');
-      console.log('[test-db] Sample (without image_data):', sample);
-      
-      return new Response(JSON.stringify({ 
-        connected: true, 
-        imageCount: count,
-        sample: sample,
-        note: 'Sample shown without image_data field'
-      }), {
-        headers: { "Content-Type": "application/json" },
+    const dbStatus = {
+      timestamp: new Date().toISOString(),
+      mongooseConnected: mongoose.connection.readyState === 1,
+      mongooseState: mongoose.connection.readyState,
+      states: {
+        0: "disconnected",
+        1: "connected",
+        2: "connecting",
+        3: "disconnecting",
+      }
+    };
+
+    if (!process.env.MONGODB_URI) {
+      return NextResponse.json({
+        error: "MONGODB_URI not set in environment variables",
+        ...dbStatus
       });
     }
-    
-    return new Response(JSON.stringify({ connected: true, imageCount: count }), {
-      headers: { "Content-Type": "application/json" },
+
+    // Try to connect if not already connected
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.MONGODB_URI);
+    }
+
+    // Try a simple query
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    const collectionNames = collections.map(c => c.name);
+
+    return NextResponse.json({
+      success: true,
+      ...dbStatus,
+      mongooseState_text: dbStatus.states[dbStatus.mongooseState],
+      collections: collectionNames,
+      hasVoterDataCollection: collectionNames.includes("voterdatas"),
+      message: "Database connection check"
     });
   } catch (error) {
-    console.error('[test-db] Error:', error);
-    return new Response(JSON.stringify({ 
-      connected: false, 
+    return NextResponse.json({
+      success: false,
       error: error.message,
-      details: error.toString()
-    }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+      errorType: error.constructor.name,
+    }, { status: 500 });
   }
 }

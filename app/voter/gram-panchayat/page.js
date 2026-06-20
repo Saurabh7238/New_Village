@@ -10,12 +10,15 @@ import {
   getVoterAge,
   classifyVoterGender,
   getVoterWard,
+  getVoterHouseNo,
   getVoterImage,
   getVoterSerialNumber,
   getVoterPoolingBooth,
   getVoterRelationship,
   getVoterDOB,
+  getVoterSvnNo,
 } from "@/lib/voterDisplay";
+
 
 export default function GramPanchayatPage() {
   const [voters, setVoters] = useState([]);
@@ -118,6 +121,7 @@ export default function GramPanchayatPage() {
       relationship: "Relationship",
       dob: "Date of Birth",
       houseNo: "House Number",
+      svnNo: "SVN Number",
       filterByGender: "Filter by Gender",
       filterByAge: "Filter by Age Range",
       minAge: "Min Age",
@@ -146,6 +150,7 @@ export default function GramPanchayatPage() {
       relationship: "रिश्ता",
       dob: "जन्मतिथि",
       houseNo: "मकान संख्या",
+      svnNo: "SVN संख्या",
       filterByGender: "लिंग से फ़िल्टर करें",
       filterByAge: "आयु श्रेणी से फ़िल्टर करें",
       minAge: "न्यूनतम आयु",
@@ -343,12 +348,10 @@ export default function GramPanchayatPage() {
                   </h2>
 
                   <div className="space-y-2 text-sm">
-                    {epicNo && (
+                    {getVoterSvnNo(voter) && (
                       <p className="text-gray-700">
-                        <span className="font-semibold text-blue-600">
-                          {t.epicNo}:
-                        </span>{" "}
-                        {epicNo}
+                        <span className="font-semibold">{t.svnNo}:</span>{" "}
+                        {getVoterSvnNo(voter)}
                       </p>
                     )}
 
@@ -361,10 +364,11 @@ export default function GramPanchayatPage() {
 
                     <p className="text-gray-700">
                       <span className="font-semibold">{t.houseNo}:</span>{" "}
-                      {ward || "N/A"}
+                      {getVoterHouseNo(voter) || "N/A"}
                     </p>
 
                     {booth && (
+
                       <p className="text-gray-700">
                         <span className="font-semibold">{t.poolingBooth}:</span>{" "}
                         {booth}
