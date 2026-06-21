@@ -38,9 +38,6 @@ const NotificationDocumentSchema = new mongoose.Schema(
   }
 );
 
-// Index for faster lookups by notification
-NotificationDocumentSchema.index({ notificationId: 1 });
-
 const NotificationDocument = mongoose.models.NotificationDocument || mongoose.model('NotificationDocument', NotificationDocumentSchema);
 
 export default NotificationDocument;
