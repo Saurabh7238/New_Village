@@ -6,7 +6,7 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 
 // --- NextAuth Configuration ---
-const authOptions = {
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",

@@ -74,13 +74,20 @@ export default function AdminNotificationsPage() {
       const params = new URLSearchParams();
       if (filters.type) params.append('type', filters.type);
       if (filters.level) params.append('level', filters.level);
+      if (filters.category) params.append('category', filters.category);
       if (filters.status) params.append('status', filters.status);
       if (filters.search) params.append('search', filters.search);
 
-      const res = await fetch(`/api/notifications?${params.toString()}`);
+      const url = `/api/notifications?${params.toString()}`;
+      console.log('Fetching from URL:', url, 'Filters:', filters);
+
+      const res = await fetch(url);
       const data = await res.json();
 
+      console.log('Fetch response:', data);
+
       if (data.success) {
+        console.log('Notifications loaded:', data.notifications?.length);
         setNotifications(data.notifications || []);
       } else {
         showMessage('Failed to fetch notifications', 'error');
@@ -159,6 +166,8 @@ export default function AdminNotificationsPage() {
       const method = editingId ? 'PUT' : 'POST';
       const endpoint = editingId ? `/api/notifications?id=${editingId}` : '/api/notifications';
 
+      console.log('Sending notification data:', formData);
+
       const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -166,6 +175,7 @@ export default function AdminNotificationsPage() {
       });
 
       const data = await res.json();
+      console.log('Response:', data, 'Status:', res.status);
 
       if (!res.ok) {
         showMessage(data.message || `Failed to ${editingId ? 'update' : 'create'} notification`, 'error');
@@ -181,7 +191,9 @@ export default function AdminNotificationsPage() {
       showMessage(data.message || `Notification ${editingId ? 'updated' : 'created'} successfully`, 'success');
       resetForm();
       setShowForm(false);
-      fetchNotifications();
+      console.log('Fetching notifications...');
+      await fetchNotifications();
+      console.log('Notifications fetched');
     } catch (error) {
       console.error('Submit error:', error);
       showMessage('Error saving notification', 'error');

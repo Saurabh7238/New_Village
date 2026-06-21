@@ -4,9 +4,10 @@ import dbConnect from '@/lib/dbConnect';
 import NotificationBoard from '@/models/NotificationBoard';
 import NotificationDocument from '@/models/NotificationDocument';
 import mongoose from 'mongoose';
+import { authOptions } from '../auth/[...nextauth]/route';
 
 async function getSession() {
-  return await getServerSession();
+  return await getServerSession(authOptions);
 }
 
 // --- GET (FETCH ALL NOTIFICATIONS) ---
@@ -26,11 +27,14 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 10;
 
+    console.log('GET /api/notifications - Session:', session?.user?.role, 'Params:', { type, level, category, status, search });
+
     // Build filter
     const filter = {};
 
     // Public users see only published, non-expired notifications (including scheduled ones that are due)
-    if (!session?.user?.role === 'admin') {
+    if (session?.user?.role !== 'admin') {
+      console.log('Applying public filter');
       filter.$or = [
         { status: 'published' },
         { status: 'published', scheduledPublishDate: { $lte: new Date() } },
@@ -43,6 +47,8 @@ export async function GET(request) {
           ],
         },
       ];
+    } else {
+      console.log('Admin user - no public filter applied');
     }
 
     if (type) filter.type = type;
@@ -91,6 +97,8 @@ export async function GET(request) {
     );
 
     const total = await NotificationBoard.countDocuments(filter);
+
+    console.log('Returning', notificationsWithDocs.length, 'notifications (total:', total, ') Filter:', JSON.stringify(filter));
 
     return NextResponse.json(
       {
@@ -174,6 +182,8 @@ export async function POST(request) {
       scheduledPublishDate: scheduledPublishDate ? new Date(scheduledPublishDate) : null,
       createdBy: session.user.id,
     });
+
+    console.log('Notification created:', newNotification._id, 'Title:', title, 'Status:', newNotification.status);
 
     return NextResponse.json(
       {

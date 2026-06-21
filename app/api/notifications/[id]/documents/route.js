@@ -4,12 +4,13 @@ import dbConnect from '@/lib/dbConnect';
 import NotificationBoard from '@/models/NotificationBoard';
 import NotificationDocument from '@/models/NotificationDocument';
 import { ALLOWED_MIME_TYPES } from '@/lib/notificationConstants';
+import { authOptions } from '../../auth/[...nextauth]/route';
 import mongoose from 'mongoose';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 async function getSession() {
-  return await getServerSession();
+  return await getServerSession(authOptions);
 }
 
 async function fileToBase64(file) {
