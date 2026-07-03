@@ -21,6 +21,7 @@ const iconMap = {
   "Aadhar Create / Update": FaCogs,
   "Voter List": FaUsers,
   "Gram Budget": FaMoneyBillWave,
+  "Panchayat Funds": FaMoneyBillWave,
   "Map": FaMapMarkedAlt,
 };
 

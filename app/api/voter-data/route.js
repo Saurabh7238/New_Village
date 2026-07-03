@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import VoterData from "@/models/VoterData";
+import { requireAdminSession } from "@/lib/adminAuth";
 
 const VALID_TYPES = ["vidhan-sabha", "lok-sabha", "gram-panchayat"];
 
@@ -25,6 +26,18 @@ export async function GET(request) {
     const mapped = data.map((item) => ({
       ...item.toObject(),
       type: item.type || type,
+      serialNumber: item.serialNumber || item.serial_number || "",
+      houseNo: item.houseNo || item.house_no || "",
+      svnNo: item.svnNo || item.svn_no || "",
+      electorName: item.electorName || item.elector_name || item.name || "",
+      relationType: item.relationType || item.relation_type || "",
+      relationship: item.relationship || item.parent_name || item.voterGuardianName || "",
+      voterId: item.voterId || item.elector_id || item.svn_no || "",
+      voterName: item.voterName || item.elector_name || item.name || "",
+      voterGuardianName: item.voterGuardianName || item.parent_name || item.relationship || "",
+      voterGender: item.voterGender || item.gender || "",
+      voterAge: item.voterAge ?? item.age ?? undefined,
+      voterWardNo: item.voterWardNo || item.ward || item.house_no || "",
       id: item._id.toString(),
       _id: item._id.toString(),
     }));
@@ -42,6 +55,11 @@ function normalizeStr(val) {
 
 export async function POST(request) {
   await dbConnect();
+
+  const session = await requireAdminSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   try {
     const body = await request.json();
@@ -162,6 +180,11 @@ export async function POST(request) {
 export async function DELETE(request) {
   await dbConnect();
 
+  const session = await requireAdminSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const { id, type } = body;
@@ -191,6 +214,11 @@ export async function DELETE(request) {
 
 export async function PUT(request) {
   await dbConnect();
+
+  const session = await requireAdminSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   try {
     const body = await request.json();

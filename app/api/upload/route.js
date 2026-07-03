@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import ImageModel from '@/models/Image';
+import { requireAdminSession } from '@/lib/adminAuth';
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
@@ -21,6 +22,14 @@ async function fileToDataUri(file) {
 
 export async function POST(request) {
   try {
+    const session = await requireAdminSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Admin access required.' },
+        { status: 403 }
+      );
+    }
+
     await dbConnect();
 
     const formData = await request.formData();
@@ -71,6 +80,14 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
+    const session = await requireAdminSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Admin access required.' },
+        { status: 403 }
+      );
+    }
+
     await dbConnect();
 
     const { searchParams } = new URL(request.url);

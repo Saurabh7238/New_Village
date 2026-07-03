@@ -25,6 +25,7 @@ export default function Header() {
     ["Aadhar", "/aadhar"],
     ["Voter", "/voter"],
     ["Budget", "/budget"],
+    ["Funds", "/funds"],
     ["Development", "/development"],
     ["Members", "/members"],
     ["Appointments", "/appointments"],

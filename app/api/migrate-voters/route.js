@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import VoterData from "@/models/VoterData";
+import { requireAdminSession } from "@/lib/adminAuth";
 
 export async function POST(request) {
   try {
+    const session = await requireAdminSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     await dbConnect();
 
     // Find all documents that have an "electors" array field (bulk imported with wrong format)

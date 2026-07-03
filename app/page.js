@@ -18,6 +18,7 @@ export default function HomePage() {
   const [visitCount, setVisitCount] = useState(null);
   const [showBanner, setShowBanner] = useState(true);
   const [notifications, setNotifications] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [reviewName, setReviewName] = useState("");
   const [reviewWard, setReviewWard] = useState("");
@@ -37,6 +38,35 @@ export default function HomePage() {
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setReviews(Array.isArray(data) ? data : []))
       .catch(() => setReviews([]));
+  };
+
+  const loadNotifications = () => {
+    const params = new URLSearchParams();
+    params.append("page", "1");
+    params.append("limit", "5");
+
+    fetch(`/api/notifications?${params.toString()}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) {
+          setNotifications([]);
+          setNotificationCount(0);
+          return;
+        }
+
+        const items = Array.isArray(data.notifications)
+          ? data.notifications
+          : Array.isArray(data)
+            ? data
+            : [];
+
+        setNotifications(items);
+        setNotificationCount(typeof data.total === "number" ? data.total : items.length);
+      })
+      .catch(() => {
+        setNotifications([]);
+        setNotificationCount(0);
+      });
   };
 
   // Visitor count: record once per browser session, then poll count
@@ -73,12 +103,11 @@ export default function HomePage() {
     return () => clearInterval(visitInterval);
   }, []);
 
-  // Notifications API: Runs once on component mount
+  // Notifications API: load on mount and refresh periodically so new admin posts appear
   useEffect(() => {
-    fetch("/api/notifications")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setNotifications(Array.isArray(data) ? data : []))
-      .catch(() => setNotifications([]));
+    loadNotifications();
+    const notificationInterval = setInterval(loadNotifications, 30000);
+    return () => clearInterval(notificationInterval);
   }, []);
 
   // Reviews: load on mount and refresh every 15s for real-time updates
@@ -212,6 +241,7 @@ export default function HomePage() {
     { title: "Aadhar Create / Update", href: "/aadhar" },
     { title: "Voter List", href: "/voter" },
     { title: "Gram Budget", href: "/budget" },
+    { title: "Panchayat Funds", href: "/funds" },
     { title: "Development Projects", href: "/development" },
     { title: "Panchayat Members", href: "/members" },
     { title: "Appointments", href: "/appointments" },
@@ -260,9 +290,9 @@ export default function HomePage() {
             >
               <Bell className="w-5 h-5 text-gray-700 dark:text-gray-200" />
             </button>
-            {notifications.length > 0 && (
+            {notificationCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
-                {notifications.length}
+                {notificationCount}
               </span>
             )}
             {showDropdown && (

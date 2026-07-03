@@ -13,7 +13,15 @@ export default function NotificationsPage() {
         if (!res.ok) throw new Error("Network response was not ok");
         return res.json();
       })
-      .then((data) => setNotifications(data))
+      .then((data) => {
+        const items = Array.isArray(data.notifications)
+          ? data.notifications
+          : Array.isArray(data)
+            ? data
+            : [];
+
+        setNotifications(items);
+      })
       .catch((err) => {
         console.error("Error fetching notifications:", err);
         setNotifications([]);

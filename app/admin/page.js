@@ -49,6 +49,9 @@ export default function AdminPanel() {
             <Link href="/admin/budget" className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               💰 Budget
             </Link>
+            <Link href="/admin/funds" className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              💰 Funds
+            </Link>
             <Link href="/admin/infrastructure" className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               🏗️ Infrastructure
             </Link>

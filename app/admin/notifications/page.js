@@ -45,7 +45,7 @@ export default function AdminNotificationsPage() {
     issueDate: new Date().toISOString().split('T')[0],
     validTill: '',
     priority: 'medium',
-    status: 'draft',
+    status: 'published',
     category: 'announcement',
     scheduledPublishDate: '',
   });
@@ -62,13 +62,10 @@ export default function AdminNotificationsPage() {
     category: '',
   });
 
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role === 'admin') {
-      fetchNotifications();
-    }
-  }, [status, session, filters]);
-
+  // Fetch notifications
   const fetchNotifications = async () => {
+    if (status !== 'authenticated' || session?.user?.role !== 'admin') return;
+
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -78,16 +75,10 @@ export default function AdminNotificationsPage() {
       if (filters.status) params.append('status', filters.status);
       if (filters.search) params.append('search', filters.search);
 
-      const url = `/api/notifications?${params.toString()}`;
-      console.log('Fetching from URL:', url, 'Filters:', filters);
-
-      const res = await fetch(url);
+      const res = await fetch(`/api/notifications?${params.toString()}`);
       const data = await res.json();
 
-      console.log('Fetch response:', data);
-
       if (data.success) {
-        console.log('Notifications loaded:', data.notifications?.length);
         setNotifications(data.notifications || []);
       } else {
         showMessage('Failed to fetch notifications', 'error');
@@ -100,6 +91,24 @@ export default function AdminNotificationsPage() {
     }
   };
 
+  // Initial fetch on mount
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.role === 'admin') {
+      fetchNotifications();
+    }
+  }, [status, session]);
+
+  // Re-fetch when filters change
+  useEffect(() => {
+    fetchNotifications();
+  }, [filters]);
+
+  const showMessage = (msg, type) => {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(''), 4000);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -109,8 +118,7 @@ export default function AdminNotificationsPage() {
   };
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFile(files.length > 0 ? files : null);
+    setSelectedFile(e.target.files && e.target.files.length > 0 ? Array.from(e.target.files) : null);
   };
 
   const uploadFiles = async (notificationId) => {
@@ -133,15 +141,12 @@ export default function AdminNotificationsPage() {
         showMessage(`${data.documents.length} file(s) uploaded successfully`, 'success');
         setSelectedFile(null);
         setUploadedFiles(data.documents || []);
-        return true;
       } else {
         showMessage(data.message || 'Upload failed', 'error');
-        return false;
       }
     } catch (error) {
       console.error('Upload error:', error);
       showMessage('Error uploading files', 'error');
-      return false;
     }
   };
 
@@ -150,15 +155,23 @@ export default function AdminNotificationsPage() {
     setLoading(true);
 
     try {
-      // Validate
-      if (!formData.title.trim() || !formData.description.trim()) {
+      const trimmedTitle = (formData.title || '').trim();
+      const trimmedDescription = (formData.description || '').trim();
+
+      if (!trimmedTitle || !trimmedDescription) {
         showMessage('Title and description are required', 'error');
         setLoading(false);
         return;
       }
 
-      if (formData.title.length > 200) {
+      if (trimmedTitle.length > 200) {
         showMessage('Title cannot exceed 200 characters', 'error');
+        setLoading(false);
+        return;
+      }
+
+      if (trimmedDescription.length < 10) {
+        showMessage('Description must be at least 10 characters', 'error');
         setLoading(false);
         return;
       }
@@ -166,16 +179,19 @@ export default function AdminNotificationsPage() {
       const method = editingId ? 'PUT' : 'POST';
       const endpoint = editingId ? `/api/notifications?id=${editingId}` : '/api/notifications';
 
-      console.log('Sending notification data:', formData);
+      const payload = {
+        ...formData,
+        title: trimmedTitle,
+        description: trimmedDescription,
+      };
 
       const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      console.log('Response:', data, 'Status:', res.status);
 
       if (!res.ok) {
         showMessage(data.message || `Failed to ${editingId ? 'update' : 'create'} notification`, 'error');
@@ -191,9 +207,7 @@ export default function AdminNotificationsPage() {
       showMessage(data.message || `Notification ${editingId ? 'updated' : 'created'} successfully`, 'success');
       resetForm();
       setShowForm(false);
-      console.log('Fetching notifications...');
-      await fetchNotifications();
-      console.log('Notifications fetched');
+      fetchNotifications();
     } catch (error) {
       console.error('Submit error:', error);
       showMessage('Error saving notification', 'error');
@@ -276,7 +290,7 @@ export default function AdminNotificationsPage() {
       issueDate: new Date().toISOString().split('T')[0],
       validTill: '',
       priority: 'medium',
-      status: 'draft',
+      status: 'published',
       category: 'announcement',
       scheduledPublishDate: '',
     });
@@ -284,21 +298,6 @@ export default function AdminNotificationsPage() {
     setUploadedFiles([]);
     setSelectedFile(null);
   };
-
-  const showMessage = (msg, type) => {
-    setMessage(msg);
-    setMessageType(type);
-    setTimeout(() => setMessage(''), 4000);
-  };
-
-  const filteredNotifications = notifications.filter((notif) => {
-    const matchType = !filters.type || notif.type === filters.type;
-    const matchLevel = !filters.level || notif.level === filters.level;
-    const matchStatus = !filters.status || notif.status === filters.status;
-    const matchCategory = !filters.category || notif.category === filters.category;
-    const matchSearch = !filters.search || notif.title.toLowerCase().includes(filters.search.toLowerCase());
-    return matchType && matchLevel && matchStatus && matchCategory && matchSearch;
-  });
 
   // Auth protection
   if (status === 'loading') return <div className="p-8 text-center">Loading...</div>;
@@ -315,7 +314,7 @@ export default function AdminNotificationsPage() {
       <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-blue-700 dark:text-blue-400">
-            Notification Board Manager
+            Notification Manager
           </h1>
           <button
             onClick={() => signOut()}
@@ -499,7 +498,7 @@ export default function AdminNotificationsPage() {
               </div>
 
               {/* Scheduled Publish Date */}
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2">Schedule Publish Date (Optional)</label>
                 <input
                   type="datetime-local"
@@ -577,7 +576,7 @@ export default function AdminNotificationsPage() {
           </form>
         )}
 
-        {/* Add Notification Button */}
+        {/* Create Button */}
         {!showForm && (
           <button
             onClick={() => {
@@ -593,7 +592,7 @@ export default function AdminNotificationsPage() {
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
           <h2 className="text-lg font-semibold mb-4">Filters</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <input
               type="text"
               placeholder="Search by title..."
@@ -654,123 +653,63 @@ export default function AdminNotificationsPage() {
 
         {/* Notifications List */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100 dark:bg-gray-700 border-b">
-                <tr>
-                  <th className="p-3 text-left font-semibold">Type</th>
-                  <th className="p-3 text-left font-semibold">Level</th>
-                  <th className="p-3 text-left font-semibold">Title</th>
-                  <th className="p-3 text-left font-semibold">Category</th>
-                  <th className="p-3 text-left font-semibold">Status</th>
-                  <th className="p-3 text-left font-semibold">Priority</th>
-                  <th className="p-3 text-left font-semibold">Issue Date</th>
-                  <th className="p-3 text-left font-semibold">Documents</th>
-                  <th className="p-3 text-left font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredNotifications.map((notif) => (
-                  <tr key={notif.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getLevelColor(notif.level)}`}>
-                        {getTypeLabel(notif.type)}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getLevelColor(notif.level)}`}>
-                        {getLevelLabel(notif.level)}
-                      </span>
-                    </td>
-                    <td className="p-3 max-w-xs truncate">{notif.title}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(notif.category || 'announcement')}`}>
-                        {CATEGORY_LABELS[notif.category || 'announcement']}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(notif.status)}`}>
-                        {getStatusLabel(notif.status)}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(notif.priority)}`}>
-                        {PRIORITY_LABELS[notif.priority]}
-                      </span>
-                    </td>
-                    <td className="p-3 text-sm">{formatDate(notif.issueDate)}</td>
-                    <td className="p-3 text-center">{notif.documents?.length || 0}</td>
-                    <td className="p-3 space-x-2">
-                      <button
-                        onClick={() => handleEdit(notif)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(notif.id)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile View */}
-          <div className="md:hidden space-y-3 p-4">
-            {filteredNotifications.map((notif) => (
-              <div key={notif.id} className="border dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-semibold text-sm flex-1">{notif.title}</h4>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(notif.status)}`}>
-                    {getStatusLabel(notif.status)}
-                  </span>
-                </div>
-                <div className="space-y-1 text-xs mb-3">
-                  <p>
-                    <span className="font-medium">Type:</span> {getTypeLabel(notif.type)}
-                  </p>
-                  <p>
-                    <span className="font-medium">Level:</span> {getLevelLabel(notif.level)}
-                  </p>
-                  <p>
-                    <span className="font-medium">Category:</span> {CATEGORY_LABELS[notif.category || 'announcement']}
-                  </p>
-                  <p>
-                    <span className="font-medium">Priority:</span> {PRIORITY_LABELS[notif.priority]}
-                  </p>
-                  <p>
-                    <span className="font-medium">Issued:</span> {formatDate(notif.issueDate)}
-                  </p>
-                  <p>
-                    <span className="font-medium">Documents:</span> {notif.documents?.length || 0}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEdit(notif)}
-                    className="flex-1 text-blue-600 hover:text-blue-800 text-sm font-medium p-2 border border-blue-200 rounded"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(notif.id)}
-                    className="flex-1 text-red-600 hover:text-red-800 text-sm font-medium p-2 border border-red-200 rounded"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredNotifications.length === 0 && (
+          {notifications.length === 0 && !loading ? (
             <div className="p-8 text-center text-gray-500">
               No notifications found. {!showForm && 'Create one to get started.'}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100 dark:bg-gray-700 border-b">
+                  <tr>
+                    <th className="p-3 text-left font-semibold">Title</th>
+                    <th className="p-3 text-left font-semibold">Type</th>
+                    <th className="p-3 text-left font-semibold">Level</th>
+                    <th className="p-3 text-left font-semibold">Status</th>
+                    <th className="p-3 text-left font-semibold">Category</th>
+                    <th className="p-3 text-left font-semibold">Date</th>
+                    <th className="p-3 text-left font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {notifications.map((notif) => (
+                    <tr key={notif.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="p-3 max-w-xs truncate">{notif.title}</td>
+                      <td className="p-3">{getTypeLabel(notif.type)}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getLevelColor(notif.level)}`}>
+                          {getLevelLabel(notif.level)}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(notif.status)}`}>
+                          {getStatusLabel(notif.status)}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(notif.category)}`}>
+                          {CATEGORY_LABELS[notif.category]}
+                        </span>
+                      </td>
+                      <td className="p-3 text-sm">{formatDate(notif.issueDate)}</td>
+                      <td className="p-3 space-x-2">
+                        <button
+                          onClick={() => handleEdit(notif)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(notif.id)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

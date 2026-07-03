@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import {
   NOTIFICATION_TYPES,
   NOTIFICATION_LEVELS,
@@ -10,15 +9,11 @@ import {
   LEVEL_LABELS,
   CATEGORY_LABELS,
   PRIORITY_LABELS,
-  getStatusColor,
-  getPriorityColor,
   getLevelColor,
   getCategoryColor,
-  isExpired,
+  getPriorityColor,
 } from '@/lib/notificationConstants';
 import {
-  getTypeLabel,
-  getLevelLabel,
   formatDate,
   formatFileSize,
   getIconForFileType,
@@ -27,51 +22,76 @@ import {
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
-  const [selectedType, setSelectedType] = useState('message');
-  const [selectedLevel, setSelectedLevel] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    type: 'message',
+    level: '',
+    category: '',
+    search: '',
+  });
+
   const itemsPerPage = 10;
 
+  // Fetch notifications when filters or page changes
   useEffect(() => {
-    fetchNotifications();
-  }, [selectedType, selectedLevel, selectedCategory, searchTerm]);
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      params.append('type', selectedType);
-      if (selectedLevel) params.append('level', selectedLevel);
-      if (selectedCategory) params.append('category', selectedCategory);
-      if (searchTerm) params.append('search', searchTerm);
+        const params = new URLSearchParams();
+        params.append('type', filters.type);
+        if (filters.level) params.append('level', filters.level);
+        if (filters.category) params.append('category', filters.category);
+        if (filters.search) params.append('search', filters.search);
+        params.append('page', currentPage);
+        params.append('limit', itemsPerPage);
 
-      const res = await fetch(`/api/notifications?${params.toString()}`);
-      const data = await res.json();
+        const response = await fetch(`/api/notifications?${params.toString()}`);
+        const data = await response.json();
 
-      if (data.success) {
-        setNotifications(data.notifications || []);
-        setCurrentPage(1);
+        if (data.success) {
+          const items = Array.isArray(data.notifications)
+            ? data.notifications
+            : Array.isArray(data)
+              ? data
+              : [];
+
+          setNotifications(items);
+          setTotalPages(data.pages || 0);
+        } else {
+          setError('Failed to load notifications');
+          setNotifications([]);
+        }
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+        setError('Error loading notifications. Please try again.');
+        setNotifications([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Fetch error:', error);
-      setNotifications([]);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchNotifications();
+
+    const refreshInterval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(refreshInterval);
+  }, [filters, currentPage]);
+
+  const handleFilterChange = (filterName, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [filterName]: value,
+    }));
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
-  const paginatedNotifications = notifications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(notifications.length / itemsPerPage);
-
   const handleDownloadDocument = (doc) => {
-    // Create a temporary link and trigger download
     const link = document.createElement('a');
     link.href = doc.filePath;
     link.download = doc.fileName;
@@ -83,6 +103,7 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white pt-20 pb-10">
       <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-blue-700 dark:text-blue-400 mb-2">
             Notification Board
@@ -92,17 +113,16 @@ export default function NotificationsPage() {
           </p>
         </div>
 
-        {/* Tabs for Notification Types */}
+        {/* Type Tabs */}
         <div className="flex flex-wrap gap-2 mb-8 border-b dark:border-gray-700">
           {NOTIFICATION_TYPES.map((type) => (
             <button
               key={type}
-              onClick={() => {
-                setSelectedType(type);
-                setSelectedLevel('');
-              }}
+              onClick={() =>
+                handleFilterChange('type', type)
+              }
               className={`px-6 py-3 font-medium transition ${
-                selectedType === type
+                filters.type === type
                   ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
@@ -112,14 +132,14 @@ export default function NotificationsPage() {
           ))}
         </div>
 
-        {/* Level Filter & Search */}
+        {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Filter by Level</label>
               <select
-                value={selectedLevel}
-                onChange={(e) => setSelectedLevel(e.target.value)}
+                value={filters.level}
+                onChange={(e) => handleFilterChange('level', e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
               >
                 <option value="">All Levels</option>
@@ -134,8 +154,8 @@ export default function NotificationsPage() {
             <div>
               <label className="block text-sm font-medium mb-2">Filter by Category</label>
               <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                value={filters.category}
+                onChange={(e) => handleFilterChange('category', e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
               >
                 <option value="">All Categories</option>
@@ -147,21 +167,25 @@ export default function NotificationsPage() {
               </select>
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm font-medium mb-2">Search</label>
               <input
                 type="text"
                 placeholder="Search by title..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
               />
             </div>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
-            Found {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
-          </p>
         </div>
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-800 dark:text-red-200 px-4 py-3 rounded mb-6">
+            {error}
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -171,10 +195,10 @@ export default function NotificationsPage() {
         )}
 
         {/* Notifications List */}
-        {!loading && paginatedNotifications.length > 0 ? (
+        {!loading && notifications.length > 0 && (
           <>
-            <div className="space-y-4">
-              {paginatedNotifications.map((notification) => {
+            <div className="space-y-4 mb-8">
+              {notifications.map((notification) => {
                 const expired = isNotificationExpired(notification);
                 return (
                   <div
@@ -184,37 +208,39 @@ export default function NotificationsPage() {
                     }`}
                   >
                     {/* Header */}
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
-                      <div className="flex-1">
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getLevelColor(notification.level)}`}>
-                            {LEVEL_LABELS[notification.level]}
+                    <div className="mb-4">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getLevelColor(notification.level)}`}>
+                          {LEVEL_LABELS[notification.level]}
+                        </span>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(
+                            notification.category || 'announcement'
+                          )}`}
+                        >
+                          {CATEGORY_LABELS[notification.category || 'announcement']}
+                        </span>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(notification.priority)}`}>
+                          {PRIORITY_LABELS[notification.priority]}
+                        </span>
+                        {expired && (
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                            EXPIRED
                           </span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(notification.category || 'announcement')}`}>
-                            {CATEGORY_LABELS[notification.category || 'announcement']}
-                          </span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(notification.priority)}`}>
-                            {PRIORITY_LABELS[notification.priority]}
-                          </span>
-                          {expired && (
-                            <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                              EXPIRED
-                            </span>
-                          )}
-                        </div>
-                        <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-2">
-                          {notification.title}
-                        </h2>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">Issued:</span> {formatDate(notification.issueDate)}
-                          {notification.validTill && (
-                            <>
-                              {' | '}
-                              <span className="font-medium">Valid Till:</span> {formatDate(notification.validTill)}
-                            </>
-                          )}
-                        </p>
+                        )}
                       </div>
+                      <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-2">
+                        {notification.title}
+                      </h2>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Issued:</span> {formatDate(notification.issueDate)}
+                        {notification.validTill && (
+                          <>
+                            {' | '}
+                            <span className="font-medium">Valid Till:</span> {formatDate(notification.validTill)}
+                          </>
+                        )}
+                      </p>
                     </div>
 
                     {/* Description */}
@@ -267,7 +293,7 @@ export default function NotificationsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
@@ -300,16 +326,15 @@ export default function NotificationsPage() {
               </div>
             )}
           </>
-        ) : (
-          !loading && (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-              <p className="text-gray-500 dark:text-gray-400 text-lg">
-                {searchTerm
-                  ? 'No notifications found matching your search.'
-                  : `No ${TYPE_LABELS[selectedType]?.toLowerCase() || 'notifications'} available.`}
-              </p>
-            </div>
-          )
+        )}
+
+        {/* Empty State */}
+        {!loading && notifications.length === 0 && !error && (
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <p className="text-gray-500 dark:text-gray-400 text-lg">
+              {filters.search ? 'No notifications found matching your search.' : 'No notifications available at the moment.'}
+            </p>
+          </div>
         )}
       </div>
     </div>

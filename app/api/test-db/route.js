@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 
 export async function GET(request) {
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     const dbStatus = {
       timestamp: new Date().toISOString(),

@@ -27,34 +27,36 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 10;
 
-    console.log('GET /api/notifications - Session:', session?.user?.role, 'Params:', { type, level, category, status, search });
-
-    // Build filter
+    const isAdmin = session?.user?.role === 'admin';
     const filter = {};
 
-    // Public users see only published, non-expired notifications (including scheduled ones that are due)
-    if (session?.user?.role !== 'admin') {
-      console.log('Applying public filter');
+    if (!isAdmin) {
+      // Public users only see published and not-expired notifications
+      const now = new Date();
+      filter.status = 'published';
+
+      // scheduledPublishDate: must be null or in the past
       filter.$or = [
-        { status: 'published' },
-        { status: 'published', scheduledPublishDate: { $lte: new Date() } },
+        { scheduledPublishDate: null },
+        { scheduledPublishDate: { $lte: now } },
       ];
+
+      // validTill: must be null or in the future
       filter.$and = [
         {
           $or: [
-            { validTill: { $exists: false } },
-            { validTill: { $gt: new Date() } },
+            { validTill: null },
+            { validTill: { $gt: now } },
           ],
         },
       ];
-    } else {
-      console.log('Admin user - no public filter applied');
     }
 
+    // Apply additional filters
     if (type) filter.type = type;
     if (level) filter.level = level;
     if (category) filter.category = category;
-    if (status) filter.status = status;
+    if (status && isAdmin) filter.status = status;
 
     if (search) {
       filter.$text = { $search: search };
@@ -78,7 +80,7 @@ export async function GET(request) {
       .limit(limit)
       .lean();
 
-    // Populate documents for each notification
+    // Populate documents
     const notificationsWithDocs = await Promise.all(
       notifications.map(async (notif) => {
         const documents = await NotificationDocument.find({
@@ -98,8 +100,6 @@ export async function GET(request) {
 
     const total = await NotificationBoard.countDocuments(filter);
 
-    console.log('Returning', notificationsWithDocs.length, 'notifications (total:', total, ') Filter:', JSON.stringify(filter));
-
     return NextResponse.json(
       {
         success: true,
@@ -113,7 +113,11 @@ export async function GET(request) {
   } catch (error) {
     console.error('GET Notifications Error:', error);
     return NextResponse.json(
-      { success: false, message: 'Failed to fetch notifications' },
+      {
+        success: false,
+        message: 'Failed to fetch notifications',
+        error: error.message,
+      },
       { status: 500 }
     );
   }
@@ -124,7 +128,6 @@ export async function POST(request) {
   try {
     const session = await getSession();
 
-    // Admin only
     if (!session?.user?.id || session?.user?.role !== 'admin') {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Admin access required.' },
@@ -133,17 +136,12 @@ export async function POST(request) {
     }
 
     await dbConnect();
-
     const body = await request.json();
     const { type, level, title, description, issueDate, validTill, priority, status, category, scheduledPublishDate } = body;
 
-    // Validation
     if (!type || !level || !title || !description) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Type, level, title, and description are required',
-        },
+        { success: false, message: 'Type, level, title, and description are required' },
         { status: 400 }
       );
     }
@@ -151,6 +149,13 @@ export async function POST(request) {
     if (title.length > 200) {
       return NextResponse.json(
         { success: false, message: 'Title cannot exceed 200 characters' },
+        { status: 400 }
+      );
+    }
+
+    if (description.length < 10) {
+      return NextResponse.json(
+        { success: false, message: 'Description must be at least 10 characters' },
         { status: 400 }
       );
     }
@@ -183,8 +188,6 @@ export async function POST(request) {
       createdBy: session.user.id,
     });
 
-    console.log('Notification created:', newNotification._id, 'Title:', title, 'Status:', newNotification.status);
-
     return NextResponse.json(
       {
         success: true,
@@ -200,7 +203,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('POST Notification Error:', error);
     return NextResponse.json(
-      { success: false, message: 'Failed to create notification' },
+      { success: false, message: 'Failed to create notification', error: error.message },
       { status: 500 }
     );
   }
@@ -211,7 +214,6 @@ export async function PUT(request) {
   try {
     const session = await getSession();
 
-    // Admin only
     if (!session?.user?.id || session?.user?.role !== 'admin') {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Admin access required.' },
@@ -220,7 +222,6 @@ export async function PUT(request) {
     }
 
     await dbConnect();
-
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -234,7 +235,6 @@ export async function PUT(request) {
     const body = await request.json();
     const { title, description, level, priority, status, issueDate, validTill, category, scheduledPublishDate } = body;
 
-    // Validation
     if (!title || !description) {
       return NextResponse.json(
         { success: false, message: 'Title and description are required' },
@@ -245,6 +245,13 @@ export async function PUT(request) {
     if (title.length > 200) {
       return NextResponse.json(
         { success: false, message: 'Title cannot exceed 200 characters' },
+        { status: 400 }
+      );
+    }
+
+    if (description.length < 10) {
+      return NextResponse.json(
+        { success: false, message: 'Description must be at least 10 characters' },
         { status: 400 }
       );
     }
@@ -309,7 +316,7 @@ export async function PUT(request) {
   } catch (error) {
     console.error('PUT Notification Error:', error);
     return NextResponse.json(
-      { success: false, message: 'Failed to update notification' },
+      { success: false, message: 'Failed to update notification', error: error.message },
       { status: 500 }
     );
   }
@@ -320,7 +327,6 @@ export async function DELETE(request) {
   try {
     const session = await getSession();
 
-    // Admin only
     if (!session?.user?.id || session?.user?.role !== 'admin') {
       return NextResponse.json(
         { success: false, message: 'Unauthorized. Admin access required.' },
@@ -329,7 +335,6 @@ export async function DELETE(request) {
     }
 
     await dbConnect();
-
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -340,7 +345,6 @@ export async function DELETE(request) {
       );
     }
 
-    // Delete notification and all associated documents
     const deletedNotification = await NotificationBoard.findByIdAndDelete(id);
 
     if (!deletedNotification) {
@@ -350,7 +354,6 @@ export async function DELETE(request) {
       );
     }
 
-    // Delete all documents
     await NotificationDocument.deleteMany({ notificationId: id });
 
     return NextResponse.json(
@@ -360,7 +363,7 @@ export async function DELETE(request) {
   } catch (error) {
     console.error('DELETE Notification Error:', error);
     return NextResponse.json(
-      { success: false, message: 'Failed to delete notification' },
+      { success: false, message: 'Failed to delete notification', error: error.message },
       { status: 500 }
     );
   }

@@ -4,6 +4,7 @@ import QueryCounter from '@/models/QueryCounter';
 import connectDB from '@/lib/dbConnect';
 import { checkQueryRateLimit } from '@/lib/rateLimit';
 import { isAbusive, generateQueryId, getAutoAssignedOfficer } from '@/lib/queryDisplay';
+import { requireAdminSession } from '@/lib/adminAuth';
 
 export async function POST(request) {
   await connectDB();
@@ -94,9 +95,19 @@ export async function GET(request) {
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
 
+    const session = await requireAdminSession();
+    const isAdmin = !!session;
+
+    if (!isAdmin && !mobile) {
+      return NextResponse.json(
+        { message: 'Mobile number is required for public tracking' },
+        { status: 403 }
+      );
+    }
+
     const filter = {};
 
-    if (search) {
+    if (isAdmin && search) {
       filter.$or = [
         { queryId: { $regex: search, $options: 'i' } },
         { name: { $regex: search, $options: 'i' } },
@@ -104,12 +115,15 @@ export async function GET(request) {
       ];
     }
 
-    if (ward) filter.ward = parseInt(ward);
-    if (category) filter.category = category;
-    if (status) filter.status = status;
+    if (isAdmin) {
+      if (ward) filter.ward = parseInt(ward);
+      if (category) filter.category = category;
+      if (status) filter.status = status;
+    }
+
     if (mobile) filter.mobile = mobile;
 
-    if (dateFrom || dateTo) {
+    if (isAdmin && (dateFrom || dateTo)) {
       filter.createdAt = {};
       if (dateFrom) filter.createdAt.$gte = new Date(dateFrom);
       if (dateTo) {

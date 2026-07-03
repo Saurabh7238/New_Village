@@ -3,9 +3,18 @@ import Query from '@/models/Query';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
 import { checkSlaBreach } from '@/lib/escalationRules';
+import { requireAdminSession } from '@/lib/adminAuth';
 
 export async function GET(request, { params }) {
   await connectDB();
+
+  const session = await requireAdminSession();
+  if (!session) {
+    return NextResponse.json(
+      { message: 'Unauthorized' },
+      { status: 403 }
+    );
+  }
 
   try {
     const { id } = params;
@@ -44,6 +53,14 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   await connectDB();
+
+  const session = await requireAdminSession();
+  if (!session) {
+    return NextResponse.json(
+      { message: 'Unauthorized' },
+      { status: 403 }
+    );
+  }
 
   try {
     const { id } = params;

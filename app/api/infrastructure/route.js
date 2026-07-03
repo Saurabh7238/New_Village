@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server';
 import Infrastructure from '@/models/Infrastructure'; 
 import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
+import { requireAdminSession } from '@/lib/adminAuth';
 
 // Handler for POST (Create) and PUT (Update) requests
 export async function POST(request) {
     await connectDB();
+
+    const session = await requireAdminSession();
+    if (!session) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+    }
     
     try {
         const data = await request.json();
@@ -62,6 +68,11 @@ export async function GET() {
 // Handler for DELETE requests
 export async function DELETE(request) {
     await connectDB();
+
+    const session = await requireAdminSession();
+    if (!session) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+    }
     try {
         const data = await request.json().catch(() => ({}));
         const { id } = data;
