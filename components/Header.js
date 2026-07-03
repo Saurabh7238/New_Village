@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useSession, signOut, signIn } from "next-auth/react";
+import logoImage from "../Gemini_Generated_Image_vj7e1vj7e1vj7e1v.png";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -60,12 +62,22 @@ export default function Header() {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between py-4">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-2xl font-bold tracking-wide text-white">
-            Gram Panchayat
-          </Link>
-          <span className="text-sm text-green-100">Portal</span>
-        </div>
+        <Link href="/" className="flex items-center gap-3 group">
+          <span className="relative h-12 w-12 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105">
+            <Image
+              src={logoImage}
+              alt="Chhiutahara Heritage Village logo"
+              fill
+              sizes="48px"
+              className="object-cover"
+              priority
+            />
+          </span>
+          <span className="flex flex-col leading-tight text-white">
+            <span className="text-2xl font-bold tracking-wide">Gram Panchayat</span>
+            <span className="text-sm text-green-100">Portal</span>
+          </span>
+        </Link>
 
         <div className="relative flex items-center gap-3 md:gap-5">
           {status === "loading" ? (
