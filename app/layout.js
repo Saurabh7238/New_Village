@@ -6,6 +6,10 @@ import ScrollToTopButton from "../components/ScrollToTopButton";
 export const metadata = {
   title: "Gram Panchayat Portal",
   description: "Manage Gram Panchayat information",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }) {
