@@ -6,7 +6,7 @@
 
 ## Step 2 - API consistency (CRUD)
 - [x] Update app/api/voter-data/route.js POST/PUT mapping to canonical fields
-- [ ] Ensure GET returns same shape expected by UI
+- [x] Ensure GET returns same shape expected by UI
 
 
 ## Step 3 - Import mapping fixes
@@ -19,7 +19,7 @@
 
 ## Step 5 - Display helpers
 - [x] Update lib/voterDisplay.js to expose new getters (svn_no, relation_type, relationship)
-- [ ] Ensure existing getters map to canonical fields
+- [x] Ensure existing getters map to canonical fields
 
 ## Step 6 - Testing
 - [ ] Run lint/tests/build and do a manual flow check (import -> list -> edit -> save)

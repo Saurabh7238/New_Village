@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import VoterData from "@/models/VoterData";
 import { requireAdminSession } from "@/lib/adminAuth";
+import { serializeVoter } from "@/lib/voterSerialization";
 
 const VALID_TYPES = ["vidhan-sabha", "lok-sabha", "gram-panchayat"];
 
@@ -23,24 +24,7 @@ export async function GET(request) {
       ],
     }).exec();
 
-    const mapped = data.map((item) => ({
-      ...item.toObject(),
-      type: item.type || type,
-      serialNumber: item.serialNumber || item.serial_number || "",
-      houseNo: item.houseNo || item.house_no || "",
-      svnNo: item.svnNo || item.svn_no || "",
-      electorName: item.electorName || item.elector_name || item.name || "",
-      relationType: item.relationType || item.relation_type || "",
-      relationship: item.relationship || item.parent_name || item.voterGuardianName || "",
-      voterId: item.voterId || item.elector_id || item.svn_no || "",
-      voterName: item.voterName || item.elector_name || item.name || "",
-      voterGuardianName: item.voterGuardianName || item.parent_name || item.relationship || "",
-      voterGender: item.voterGender || item.gender || "",
-      voterAge: item.voterAge ?? item.age ?? undefined,
-      voterWardNo: item.voterWardNo || item.ward || item.house_no || "",
-      id: item._id.toString(),
-      _id: item._id.toString(),
-    }));
+    const mapped = data.map((item) => serializeVoter(item, type));
 
     return NextResponse.json(mapped);
   } catch (error) {
@@ -163,14 +147,7 @@ export async function POST(request) {
     }
 
     const created = await VoterData.create(record);
-    return NextResponse.json(
-      {
-        ...created.toObject(),
-        id: created._id.toString(),
-        _id: created._id.toString(),
-      },
-      { status: 201 }
-    );
+    return NextResponse.json(serializeVoter(created, type), { status: 201 });
   } catch (error) {
     console.error("Failed to create voter:", error);
     return NextResponse.json({ error: "Failed to add voter" }, { status: 500 });
@@ -307,14 +284,7 @@ export async function PUT(request) {
       return NextResponse.json({ error: "Voter not found" }, { status: 404 });
     }
 
-    return NextResponse.json(
-      {
-        ...updated.toObject(),
-        id: updated._id.toString(),
-        _id: updated._id.toString(),
-      },
-      { status: 200 }
-    );
+    return NextResponse.json(serializeVoter(updated, type), { status: 200 });
   } catch (error) {
     console.error("Failed to update voter:", error);
     return NextResponse.json({ error: "Failed to update voter" }, { status: 500 });

@@ -11,6 +11,10 @@ import {
   classifyVoterGender,
   getVoterConstituency,
   getVoterImage,
+  getVoterSerialNumber,
+  getVoterHouseNo,
+  getVoterSvnNo,
+  getVoterWard,
 } from "@/lib/voterDisplay";
 
 export default function VidhanSabhaPage() {
@@ -137,10 +141,22 @@ export default function VidhanSabhaPage() {
               )}
               <h2 className="text-lg font-semibold text-purple-700">{getVoterName(voter)}</h2>
               <p className="text-sm text-gray-600">
+                Serial No.: {getVoterSerialNumber(voter) || "N/A"}
+              </p>
+              <p className="text-sm text-gray-600">
                 {t.voterId}: {getVoterId(voter) || "N/A"}
               </p>
               <p className="text-sm text-gray-600">
+                SVN No.: {getVoterSvnNo(voter) || "N/A"}
+              </p>
+              <p className="text-sm text-gray-600">
                 {t.constituency}: {getVoterConstituency(voter) || "Unknown"}
+              </p>
+              <p className="text-sm text-gray-600">
+                House No.: {getVoterHouseNo(voter) || "N/A"}
+              </p>
+              <p className="text-sm text-gray-600">
+                Ward/Constituency: {getVoterWard(voter) || getVoterConstituency(voter) || "N/A"}
               </p>
               <p className="text-sm text-gray-600">
                 {t.guardian}: {getVoterGuardian(voter) || "N/A"}
