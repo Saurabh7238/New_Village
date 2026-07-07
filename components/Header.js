@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useSession, signOut, signIn } from "next-auth/react";
 import logoImage from "../Gemini_Generated_Image_vj7e1vj7e1vj7e1v.png";
+import WeatherBadge from "./WeatherBadge";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -144,6 +145,8 @@ export default function Header() {
               </motion.ul>
             )}
           </AnimatePresence>
+          
+          <WeatherBadge />
         </div>
       </div>
     </header>

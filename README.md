@@ -11,6 +11,18 @@ copy .env.example .env.local
 
 Edit `.env.local` with your MongoDB Atlas URI and a `NEXTAUTH_SECRET` (32+ random characters).
 
+### Weather feature environment variables
+
+The project includes a small weather badge that depends on OpenWeatherMap. Add the following to `.env.local`:
+
+```
+OPENWEATHER_API_KEY=your_openweather_api_key
+DEFAULT_LAT=26.8467
+DEFAULT_LON=80.9462
+```
+
+`DEFAULT_LAT` and `DEFAULT_LON` are optional but used as a fallback when the client does not provide coordinates.
+
 ```bash
 npm run dev
 ```
