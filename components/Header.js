@@ -45,6 +45,12 @@ export default function Header() {
   const scrolledClass = scrolled
     ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
+  const menuItemBaseClass =
+    "flex w-full items-center px-5 py-3 text-sm font-medium transition-colors text-left rounded-none";
+  const menuItemActiveClass =
+    "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 font-semibold";
+  const menuItemInactiveClass =
+    "text-green-700 dark:text-green-100 hover:bg-green-100 dark:hover:bg-green-900";
 
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
@@ -81,32 +87,6 @@ export default function Header() {
         </Link>
 
         <div className="relative flex items-center gap-3 md:gap-5">
-          {status === "loading" ? (
-            <div className="text-white text-sm">Loading...</div>
-          ) : session ? (
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="px-4 py-2 bg-red-500 text-white rounded-md shadow hover:bg-red-600 transition font-semibold"
-            >
-              Sign Out
-            </button>
-          ) : (
-            <>
-              <Link
-                href="/register"
-                className="px-4 py-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600 transition font-semibold"
-              >
-                Register
-              </Link>
-              <button
-                onClick={() => signIn("credentials", { callbackUrl: "/admin" })}
-                className="px-4 py-2 bg-green-500 text-white rounded-md shadow hover:bg-green-600 transition font-semibold"
-              >
-                Sign In
-              </button>
-            </>
-          )}
-
           <button
             onClick={() => setOpen(!open)}
             className="px-4 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold"
@@ -120,21 +100,58 @@ export default function Header() {
             {open && (
               <motion.ul
                 id="main-menu"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="absolute right-0 top-full mt-3 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden"
+                initial={{ opacity: 0, y: -10, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.97 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute right-0 top-full mt-3 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden origin-top-right"
                 onMouseLeave={() => setOpen(false)}
               >
+                {session ? (
+                  <li>
+                    <button
+                      onClick={() => {
+                        signOut({ callbackUrl: "/" });
+                        setOpen(false);
+                      }}
+                      className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
+                    >
+                      Sign Out
+                    </button>
+                  </li>
+                ) : (
+                  <>
+                    <li>
+                      <Link
+                        href="/register"
+                        className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
+                        onClick={() => setOpen(false)}
+                      >
+                        Register
+                      </Link>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          signIn("credentials", { callbackUrl: "/admin" });
+                          setOpen(false);
+                        }}
+                        className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
+                      >
+                        Sign In
+                      </button>
+                    </li>
+                  </>
+                )}
+
                 {navItems.map(([label, href]) => (
                   <li key={href}>
                     <Link
                       href={href}
-                      className={`block px-5 py-3 transition ${
+                      className={`${menuItemBaseClass} ${
                         pathname === href
-                          ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 font-semibold"
-                          : "text-green-700 dark:text-green-100 hover:bg-green-100 dark:hover:bg-green-900"
+                          ? menuItemActiveClass
+                          : menuItemInactiveClass
                       }`}
                       onClick={() => setOpen(false)}
                     >
