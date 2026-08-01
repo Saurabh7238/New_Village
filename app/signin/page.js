@@ -1,9 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+
+const getFriendlyAuthError = (authError) => {
+  switch (authError) {
+    case "CredentialsSignin":
+    case "InvalidEmailOrPassword":
+      return "Incorrect email or password.";
+    case "Configuration":
+      return "Authentication is currently unavailable. Please try again later.";
+    default:
+      return "Unable to sign in. Please try again.";
+  }
+};
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,6 +23,14 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const authError = searchParams.get("error");
+    if (authError) {
+      setError(getFriendlyAuthError(authError));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,7 +65,7 @@ export default function LoginPage() {
 
       if (result?.error) {
         console.error("❌ Sign-in error:", result.error);
-        setError("Invalid email or password.");
+        setError(getFriendlyAuthError(result.error));
       } else if (result?.ok) {
         console.log("✅ Login successful!");
         // Redirect immediately
@@ -63,9 +83,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 px-4 py-12">
+      <div className="w-full max-w-sm rounded-xl border border-green-200 bg-white p-8 shadow-xl shadow-green-100">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold text-green-800">Login</h1>
+          <p className="mt-2 text-sm text-green-700/80">Access your Gram Panchayat account</p>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -73,7 +96,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               required
               disabled={loading}
               placeholder="your-email@example.com"
@@ -86,25 +109,29 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               required
               disabled={loading}
               placeholder="Enter your password"
               autoComplete="current-password"
             />
           </div>
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          {error && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700">
+              {error}
+            </div>
+          )}
           <button
             type="submit"
-            className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={loading}
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
-        <div className="text-center mt-4 text-sm">
+        <div className="mt-4 text-center text-sm text-gray-600">
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-indigo-600 hover:underline">
+          <Link href="/register" className="font-semibold text-green-700 hover:underline">
             Register here
           </Link>
         </div>

@@ -48,7 +48,7 @@ export default function Header() {
     ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
   const menuItemBaseClass =
-    "flex w-full items-center px-5 py-3 text-sm font-medium transition-colors text-left rounded-none";
+    "flex w-full items-center border-b border-green-100 px-5 py-3 text-sm font-medium transition-colors text-left last:border-b-0 dark:border-green-700";
   const menuItemActiveClass =
     "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 font-semibold";
   const menuItemInactiveClass =
@@ -84,7 +84,7 @@ export default function Header() {
           </span>
           <span className="flex min-w-0 flex-col leading-tight text-white">
             <span className="truncate text-2xl font-bold tracking-wide">Gram Panchayat</span>
-            <span className="truncate text-sm text-green-100">Portal</span>
+            <span className="truncate text-sm text-green-100">Chhiutahara Portal</span>
           </span>
         </Link>
 
@@ -131,7 +131,7 @@ export default function Header() {
                     </button>
                   </li>
                 ) : (
-                  <li className="border-t border-green-100 bg-green-50/70 px-3 py-3 dark:border-green-700 dark:bg-green-950/60">
+                  <li className="border-b border-green-100 bg-green-50/70 px-3 py-3 dark:border-green-700 dark:bg-green-950/60">
                     <div className="flex items-center justify-center gap-2 text-sm font-semibold text-green-700 dark:text-green-100">
                       <Link
                         href="/register"

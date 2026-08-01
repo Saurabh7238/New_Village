@@ -32,7 +32,7 @@ export const authOptions = {
 
           if (!userFound) {
             console.log(`[Auth] User not found for email: ${credentials.email}`);
-            return null;
+            throw new Error("InvalidEmailOrPassword");
           }
 
           console.log(`[Auth] User found: ${userFound.email}, checking password...`);
@@ -40,7 +40,7 @@ export const authOptions = {
           // Check if password exists
           if (!userFound.password) {
             console.log(`[Auth] User has no password set: ${credentials.email}`);
-            return null;
+            throw new Error("InvalidEmailOrPassword");
           }
 
           // Compare passwords
@@ -61,10 +61,10 @@ export const authOptions = {
           }
 
           console.log(`[Auth] ❌ Password mismatch for: ${userFound.email}`);
-          return null;
+          throw new Error("InvalidEmailOrPassword");
         } catch (error) {
           console.error("[Auth] Authorize error:", error.message);
-          return null;
+          throw error;
         }
       },
     }),
