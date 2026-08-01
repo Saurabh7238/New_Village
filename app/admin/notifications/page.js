@@ -317,7 +317,7 @@ export default function AdminNotificationsPage() {
             Notification Manager
           </h1>
           <button
-            onClick={() => signOut()}
+            onClick={() => signOut({ callbackUrl: "/?logout=true" })}
             className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm"
           >
             Sign Out

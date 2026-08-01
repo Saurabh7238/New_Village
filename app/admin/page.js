@@ -23,7 +23,7 @@ export default function AdminPanel() {
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-green-700 dark:text-yellow-400">Admin Panel</h1>
-          <button onClick={() => signOut()} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+          <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
             Sign Out
           </button>
         </div>
@@ -67,7 +67,7 @@ export default function AdminPanel() {
         <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 p-6 rounded-lg border border-green-200 dark:border-gray-600">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Welcome to Admin Dashboard</h3>
           <p className="text-gray-700 dark:text-gray-300">
-            Select a management section above to manage different aspects of your Gram Panchayat Portal.
+            Select a management section above to manage different aspects of Chiutahara Portal.
           </p>
         </div>
       </div>

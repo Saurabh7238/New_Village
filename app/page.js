@@ -170,7 +170,7 @@ export default function HomePage() {
 
   const labels = {
     en: {
-      welcome: "Welcome to Gram Panchayat Portal",
+      welcome: "Welcome to Chiutahara Portal",
       description: "Manage certificates, budget, members, development & more",
       services: "Services",
       lang: "हिंदी",

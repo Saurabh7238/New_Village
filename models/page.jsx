@@ -24,7 +24,7 @@ export default function GramPanchayatDashboard() {
     <div className="min-h-screen bg-gray-50 p-8">
       <header className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-blue-900">Gram Panchayat Portal</h1>
+          <h1 className="text-3xl font-bold text-blue-900">Chiutahara Portal</h1>
           <p className="text-gray-600">Welcome back, {citizenName}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-blue-100">

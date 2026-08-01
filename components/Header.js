@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useSession, signOut, signIn } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import logoImage from "../Gemini_Generated_Image_vj7e1vj7e1vj7e1v.png";
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
@@ -17,11 +17,18 @@ export default function Header() {
   const { data: session, status } = useSession();
   const { labels: langLabels, toggleLanguage } = useLanguage();
 
+  const displayName =
+    session?.user?.name ||
+    session?.user?.email?.split("@")[0] ||
+    session?.user?.role ||
+    null;
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
 
   const navItems = [
     [langLabels.home, "/"],
@@ -66,7 +73,7 @@ export default function Header() {
             repeat: Infinity,
           }}
         >
-          🌟 Welcome to Gram Panchayat Portal — Efficient Governance for Every Citizen 🌟
+          🌟 Welcome to Chiutahara Portal — Efficient Governance for Every Citizen 🌟
         </motion.div>
       </div>
 
@@ -83,13 +90,18 @@ export default function Header() {
             />
           </span>
           <span className="flex min-w-0 flex-col leading-tight text-white">
-            <span className="truncate text-2xl font-bold tracking-wide">Gram Panchayat</span>
-            <span className="truncate text-sm text-green-100">Chhiutahara Portal</span>
+            <span className="truncate text-2xl font-bold tracking-wide">Chiutahara Portal</span>
+            <span className="truncate text-sm text-green-100">Local Governance</span>
           </span>
         </Link>
 
         <div className="relative ml-auto flex items-center gap-2 md:gap-3 shrink-0">
           <WeatherBadge />
+          {displayName && (
+            <span className="hidden sm:inline-flex items-center rounded-full border border-white/20 bg-white/90 px-3 py-1 text-sm font-medium text-green-900 dark:bg-green-950/80 dark:text-green-100">
+              Logged in as {displayName}
+            </span>
+          )}
           <button
             onClick={toggleLanguage}
             className="px-3 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold whitespace-nowrap"
@@ -122,7 +134,7 @@ export default function Header() {
                   <li>
                     <button
                       onClick={() => {
-                        signOut({ callbackUrl: "/" });
+                        signOut({ callbackUrl: "/?logout=true" });
                         setOpen(false);
                       }}
                       className={`${menuItemBaseClass} ${menuItemInactiveClass}`}

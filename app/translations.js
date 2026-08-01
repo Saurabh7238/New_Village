@@ -37,7 +37,7 @@ export const TRANSLATIONS = {
   },
   home: {
     en: {
-      heading: "Welcome to Gram Panchayat Portal",
+      heading: "Welcome to Chiutahara Portal",
       description: "Manage certificates, budget, members, development & more",
       banner: "📢 Special Gram Sabha will be held on September 25 at Panchayat Bhavan.",
       servicesTitle: "Services",

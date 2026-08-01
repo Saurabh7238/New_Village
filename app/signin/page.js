@@ -69,12 +69,13 @@ export default function LoginPage() {
         setError(getFriendlyAuthError(result.error));
       } else if (result?.ok) {
         console.log("✅ Login successful!");
-        // Redirect immediately
-        // Force a full reload so SessionProvider fetches updated session with role
+        // Redirect immediately with a welcome flag so the app can show a login animation.
         if (typeof window !== "undefined") {
           const params = new URLSearchParams(window.location.search);
           const callbackUrl = params.get("callbackUrl") || "/";
-          window.location.href = callbackUrl;
+          const redirectUrl = new URL(callbackUrl, window.location.origin);
+          redirectUrl.searchParams.set("welcome", "true");
+          window.location.href = redirectUrl.toString();
         } else {
           router.push("/");
         }
@@ -95,7 +96,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm rounded-xl border border-green-200 bg-white p-8 shadow-xl shadow-green-100">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-green-800">Login</h1>
-          <p className="mt-2 text-sm text-green-700/80">Access your Gram Panchayat account</p>
+          <p className="mt-2 text-sm text-green-700/80">Access your Chiutahara Portal account</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

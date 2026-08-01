@@ -3,10 +3,11 @@ import Header from "../components/Header";
 import LanguageBanner from "../components/LanguageBanner";
 import Providers from "./auth-provider";
 import ScrollToTopButton from "../components/ScrollToTopButton";
+import WelcomeToast from "../components/WelcomeToast";
 import { LanguageProvider } from "./language-provider";
 
 export const metadata = {
-  title: "Gram Panchayat Portal",
+  title: "Chiutahara Portal",
   description: "Manage Gram Panchayat information",
   icons: {
     icon: "/favicon.ico",
@@ -40,12 +41,13 @@ export default function RootLayout({ children }) {
               </div>
             </noscript>
             <Header />
+            <WelcomeToast />
             <LanguageBanner />
             <main className="max-w-6xl mx-auto px-4 pt-36 pb-8">{children}</main>
             <ScrollToTopButton />
             <footer className="bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700 text-white mt-8">
               <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm">
-                © {new Date().getFullYear()} Gram Panchayat Portal
+                © {new Date().getFullYear()} Chiutahara Portal
               </div>
             </footer>
           </LanguageProvider>

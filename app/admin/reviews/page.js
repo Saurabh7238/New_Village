@@ -61,7 +61,7 @@ export default function AdminReviewsPage() {
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-purple-700 dark:text-yellow-400">Manage Reviews</h1>
-          <button onClick={() => signOut()} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Sign Out</button>
+          <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Sign Out</button>
         </div>
 
         <form onSubmit={addReview} className="mb-8 space-y-4 p-4 border rounded-lg bg-white dark:bg-gray-800">
