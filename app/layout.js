@@ -41,9 +41,11 @@ export default function RootLayout({ children }) {
               </div>
             </noscript>
             <Header />
-            <WelcomeToast />
             <LanguageBanner />
-            <main className="max-w-6xl mx-auto px-4 pt-36 pb-8">{children}</main>
+            <main className="max-w-6xl mx-auto px-4 pt-36 pb-8">
+              <WelcomeToast />
+              {children}
+            </main>
             <ScrollToTopButton />
             <footer className="bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700 text-white mt-8">
               <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm">

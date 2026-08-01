@@ -96,11 +96,6 @@ export default function Header() {
 
         <div className="relative ml-auto flex items-center gap-2 md:gap-3 shrink-0">
           <WeatherBadge />
-          {displayName && (
-            <span className="inline-flex items-center rounded-full border border-white/20 bg-white/90 px-3 py-1 text-sm font-medium text-green-900 dark:bg-green-950/80 dark:text-green-100">
-              Logged in as {displayName}
-            </span>
-          )}
           <button
             onClick={toggleLanguage}
             className="px-3 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold whitespace-nowrap"
@@ -130,17 +125,22 @@ export default function Header() {
                 onMouseLeave={() => setOpen(false)}
               >
                 {session ? (
-                  <li>
-                    <button
-                      onClick={() => {
-                        signOut({ callbackUrl: "/?logout=true" });
-                        setOpen(false);
-                      }}
-                      className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
-                    >
-                      Sign Out
-                    </button>
-                  </li>
+                  <>
+                    <li className="bg-green-50 px-5 py-3 text-sm font-medium text-green-900 dark:bg-green-950 dark:text-green-100">
+                      Logged in as {displayName}
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          signOut({ callbackUrl: "/?logout=true" });
+                          setOpen(false);
+                        }}
+                        className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
+                      >
+                        Sign Out
+                      </button>
+                    </li>
+                  </>
                 ) : (
                   <li className="border-b border-green-100 bg-green-50/70 px-3 py-3 dark:border-green-700 dark:bg-green-950/60">
                     <div className="flex items-center justify-center gap-2 text-sm font-semibold text-green-700 dark:text-green-100">
