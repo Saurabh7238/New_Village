@@ -30,7 +30,7 @@ export default function WelcomeToast() {
       const newSearch = params.toString();
       const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}${window.location.hash || ""}`;
       window.history.replaceState({}, "", newUrl);
-      const timeout = window.setTimeout(() => setShowToast(false), 4000);
+      const timeout = window.setTimeout(() => setShowToast(false), 5000);
       return () => window.clearTimeout(timeout);
     }
     return undefined;
