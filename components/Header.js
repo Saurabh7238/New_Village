@@ -55,11 +55,11 @@ export default function Header() {
     ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
   const menuItemBaseClass =
-    "flex w-full items-center border-b border-green-100 bg-white dark:border-green-700 dark:bg-gray-800 px-5 py-3 text-sm font-medium transition-colors text-left last:border-b-0";
+    "flex w-full items-center border-b border-green-100 bg-green-50 dark:border-green-700 dark:bg-gray-900 px-5 py-3 text-sm font-medium transition-colors text-left last:border-b-0";
   const menuItemActiveClass =
-    "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 font-semibold";
+    "bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 font-semibold";
   const menuItemInactiveClass =
-    "text-green-700 dark:text-green-100 hover:bg-green-100 dark:hover:bg-green-900";
+    "text-green-700 dark:text-green-100 hover:bg-green-100 dark:hover:bg-green-800";
 
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
