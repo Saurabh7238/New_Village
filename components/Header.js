@@ -97,7 +97,7 @@ export default function Header() {
         <div className="relative ml-auto flex items-center gap-2 md:gap-3 shrink-0">
           <WeatherBadge />
           {displayName && (
-            <span className="hidden sm:inline-flex items-center rounded-full border border-white/20 bg-white/90 px-3 py-1 text-sm font-medium text-green-900 dark:bg-green-950/80 dark:text-green-100">
+            <span className="inline-flex items-center rounded-full border border-white/20 bg-white/90 px-3 py-1 text-sm font-medium text-green-900 dark:bg-green-950/80 dark:text-green-100">
               Logged in as {displayName}
             </span>
           )}
@@ -153,7 +153,7 @@ export default function Header() {
                       </Link>
                       <span className="text-green-500">/</span>
                       <Link
-                        href="/signin?callbackUrl=/admin"
+                        href="/signin?callbackUrl=/"
                         className="rounded px-2 py-1 transition hover:bg-green-100 dark:hover:bg-green-900"
                         onClick={() => setOpen(false)}
                       >
