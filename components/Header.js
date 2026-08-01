@@ -88,7 +88,7 @@ export default function Header() {
           </span>
         </Link>
 
-        <div className="relative flex items-center gap-2 md:gap-3 shrink-0">
+        <div className="relative ml-auto flex items-center gap-2 md:gap-3 shrink-0">
           <WeatherBadge />
           <button
             onClick={toggleLanguage}
@@ -131,28 +131,27 @@ export default function Header() {
                     </button>
                   </li>
                 ) : (
-                  <>
-                    <li>
+                  <li className="border-t border-green-100 bg-green-50/70 px-3 py-3 dark:border-green-700 dark:bg-green-950/60">
+                    <div className="flex items-center justify-center gap-2 text-sm font-semibold text-green-700 dark:text-green-100">
                       <Link
                         href="/register"
-                        className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
+                        className="rounded px-2 py-1 transition hover:bg-green-100 dark:hover:bg-green-900"
                         onClick={() => setOpen(false)}
                       >
-                        Register
+                        Sign Up
                       </Link>
-                    </li>
-                    <li>
+                      <span className="text-green-500">/</span>
                       <button
                         onClick={() => {
                           signIn("credentials", { callbackUrl: "/admin" });
                           setOpen(false);
                         }}
-                        className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
+                        className="rounded px-2 py-1 transition hover:bg-green-100 dark:hover:bg-green-900"
                       >
-                        Sign In
+                        Log In
                       </button>
-                    </li>
-                  </>
+                    </div>
+                  </li>
                 )}
 
                 {navItems.map(([label, href]) => (
