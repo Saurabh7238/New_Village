@@ -72,7 +72,9 @@ export default function LoginPage() {
         // Redirect immediately
         // Force a full reload so SessionProvider fetches updated session with role
         if (typeof window !== "undefined") {
-          window.location.href = "/";
+          const params = new URLSearchParams(window.location.search);
+          const callbackUrl = params.get("callbackUrl") || "/";
+          window.location.href = callbackUrl;
         } else {
           router.push("/");
         }

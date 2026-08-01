@@ -141,15 +141,13 @@ export default function Header() {
                         Sign Up
                       </Link>
                       <span className="text-green-500">/</span>
-                      <button
-                        onClick={() => {
-                          signIn("credentials", { callbackUrl: "/admin" });
-                          setOpen(false);
-                        }}
+                      <Link
+                        href="/signin?callbackUrl=/admin"
                         className="rounded px-2 py-1 transition hover:bg-green-100 dark:hover:bg-green-900"
+                        onClick={() => setOpen(false)}
                       >
                         Log In
-                      </button>
+                      </Link>
                     </div>
                   </li>
                 )}
