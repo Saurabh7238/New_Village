@@ -89,9 +89,8 @@ export default function Header() {
               priority
             />
           </span>
-          <span className="flex min-w-0 flex-col leading-tight text-white">
+          <span className="min-w-0 leading-tight text-white">
             <span className="truncate text-2xl font-bold tracking-wide">Chiutahara Portal</span>
-            <span className="truncate text-sm text-green-100">Local Governance</span>
           </span>
         </Link>
 
