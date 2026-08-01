@@ -70,7 +70,12 @@ export default function LoginPage() {
       } else if (result?.ok) {
         console.log("✅ Login successful!");
         // Redirect immediately
-        router.push("/");
+        // Force a full reload so SessionProvider fetches updated session with role
+        if (typeof window !== "undefined") {
+          window.location.href = "/";
+        } else {
+          router.push("/");
+        }
       } else {
         console.error("⚠️ Unexpected response:", result);
         setError("Login failed. Please try again.");
