@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const getFriendlyAuthError = (authError) => {
@@ -23,14 +23,15 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const authError = searchParams.get("error");
+    if (typeof window === "undefined") return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const authError = urlParams.get("error");
     if (authError) {
       setError(getFriendlyAuthError(authError));
     }
-  }, [searchParams]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
