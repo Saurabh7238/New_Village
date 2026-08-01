@@ -16,12 +16,13 @@ import {
   getVoterSvnNo,
   getVoterWard,
 } from "@/lib/voterDisplay";
+import { useLanguage } from "@/app/language-provider";
 
 export default function VidhanSabhaPage() {
   const [voters, setVoters] = useState([]);
   const [search, setSearch] = useState("");
   const [constituencyFilter, setConstituencyFilter] = useState("");
-  const [language, setLanguage] = useState("en");
+  const { language } = useLanguage();
 
   useEffect(() => {
     fetch("/api/voter-data?type=vidhan-sabha")
@@ -94,12 +95,6 @@ export default function VidhanSabhaPage() {
     <div className="pt-20 px-4 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-purple-700 border-b pb-2">{t.title}</h1>
-        <button
-          onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-          className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
-        >
-          {t.toggle}
-        </button>
       </div>
 
       <input

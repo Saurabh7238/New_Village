@@ -8,12 +8,14 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut, signIn } from "next-auth/react";
 import logoImage from "../Gemini_Generated_Image_vj7e1vj7e1vj7e1v.png";
 import WeatherBadge from "./WeatherBadge";
+import { useLanguage } from "@/app/language-provider";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const { labels: langLabels, toggleLanguage } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -22,19 +24,19 @@ export default function Header() {
   }, []);
 
   const navItems = [
-    ["Home", "/"],
-    ["Birth", "/birth"],
-    ["Death", "/death"],
-    ["Aadhar", "/aadhar"],
-    ["Voter", "/voter"],
-    ["Budget", "/budget"],
-    ["Funds", "/funds"],
-    ["Development", "/development"],
-    ["Members", "/members"],
-    ["Appointments", "/appointments"],
-    ["Gallery", "/gallery"],
-    ["Map", "/map"],
-    ["Infra", "/infrastructure"],
+    [langLabels.home, "/"],
+    [langLabels.birth, "/birth"],
+    [langLabels.death, "/death"],
+    [langLabels.aadhar, "/aadhar"],
+    [langLabels.voter, "/voter"],
+    [langLabels.budget, "/budget"],
+    [langLabels.funds, "/funds"],
+    [langLabels.development, "/development"],
+    [langLabels.members, "/members"],
+    [langLabels.appointments, "/appointments"],
+    [langLabels.gallery, "/gallery"],
+    [langLabels.map, "/map"],
+    [langLabels.infra, "/infrastructure"],
   ];
 
   if (session?.user?.role === "admin") {
@@ -68,8 +70,8 @@ export default function Header() {
         </motion.div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between py-4">
-        <Link href="/" className="flex items-center gap-3 group">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 py-4">
+        <Link href="/" className="flex items-center gap-3 group min-w-0">
           <span className="relative h-12 w-12 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105">
             <Image
               src={logoImage}
@@ -80,20 +82,29 @@ export default function Header() {
               priority
             />
           </span>
-          <span className="flex flex-col leading-tight text-white">
-            <span className="text-2xl font-bold tracking-wide">Gram Panchayat</span>
-            <span className="text-sm text-green-100">Portal</span>
+          <span className="flex min-w-0 flex-col leading-tight text-white">
+            <span className="truncate text-2xl font-bold tracking-wide">Gram Panchayat</span>
+            <span className="truncate text-sm text-green-100">Portal</span>
           </span>
         </Link>
 
-        <div className="relative flex items-center gap-3 md:gap-5">
+        <div className="relative flex items-center gap-2 md:gap-3 shrink-0">
+          <WeatherBadge />
+          <button
+            onClick={toggleLanguage}
+            className="px-3 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold whitespace-nowrap"
+            aria-label="Toggle language"
+          >
+            {langLabels.langToggle}
+          </button>
           <button
             onClick={() => setOpen(!open)}
-            className="px-4 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold"
+            className="px-4 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold whitespace-nowrap"
             aria-expanded={open}
             aria-controls="main-menu"
+            aria-label={open ? langLabels.close : langLabels.menu}
           >
-            {open ? "✕ Close" : "☰ Menu"}
+            {open ? langLabels.close : langLabels.menu}
           </button>
 
           <AnimatePresence>
@@ -104,7 +115,7 @@ export default function Header() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.97 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute right-0 top-full mt-3 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden origin-top-right"
+                className="absolute right-0 top-full mt-3 w-[min(95vw,18rem)] max-w-full bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden origin-top-right"
                 onMouseLeave={() => setOpen(false)}
               >
                 {session ? (
@@ -162,8 +173,6 @@ export default function Header() {
               </motion.ul>
             )}
           </AnimatePresence>
-          
-          <WeatherBadge />
         </div>
       </div>
     </header>

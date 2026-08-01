@@ -8,11 +8,12 @@ import { motion } from "framer-motion";
 import ServiceCard from "../components/ServiceCard"; 
 import { Globe, Moon, Sun, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/app/language-provider";
 
 export default function HomePage() {
   const router = useRouter();
 
-  const [language, setLanguage] = useState("hi");
+  const { language } = useLanguage();
   const [darkMode, setDarkMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [visitCount, setVisitCount] = useState(null);
@@ -28,7 +29,6 @@ export default function HomePage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef();
 
-  const toggleLanguage = () => setLanguage(language === "en" ? "hi" : "en");
   const toggleDarkMode = () => setDarkMode(!darkMode);
   const toggleModal = () => setShowModal(!showModal);
   const toggleDropdown = () => setShowDropdown(!showDropdown);
@@ -322,14 +322,6 @@ export default function HomePage() {
               </div>
             )}
           </div>
-
-          <button
-            onClick={toggleLanguage}
-            className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow"
-            title={t.lang}
-          >
-            <Globe className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-          </button>
 
           <button
             onClick={toggleDarkMode}

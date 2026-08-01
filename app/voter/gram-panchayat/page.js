@@ -18,6 +18,7 @@ import {
   getVoterDOB,
   getVoterSvnNo,
 } from "@/lib/voterDisplay";
+import { useLanguage } from "@/app/language-provider";
 
 
 export default function GramPanchayatPage() {
@@ -28,7 +29,7 @@ export default function GramPanchayatPage() {
   const [poolingBoothFilter, setPoolingBoothFilter] = useState("");
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
-  const [language, setLanguage] = useState("en");
+  const { language } = useLanguage();
 
   useEffect(() => {
     fetch("/api/voter-data?type=gram-panchayat")
@@ -191,12 +192,6 @@ export default function GramPanchayatPage() {
         <h1 className="text-3xl font-bold text-green-700 border-b pb-2">
           {t.title}
         </h1>
-        <button
-          onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-          className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition font-semibold"
-        >
-          {t.toggle}
-        </button>
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">

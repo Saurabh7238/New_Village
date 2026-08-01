@@ -16,12 +16,13 @@ import {
   getVoterSvnNo,
   getVoterWard,
 } from "@/lib/voterDisplay";
+import { useLanguage } from "@/app/language-provider";
 
 export default function LokSabhaPage() {
   const [voters, setVoters] = useState([]);
   const [search, setSearch] = useState("");
   const [constituencyFilter, setConstituencyFilter] = useState("");
-  const [language, setLanguage] = useState("en");
+  const { language } = useLanguage();
 
   useEffect(() => {
     fetch("/api/voter-data?type=lok-sabha")
@@ -99,12 +100,6 @@ export default function LokSabhaPage() {
         <h1 className="text-2xl font-bold text-blue-700 border-b pb-2">
           {t.title}
         </h1>
-        <button
-          onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-          className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
-        >
-          {t.toggle}
-        </button>
       </div>
 
       <input
