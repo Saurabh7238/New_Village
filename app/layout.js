@@ -7,8 +7,8 @@ import WelcomeToast from "../components/WelcomeToast";
 import { LanguageProvider } from "./language-provider";
 
 export const metadata = {
-  title: "Chiutahara Portal",
-  description: "Manage Gram Panchayat information",
+  title: "To Gram panchayat chiutahra",
+  description: "Manage Gram Panchayat information for Chiutahra",
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
@@ -48,8 +48,8 @@ export default function RootLayout({ children }) {
             </main>
             <ScrollToTopButton />
             <footer className="bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700 text-white mt-8">
-              <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm">
-                © {new Date().getFullYear()} Chiutahara Portal
+                <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm">
+                © {new Date().getFullYear()} To Gram panchayat chiutahra
               </div>
             </footer>
           </LanguageProvider>

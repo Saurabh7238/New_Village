@@ -170,17 +170,17 @@ export default function HomePage() {
 
   const labels = {
     en: {
-      welcome: "Welcome to Chiutahara Portal",
+      welcome: "Welcome to To Gram panchayat chiutahra",
       description: "Manage certificates, budget, members, development & more",
       services: "Services",
       lang: "हिंदी",
       dark: "Dark Mode",
       slogan: "Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen",
-      footer: "© 2026 Gram Panchayat | Powered by Local Governance",
+      footer: "© 2026 To Gram panchayat chiutahra | Powered by Local Governance",
       fab: "📞",
       whatsappLink:
         "https://wa.me/qr/D5EKI63JQJHLC1?text=Hello%20Gram%20Panchayat%20Team%2C%20I%20have%20a%20query.",
-      contactTitle: "Contact Gram Panchayat",
+      contactTitle: "Contact Gram Panchayat Chiutahra",
       contactMessage: "Send us a message or reach out via WhatsApp.",
       close: "Close",
       whatsapp: "Open WhatsApp",

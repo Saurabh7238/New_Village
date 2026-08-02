@@ -1,4 +1,4 @@
-# TODO - Gram Panchayat Portal (Voter Data)
+# TODO - To Gram panchayat chiutahra (Voter Data)
 
 ## Step 1 - Model: extend VoterData schema
 - [x] Update models/VoterData.js to store: serial_number, house_no, elector_name, relation_type, relationship/parent_name, svn_no, gender, age
