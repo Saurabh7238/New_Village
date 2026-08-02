@@ -1,4 +1,4 @@
-# To Gram panchayat chiutahra
+# Gram panchayat chiutahra
 
 Next.js app for village portal features (notifications, infrastructure, voters, gallery, admin).
 

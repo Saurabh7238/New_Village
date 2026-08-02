@@ -7,7 +7,7 @@ import WelcomeToast from "../components/WelcomeToast";
 import { LanguageProvider } from "./language-provider";
 
 export const metadata = {
-  title: "To Gram panchayat chiutahra",
+  title: "Gram panchayat chiutahra",
   description: "Manage Gram Panchayat information for Chiutahra",
   icons: {
     icon: "/favicon.ico",
@@ -31,6 +31,8 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4009707107955539"
+          crossOrigin="anonymous"></script>
       </head>
       <body className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-yellow-50 text-gray-900 font-sans relative dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 dark:text-gray-100 transition-colors">
         <Providers>
@@ -49,7 +51,7 @@ export default function RootLayout({ children }) {
             <ScrollToTopButton />
             <footer className="bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700 text-white mt-8">
                 <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm">
-                © {new Date().getFullYear()} To Gram panchayat chiutahra
+                © {new Date().getFullYear()} Gram panchayat chiutahra
               </div>
             </footer>
           </LanguageProvider>

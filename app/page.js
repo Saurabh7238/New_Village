@@ -170,13 +170,13 @@ export default function HomePage() {
 
   const labels = {
     en: {
-      welcome: "Welcome to To Gram panchayat chiutahra",
+      welcome: "Welcome to Gram panchayat chiutahra",
       description: "Manage certificates, budget, members, development & more",
       services: "Services",
       lang: "हिंदी",
       dark: "Dark Mode",
       slogan: "Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen",
-      footer: "© 2026 To Gram panchayat chiutahra | Powered by Local Governance",
+      footer: "© 2026 Gram panchayat chiutahra | Powered by Local Governance",
       fab: "📞",
       whatsappLink:
         "https://wa.me/qr/D5EKI63JQJHLC1?text=Hello%20Gram%20Panchayat%20Team%2C%20I%20have%20a%20query.",
@@ -346,6 +346,18 @@ export default function HomePage() {
               {t.description}
             </p>
           </section>
+
+          <div className="my-4 flex justify-center">
+            <ins className="adsbygoogle"
+              style={{ display: 'block' }}
+              data-ad-client="ca-pub-4009707107955539"
+              data-ad-slot="1234567890"
+              data-ad-format="auto"
+              data-full-width-responsive="true"></ins>
+            <script
+              dangerouslySetInnerHTML={{ __html: `(adsbygoogle = window.adsbygoogle || []).push({});` }}
+            />
+          </div>
 
           <section className="overflow-hidden relative bg-black text-white py-2">
             <motion.div
