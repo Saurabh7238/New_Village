@@ -252,19 +252,16 @@ export default function HomePage() {
 
   const images = ["/slide.png", "/voter.png", "/panchayat.jpg"];
 
-  // Dynamic padding-top for main content to avoid overlap with fixed banner
-  const mainContentPaddingTop = showBanner ? 'pt-16' : 'pt-4'; 
+  // The root layout already reserves space for the fixed header.
+  const mainContentPaddingTop = 'pt-2';
   // Dynamic top position for fixed icons to appear below the banner
   const fixedIconsTop = showBanner ? 'top-12' : 'top-2'; 
-  // Top padding for the whole page when banner is active to push content down
-  const wrapperPaddingTop = showBanner ? 'pt-12' : 'pt-0'; 
-
   return (
     <div className={`${darkMode ? "dark" : ""}`}>
       <div
         className={`min-h-screen ${
           darkMode ? "bg-gray-900 text-white" : "bg-white text-black"
-        } relative ${wrapperPaddingTop}`} // Use wrapperPaddingTop to push content down
+        } relative`}
       >
         {/* Notification Banner */}
         {showBanner && (
@@ -337,7 +334,7 @@ export default function HomePage() {
         </div>
 
         {/* Main Content */}
-        <div className={`pb-16 transition-all duration-500 ${mainContentPaddingTop}`}>
+        <div className={`pb-2 transition-all duration-500 ${mainContentPaddingTop}`}>
           <section className="text-center py-2 bg-gradient-to-r from-green-100 via-blue-100 to-yellow-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600">
             <h1 className="text-xl font-bold text-green-700 dark:text-yellow-400">
               {t.welcome}
@@ -346,18 +343,6 @@ export default function HomePage() {
               {t.description}
             </p>
           </section>
-
-          <div className="my-4 flex justify-center">
-            <ins className="adsbygoogle"
-              style={{ display: 'block' }}
-              data-ad-client="ca-pub-4009707107955539"
-              data-ad-slot="1234567890"
-              data-ad-format="auto"
-              data-full-width-responsive="true"></ins>
-            <script
-              dangerouslySetInnerHTML={{ __html: `(adsbygoogle = window.adsbygoogle || []).push({});` }}
-            />
-          </div>
 
           <section className="overflow-hidden relative bg-black text-white py-2">
             <motion.div
@@ -450,7 +435,7 @@ export default function HomePage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400">Chiutahara, Lauhara, Malikan</p>
                 </div>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><strong>Sarpanch:</strong> </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><strong>Sarpanch:</strong> Chhotelal Yadav</p>
               <p className="text-xs text-gray-600 dark:text-gray-400"><em>Part of Panchayati Raj system, working at grassroots level for local administrative matters and village-level planning.</em></p>
             </div>
 
@@ -573,7 +558,6 @@ export default function HomePage() {
 
         <footer className="fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-gray-800 text-center text-xs py-2 border-t border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">
           {t.footer}{" "}
-          <span className="text-[10px] ml-2">Powered by Saurabh</span>
         </footer>
 
         <button

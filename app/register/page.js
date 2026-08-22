@@ -11,6 +11,9 @@ export default function RegisterPage() {
     phone: "",
     password: "",
     confirmPassword: "",
+    village: "",
+    ward: "",
+    address: "",
   });
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -33,8 +36,8 @@ export default function RegisterPage() {
       setError("Name is required");
       return;
     }
-    if (!formData.email.includes("@")) {
-      setError("Valid email is required");
+    if (formData.email && !formData.email.includes("@")) {
+      setError("Enter a valid email address");
       return;
     }
     if (!formData.phone || formData.phone.replace(/\D/g, "").length < 10) {
@@ -49,6 +52,10 @@ export default function RegisterPage() {
       setError("Passwords do not match");
       return;
     }
+    if (!formData.village.trim() || !formData.ward || !formData.address.trim()) {
+      setError("Village, ward number, and address are required");
+      return;
+    }
 
     setLoading(true);
 
@@ -61,6 +68,9 @@ export default function RegisterPage() {
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
+          village: formData.village,
+          ward: formData.ward,
+          address: formData.address,
         }),
       });
 
@@ -71,7 +81,7 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Registration successful! Redirecting to sign in...");
+      setSuccess("Registration successful. Please login to continue.");
       setTimeout(() => {
         router.push("/signin");
       }, 2000);
@@ -108,7 +118,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email
+              Email (Optional)
             </label>
             <input
               type="email"
@@ -117,8 +127,20 @@ export default function RegisterPage() {
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               placeholder="Enter your email"
-              required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Village</label>
+            <input type="text" name="village" value={formData.village} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Ward Number</label>
+            <input type="number" min="1" max="50" name="ward" value={formData.ward} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Address</label>
+            <textarea name="address" value={formData.address} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm" rows="3" required />
           </div>
 
           <div>

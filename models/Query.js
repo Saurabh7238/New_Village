@@ -1,6 +1,12 @@
 import mongoose from 'mongoose';
 
 const QuerySchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    index: true,
+    default: null,
+  },
   queryId: {
     type: String,
     unique: true,
@@ -23,6 +29,7 @@ const QuerySchema = new mongoose.Schema({
     min: [1, 'Ward number must be at least 1'],
     max: [20, 'Ward number cannot exceed 20']
   },
+  village: { type: String, trim: true, default: '' },
   category: {
     type: String,
     enum: [
@@ -60,10 +67,16 @@ const QuerySchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  attachments: [{
+    fileName: String,
+    fileUrl: String,
+    mimeType: String,
+    uploadedAt: { type: Date, default: Date.now },
+  }],
   status: {
     type: String,
-    enum: ['New', 'In Progress', 'Resolved', 'Rejected'],
-    default: 'New'
+    enum: ['Pending', 'In Review', 'In Progress', 'Need More Information', 'Resolved', 'Rejected', 'Closed', 'New'],
+    default: 'Pending'
   },
   priority: {
     type: String,
@@ -99,6 +112,12 @@ const QuerySchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  resolution: {
+    message: { type: String, default: '' },
+    department: { type: String, default: '' },
+    documentUrl: { type: String, default: null },
+    resolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  },
   auditLog: [
     {
       action: String,
@@ -114,6 +133,9 @@ const QuerySchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+QuerySchema.index({ userId: 1, createdAt: -1 });
+QuerySchema.index({ status: 1, priority: 1, village: 1, ward: 1, createdAt: -1 });
 
 // Pre-save hook to update escalate flag based on SLA
 QuerySchema.pre('save', function(next) {

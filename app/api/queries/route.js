@@ -5,12 +5,26 @@ import connectDB from '@/lib/dbConnect';
 import { checkQueryRateLimit } from '@/lib/rateLimit';
 import { isAbusive, generateQueryId, getAutoAssignedOfficer } from '@/lib/queryDisplay';
 import { requireAdminSession } from '@/lib/adminAuth';
+import { requireAuthenticatedSession } from '@/lib/sessionAuth';
+import User from '@/models/User';
+import CitizenNotification from '@/models/CitizenNotification';
 
 export async function POST(request) {
   await connectDB();
 
   try {
-    const { name, mobile, ward, category, subject, description, address, photo } = await request.json();
+    const session = await requireAuthenticatedSession();
+    if (!session) {
+      return NextResponse.json({ message: 'Please sign in to submit a query.' }, { status: 401 });
+    }
+
+    const citizen = await User.findById(session.user.id).select('name phone village ward address status');
+    if (!citizen || citizen.status !== 'active') {
+      return NextResponse.json({ message: 'Your account is unavailable. Please contact the Panchayat office.' }, { status: 403 });
+    }
+
+    const { category, subject, description, priority, attachment } = await request.json();
+    const { name, phone: mobile, ward, village, address } = citizen;
 
     if (!name || !mobile || !ward || !category || !subject || !description) {
       return NextResponse.json(
@@ -47,14 +61,16 @@ export async function POST(request) {
       queryId,
       name,
       mobile,
-      ward: parseInt(ward),
+      userId: citizen._id,
+      ward: Number(ward),
+      village,
       category,
       subject,
       description,
       address: address || '',
-      photo: photo || null,
+      attachments: attachment ? [attachment] : [],
       assignedTo,
-      priority: ['Water', 'Health/PHC'].includes(category) ? 'High' : 'Medium',
+      priority: ['High', 'Medium', 'Low'].includes(priority) ? priority : ['Water', 'Health/PHC'].includes(category) ? 'High' : 'Medium',
       auditLog: [
         {
           action: 'Query Created',
@@ -66,6 +82,15 @@ export async function POST(request) {
     });
 
     await newQuery.save();
+
+    await CitizenNotification.create({
+      userId: citizen._id,
+      title: `Query ${queryId} submitted`,
+      message: 'Your query has been submitted successfully and is pending review.',
+      type: 'query',
+      relatedType: 'query',
+      relatedId: newQuery._id,
+    });
 
     return NextResponse.json({
       message: 'Query submitted successfully',

@@ -28,7 +28,7 @@ export const authOptions = {
           }
 
           // Find user by email
-          const userFound = await User.findOne({ email: credentials.email });
+          const userFound = await User.findOne({ email: String(credentials.email || '').trim().toLowerCase() }).select('+password');
 
           if (!userFound) {
             console.log(`[Auth] User not found for email: ${credentials.email}`);
@@ -41,6 +41,10 @@ export const authOptions = {
           if (!userFound.password) {
             console.log(`[Auth] User has no password set: ${credentials.email}`);
             throw new Error("InvalidEmailOrPassword");
+          }
+
+          if (userFound.status && userFound.status !== 'active') {
+            throw new Error('AccountInactive');
           }
 
           // Compare passwords

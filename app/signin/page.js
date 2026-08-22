@@ -72,7 +72,7 @@ export default function LoginPage() {
         // Redirect immediately with a welcome flag so the app can show a login animation.
         if (typeof window !== "undefined") {
           const params = new URLSearchParams(window.location.search);
-          const callbackUrl = params.get("callbackUrl") || "/";
+          const callbackUrl = params.get("callbackUrl") || "/dashboard";
           const redirectUrl = new URL(callbackUrl, window.location.origin);
           redirectUrl.searchParams.set("welcome", "true");
           window.location.href = redirectUrl.toString();

@@ -3,14 +3,23 @@ import { v4 as uuidv4 } from 'uuid';
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, trim: true, lowercase: true, unique: true, sparse: true },
   phone: { type: String, required: true, unique: true },
-  password: { type: String }, // Optional for OTP-based registration
-  role: { type: String, default: "user" }, // For admin access
+  password: { type: String, select: false }, // Optional for OTP-based registration
+  role: { type: String, enum: ["citizen", "user", "staff", "admin"], default: "citizen", index: true },
   uniqueId: { type: String, unique: true }, // The Generated ID
   isVerified: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
-});
+  village: { type: String, trim: true, default: "" },
+  ward: { type: Number, min: 1, max: 50, default: null },
+  address: { type: String, trim: true, default: "" },
+  // Aadhaar is never stored in plain text. Only a hash and the final four digits are retained.
+  aadhaarHash: { type: String, select: false, default: null },
+  aadhaarLast4: { type: String, default: null },
+  profilePhoto: { type: String, default: null },
+  status: { type: String, enum: ["active", "inactive", "suspended"], default: "active", index: true },
+}, { timestamps: true });
+
+UserSchema.index({ village: 1, ward: 1 });
 
 // Generate unique ID before saving if not present
 UserSchema.pre('save', function(next) {

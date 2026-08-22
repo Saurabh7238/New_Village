@@ -55,7 +55,7 @@ export default function Header() {
     ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
   const menuItemBaseClass =
-    "flex w-full items-center border-b border-green-100 bg-green-50 dark:border-green-700 dark:bg-gray-900 px-5 py-3 text-sm font-medium transition-colors text-left last:border-b-0";
+    "flex w-full items-center border-b border-green-100 bg-green-50 px-5 py-3 text-left text-sm font-medium transition-colors dark:border-green-700 dark:bg-gray-900";
   const menuItemActiveClass =
     "bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 font-semibold";
   const menuItemInactiveClass =
@@ -77,35 +77,35 @@ export default function Header() {
         </motion.div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 py-4">
-        <Link href="/" className="flex items-center gap-3 group min-w-0">
-          <span className="relative h-12 w-12 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-4 lg:px-8">
+        <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
+          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12">
             <Image
               src={logoImage}
               alt="Chhiutahara Heritage Village logo"
               fill
-              sizes="48px"
+              sizes="(max-width: 640px) 40px, 48px"
               className="object-cover"
               priority
             />
           </span>
           <span className="min-w-0 leading-tight text-white">
-            <span className="truncate text-2xl font-bold tracking-wide">Chiutahara Portal</span>
+            <span className="block truncate text-lg font-bold tracking-wide sm:text-2xl">Chiutahara Portal</span>
           </span>
         </Link>
 
-        <div className="relative ml-auto flex items-center gap-2 md:gap-3 shrink-0">
+        <div className="relative ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 md:gap-3">
           <WeatherBadge />
           <button
             onClick={toggleLanguage}
-            className="px-3 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold whitespace-nowrap"
+            className="rounded-md bg-white px-2.5 py-2 font-semibold whitespace-nowrap text-green-700 shadow transition hover:scale-105 sm:px-3"
             aria-label="Toggle language"
           >
             {langLabels.langToggle}
           </button>
           <button
             onClick={() => setOpen(!open)}
-            className="px-4 py-2 bg-white text-green-700 rounded-md shadow hover:scale-105 transition font-semibold whitespace-nowrap"
+            className="rounded-md bg-white px-3 py-2 font-semibold whitespace-nowrap text-green-700 shadow transition hover:scale-105 sm:px-4"
             aria-expanded={open}
             aria-controls="main-menu"
             aria-label={open ? langLabels.close : langLabels.menu}
@@ -121,48 +121,9 @@ export default function Header() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.97 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute right-0 top-full mt-3 w-[min(95vw,18rem)] max-w-full bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden origin-top-right"
+                className="absolute right-0 top-full mt-3 max-h-[calc(100dvh-8rem)] w-[min(95vw,18rem)] max-w-full origin-top-right overflow-y-auto overscroll-contain rounded-md bg-white shadow-lg dark:bg-gray-800"
                 onMouseLeave={() => setOpen(false)}
               >
-                {session ? (
-                  <>
-                    <li className="bg-green-50 px-5 py-3 text-sm font-medium text-green-900 dark:bg-green-950 dark:text-green-100">
-                      Logged in as {displayName}
-                    </li>
-                    <li>
-                      <button
-                        onClick={() => {
-                          signOut({ callbackUrl: "/?logout=true" });
-                          setOpen(false);
-                        }}
-                        className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
-                      >
-                        Sign Out
-                      </button>
-                    </li>
-                  </>
-                ) : (
-                  <li className="border-b border-green-100 bg-green-50/70 px-3 py-3 dark:border-green-700 dark:bg-green-950/60">
-                    <div className="flex items-center justify-center gap-2 text-sm font-semibold text-green-700 dark:text-green-100">
-                      <Link
-                        href="/register"
-                        className="rounded px-2 py-1 transition hover:bg-green-100 dark:hover:bg-green-900"
-                        onClick={() => setOpen(false)}
-                      >
-                        Sign Up
-                      </Link>
-                      <span className="text-green-500">/</span>
-                      <Link
-                        href="/signin?callbackUrl=/"
-                        className="rounded px-2 py-1 transition hover:bg-green-100 dark:hover:bg-green-900"
-                        onClick={() => setOpen(false)}
-                      >
-                        Log In
-                      </Link>
-                    </div>
-                  </li>
-                )}
-
                 {navItems.map(([label, href]) => (
                   <li key={href}>
                     <Link
@@ -178,6 +139,52 @@ export default function Header() {
                     </Link>
                   </li>
                 ))}
+
+                {status === "authenticated" && session ? (
+                  <>
+                    <li>
+                      <Link href="/dashboard" className={`${menuItemBaseClass} ${menuItemInactiveClass}`} onClick={() => setOpen(false)}>
+                        Dashboard
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/dashboard/profile" className={`${menuItemBaseClass} ${menuItemInactiveClass}`} onClick={() => setOpen(false)}>
+                        My Profile
+                      </Link>
+                    </li>
+                    <li className="border-y border-green-100 bg-green-50 px-5 py-3 text-sm font-medium text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-100">
+                      Logged in as {displayName}
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          signOut({ callbackUrl: "/?logout=true" });
+                          setOpen(false);
+                        }}
+                        className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
+                      >
+                        Logout
+                      </button>
+                    </li>
+                  </>
+                ) : (
+                  <li className="flex gap-2 border-t border-green-100 bg-green-50 p-3 dark:border-green-700 dark:bg-green-950/60">
+                    <Link
+                      href="/signin?callbackUrl=/"
+                      className="flex flex-1 items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-100 dark:bg-gray-900 dark:text-green-100 dark:hover:bg-green-800"
+                      onClick={() => setOpen(false)}
+                    >
+                      Log In
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="flex flex-1 items-center justify-center rounded-md bg-green-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800"
+                      onClick={() => setOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </li>
+                )}
               </motion.ul>
             )}
           </AnimatePresence>
