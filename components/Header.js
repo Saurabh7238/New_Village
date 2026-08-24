@@ -105,11 +105,11 @@ export default function Header() {
     ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
   const menuItemBaseClass =
-    "flex w-full items-center border-b border-green-100 bg-green-50 px-5 py-3 text-left text-sm font-medium transition-colors dark:border-green-700 dark:bg-gray-900";
+    "flex w-full items-center rounded-2xl bg-slate-100 px-5 py-4 text-left text-base font-semibold transition-colors dark:bg-slate-700";
   const menuItemActiveClass =
-    "bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 font-semibold";
+    "bg-emerald-600 text-white dark:bg-emerald-600";
   const menuItemInactiveClass =
-    "text-green-700 dark:text-green-100 hover:bg-green-100 dark:hover:bg-green-800";
+    "text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200";
 
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
@@ -194,13 +194,6 @@ export default function Header() {
             {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
           <button
-            onClick={toggleLanguage}
-            className="rounded-md bg-white px-2.5 py-2 font-semibold whitespace-nowrap text-green-700 shadow transition hover:scale-105 sm:px-3"
-            aria-label="Toggle language"
-          >
-            {langLabels.langToggle}
-          </button>
-          <button
             onClick={() => {
               setShowNotifications(false);
               setOpen(!open);
@@ -215,16 +208,16 @@ export default function Header() {
 
           <AnimatePresence>
             {open && (
-              <motion.ul
+              <motion.div
                 id="main-menu"
                 initial={{ opacity: 0, y: -10, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.97 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute right-0 top-full mt-3 max-h-[calc(100dvh-8rem)] w-[min(95vw,18rem)] max-w-full origin-top-right overflow-y-auto overscroll-contain rounded-md bg-white shadow-lg dark:bg-gray-800"
-                onMouseLeave={() => setOpen(false)}
+                className="absolute right-0 top-full mt-3 max-h-[calc(100dvh-8rem)] w-[min(92vw,44rem)] origin-top-right overflow-y-auto overscroll-contain rounded-3xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-700 dark:bg-slate-800 sm:p-4"
               >
-                {navItems.map(([label, href]) => (
+                <ul className="space-y-3">
+                  {navItems.map(([label, href]) => (
                   <li key={href}>
                     <Link
                       href={href}
@@ -238,9 +231,21 @@ export default function Header() {
                       {label}
                     </Link>
                   </li>
-                ))}
+                  ))}
 
-                {status === "authenticated" && session ? (
+                  <li>
+                    <button
+                      onClick={toggleLanguage}
+                      className="flex w-full items-center justify-between rounded-2xl bg-slate-100 px-5 py-4 text-left text-base font-semibold text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-800 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200"
+                    >
+                      <span>Language</span>
+                      <span className="rounded-xl bg-white px-4 py-1.5 text-sm font-bold text-emerald-700 shadow-sm dark:bg-slate-800 dark:text-emerald-300">
+                        {langLabels.langToggle}
+                      </span>
+                    </button>
+                  </li>
+
+                  {status === "authenticated" && session ? (
                   <>
                     <li>
                       <Link href="/dashboard" className={`${menuItemBaseClass} ${menuItemInactiveClass}`} onClick={() => setOpen(false)}>
@@ -252,7 +257,7 @@ export default function Header() {
                         My Profile
                       </Link>
                     </li>
-                    <li className="border-y border-green-100 bg-green-50 px-5 py-3 text-sm font-medium text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-100">
+                    <li className="rounded-2xl bg-slate-100 px-5 py-4 text-sm font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-100">
                       Logged in as {displayName}
                     </li>
                     <li>
@@ -268,7 +273,7 @@ export default function Header() {
                     </li>
                   </>
                 ) : (
-                  <li className="flex gap-2 border-t border-green-100 bg-green-50 p-3 dark:border-green-700 dark:bg-green-950/60">
+                  <li className="flex gap-3 rounded-2xl bg-slate-100 p-3 dark:bg-slate-700">
                     <Link
                       href="/signin?callbackUrl=/"
                       className="flex flex-1 items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-100 dark:bg-gray-900 dark:text-green-100 dark:hover:bg-green-800"
@@ -284,8 +289,9 @@ export default function Header() {
                       Sign Up
                     </Link>
                   </li>
-                )}
-              </motion.ul>
+                  )}
+                </ul>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
