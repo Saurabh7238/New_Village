@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useTheme } from "@/app/theme-provider";
@@ -13,7 +13,8 @@ export default function AdminQueriesPage() {
   const { data: session, status: authStatus } = useSession();
   const { toasts, addToast, removeToast } = useToast();
   const [queries, setQueries] = useState([]);
-  const [lastKnownQueries, setLastKnownQueries] = useState([]);
+  const lastKnownQueriesRef = useRef([]);
+  const calculateStatsRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [stats, setStats] = useState({ total: 0, new: 0, inProgress: 0, resolved: 0, pending: 0, overdue: 0 });
@@ -40,20 +41,9 @@ export default function AdminQueriesPage() {
     : "bg-white text-gray-900 border-gray-300";
   const labelClass = isDark ? "text-gray-300" : "text-gray-700";
 
-  // Polling effect for new queries
-  useEffect(() => {
-    if (authStatus !== "authenticated") return;
-
-    const interval = setInterval(() => {
-      fetchQueries();
-    }, 30000); // Check every 30 seconds
-
-    return () => clearInterval(interval);
-  }, [authStatus, filters]);
-
-  const fetchQueries = async () => {
+  const fetchQueries = useCallback(async ({ background = false } = {}) => {
     try {
-      setLoading(true);
+      if (!background) setLoading(true);
       const params = new URLSearchParams();
       if (filters.search) params.append("search", filters.search);
       if (filters.ward) params.append("ward", filters.ward);
@@ -67,20 +57,31 @@ export default function AdminQueriesPage() {
       params.append("limit", "25");
 
       const res = await fetch(`/api/queries?${params.toString()}`);
+      if (!res.ok) throw new Error("Unable to fetch queries");
       const data = await res.json();
 
       const queryList = Array.isArray(data) ? data : data.queries;
       if (Array.isArray(queryList)) {
         setQueries(queryList);
-        calculateStats(queryList);
+        calculateStatsRef.current?.(queryList);
       }
-      setLoading(false);
     } catch (error) {
       console.error("Fetch error:", error);
       setMessage("Error loading queries");
+    } finally {
       setLoading(false);
     }
-  };
+  }, [filters, page]);
+
+  // Load immediately; subsequent polls refresh the table without blocking it.
+  useEffect(() => {
+    if (authStatus !== "authenticated" || session?.user?.role !== "admin") return;
+
+    fetchQueries();
+    const interval = setInterval(() => fetchQueries({ background: true }), 30000);
+
+    return () => clearInterval(interval);
+  }, [authStatus, session?.user?.role, fetchQueries]);
 
   const calculateStats = (queriesData) => {
     const stats = {
@@ -94,6 +95,7 @@ export default function AdminQueriesPage() {
     setStats(stats);
 
     // Check for new queries
+    const lastKnownQueries = lastKnownQueriesRef.current;
     if (lastKnownQueries.length > 0) {
       const newQueries = queriesData.filter(q => !lastKnownQueries.find(lq => lq._id === q._id));
       newQueries.forEach(q => {
@@ -109,8 +111,10 @@ export default function AdminQueriesPage() {
       });
     }
 
-    setLastKnownQueries(queriesData);
+    lastKnownQueriesRef.current = queriesData;
   };
+
+  calculateStatsRef.current = calculateStats;
 
   const handleStatusChange = async (queryId, newStatus) => {
     try {

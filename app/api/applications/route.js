@@ -3,6 +3,7 @@ import connectDB from '@/lib/dbConnect';
 import Application from '@/models/Application';
 import User from '@/models/User';
 import CitizenNotification from '@/models/CitizenNotification';
+import AdminNotification from '@/models/AdminNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 
 const SERVICE_TYPES = ['birth-certificate', 'death-certificate', 'aadhaar-request', 'voter-request', 'other'];
@@ -55,6 +56,16 @@ export async function POST(request) {
       documents: safeDocuments,
     });
     await CitizenNotification.create({ userId: user._id, title: `${applicationNumber} submitted`, message: 'Your application has been submitted for review.', type: 'application', relatedType: 'application', relatedId: application._id });
+    const admins = await User.find({ role: 'admin', status: 'active' }).select('_id').lean();
+    if (admins.length) {
+      await AdminNotification.insertMany(admins.map((admin) => ({
+        userId: admin._id,
+        title: `New service application: ${applicationNumber}`,
+        message: `${user.name} submitted a ${serviceType.replace(/-/g, ' ')} request.`,
+        relatedType: 'application',
+        relatedId: application._id,
+      })));
+    }
     return NextResponse.json({ message: 'Application submitted successfully.', applicationNumber, id: application._id.toString(), createdAt: application.createdAt }, { status: 201 });
   } catch (error) {
     console.error('Application creation error:', error);

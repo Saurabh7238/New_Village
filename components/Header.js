@@ -17,6 +17,8 @@ export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [serviceNotifications, setServiceNotifications] = useState([]);
+  const [serviceUnreadCount, setServiceUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
   const notificationRef = useRef(null);
   const pathname = usePathname();
@@ -35,6 +37,31 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated") {
+      setServiceNotifications([]);
+      setServiceUnreadCount(0);
+      return;
+    }
+
+    const loadServiceNotifications = () => {
+      fetch("/api/service-notifications")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          setServiceNotifications(data?.notifications || []);
+          setServiceUnreadCount(data?.unread || 0);
+        })
+        .catch(() => {
+          setServiceNotifications([]);
+          setServiceUnreadCount(0);
+        });
+    };
+
+    loadServiceNotifications();
+    const interval = setInterval(loadServiceNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [status, session?.user?.role]);
 
   useEffect(() => {
     setDarkMode(document.documentElement.classList.contains("dark"));
@@ -110,6 +137,9 @@ export default function Header() {
     "bg-emerald-600 text-white dark:bg-emerald-600";
   const menuItemInactiveClass =
     "text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200";
+  const isAuthenticated = status === "authenticated";
+  const visibleNotifications = isAuthenticated ? serviceNotifications : notifications;
+  const visibleNotificationCount = isAuthenticated ? serviceUnreadCount : notificationCount;
 
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
@@ -157,9 +187,9 @@ export default function Header() {
               aria-expanded={showNotifications}
             >
               <Bell className="h-5 w-5" />
-              {notificationCount > 0 && (
+              {visibleNotificationCount > 0 && (
                 <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-red-500 px-1 text-[10px] font-bold leading-4 text-white">
-                  {notificationCount}
+                  {visibleNotificationCount > 99 ? "99+" : visibleNotificationCount}
                 </span>
               )}
             </button>
@@ -167,12 +197,17 @@ export default function Header() {
               <div className="absolute right-0 top-full z-[60] mt-3 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-800 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
                 <div className="border-b border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">Notifications</div>
                 <ul className="max-h-72 overflow-y-auto">
-                  {notifications.length > 0 ? notifications.map((note) => (
+                  {visibleNotifications.length > 0 ? visibleNotifications.map((note) => (
                     <li key={note.id}>
                       <button
                         className="w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 dark:hover:bg-slate-700"
                         onClick={() => {
                           setShowNotifications(false);
+                          if (isAuthenticated && !note.isRead) {
+                            fetch("/api/service-notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: note.id }) });
+                            setServiceUnreadCount((count) => Math.max(0, count - 1));
+                            setServiceNotifications((items) => items.map((item) => item.id === note.id ? { ...item, isRead: true } : item));
+                          }
                           router.push(note.link || "/notifications");
                         }}
                       >
