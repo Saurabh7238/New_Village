@@ -3,10 +3,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 export default function AppointmentsPage() {
-  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ appointmentDate: '', appointmentTime: '', purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [profile, setProfile] = useState(null); const [appointments, setAppointments] = useState([]);
+  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ appointmentDate: '', appointmentTime: '', purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]);
   useEffect(() => {
     if (status !== 'authenticated') return;
-    fetch('/api/me').then((res) => res.json()).then((data) => setProfile(data.user || null));
     fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
   }, [status]);
   const loadAppointments = () => fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
@@ -24,7 +23,6 @@ export default function AppointmentsPage() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <form className="space-y-4" onSubmit={submit}>
-          {profile && <div className="rounded border border-green-200 bg-green-50 p-4 text-sm text-green-900"><p><strong>Name:</strong> {profile.name}</p><p><strong>Email:</strong> {profile.email || 'Not provided'}</p><p><strong>Mobile:</strong> {profile.phone}</p></div>}
           <p className="rounded bg-gray-50 p-3 text-sm text-gray-600">The Panchayat office will review your purpose and confirm the appropriate service.</p>
           <div>
             <label className="block text-sm font-semibold text-gray-700">
