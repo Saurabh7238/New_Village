@@ -148,7 +148,10 @@ export default function Header() {
           <WeatherBadge />
           <div className="relative" ref={notificationRef}>
             <button
-              onClick={() => setShowNotifications((current) => !current)}
+              onClick={() => {
+                setOpen(false);
+                setShowNotifications((current) => !current);
+              }}
               className="relative grid h-10 w-10 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105"
               aria-label="Notifications"
               aria-expanded={showNotifications}
@@ -161,7 +164,7 @@ export default function Header() {
               )}
             </button>
             {showNotifications && (
-              <div className="absolute right-0 top-full z-50 mt-3 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-800 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+              <div className="absolute right-0 top-full z-[60] mt-3 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-800 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
                 <div className="border-b border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">Notifications</div>
                 <ul className="max-h-72 overflow-y-auto">
                   {notifications.length > 0 ? notifications.map((note) => (
@@ -198,7 +201,10 @@ export default function Header() {
             {langLabels.langToggle}
           </button>
           <button
-            onClick={() => setOpen(!open)}
+            onClick={() => {
+              setShowNotifications(false);
+              setOpen(!open);
+            }}
             className="rounded-md bg-white px-3 py-2 font-semibold whitespace-nowrap text-green-700 shadow transition hover:scale-105 sm:px-4"
             aria-expanded={open}
             aria-controls="main-menu"
