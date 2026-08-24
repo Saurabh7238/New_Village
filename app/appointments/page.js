@@ -3,14 +3,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 export default function AppointmentsPage() {
-  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ appointmentDate: '', appointmentTime: '', purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]);
+  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]);
   useEffect(() => {
     if (status !== 'authenticated') return;
     fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
   }, [status]);
   const loadAppointments = () => fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
-  async function submit(e) { e.preventDefault(); if (status !== 'authenticated') return router.push('/signin?callbackUrl=%2Fappointments'); setLoading(true); const res = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const data = await res.json(); setLoading(false); if (res.ok) { setMessage(`Appointment requested. Reference: ${data.appointmentNumber}`); setForm({ appointmentDate: '', appointmentTime: '', purpose: '' }); loadAppointments(); } else setMessage(data.message || 'Unable to book appointment.'); }
-  async function submit(e) { e.preventDefault(); if (status !== 'authenticated') return router.push('/signin?callbackUrl=%2Fappointments'); setLoading(true); const res = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const data = await res.json(); setLoading(false); setMessage(res.ok ? `Appointment requested. Reference: ${data.appointmentNumber}` : (data.message || 'Unable to book appointment.')); }
+  async function submit(e) { e.preventDefault(); if (status !== 'authenticated') return router.push('/signin?callbackUrl=%2Fappointments'); setLoading(true); const res = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const data = await res.json(); setLoading(false); if (res.ok) { setMessage(`Appointment requested. Reference: ${data.appointmentNumber}. The Panchayat office will set your date and time.`); setForm({ purpose: '' }); loadAppointments(); } else setMessage(data.message || 'Unable to book appointment.'); }
   if (status === 'loading') return <p className="pt-36 text-center">Loading…</p>;
   return (
     <div className="pt-36 max-w-5xl mx-auto px-4">
@@ -23,14 +22,7 @@ export default function AppointmentsPage() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <form className="space-y-4" onSubmit={submit}>
-          <p className="rounded bg-gray-50 p-3 text-sm text-gray-600">The Panchayat office will review your purpose and confirm the appropriate service.</p>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Date
-            </label>
-            <input required type="date" value={form.appointmentDate} onChange={(e) => setForm({ ...form, appointmentDate: e.target.value })} className="mt-1 w-full border rounded p-2" />
-          </div>
-          <div><label className="block text-sm font-semibold text-gray-700">Time</label><input required type="time" value={form.appointmentTime} onChange={(e) => setForm({ ...form, appointmentTime: e.target.value })} className="mt-1 w-full border rounded p-2" /></div>
+          <p className="rounded bg-gray-50 p-3 text-sm text-gray-600">After you submit, the Panchayat office will review your request, add remarks, and set the appointment date and time. You can make one booking every 24 hours.</p>
           <div><label className="block text-sm font-semibold text-gray-700">Purpose</label><textarea required value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} className="mt-1 w-full border rounded p-2" /></div>
           {message && <p className={message.startsWith('Appointment requested') ? 'text-green-700' : 'text-red-700'}>{message}</p>}
           <button

@@ -34,6 +34,9 @@ export default function AdminPanel() {
             <Link href="/admin/queries" className="bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               🎯 Queries / 📋 शिकायत
             </Link>
+            <Link href="/admin/appointments" className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              Appointments
+            </Link>
             <Link href="/admin/members" className="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               👥 Members
             </Link>
