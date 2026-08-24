@@ -17,15 +17,16 @@ export async function POST(request) {
   const session = await requireAuthenticatedSession();
   if (!session) return NextResponse.json({ message: 'Please sign in to book an appointment.' }, { status: 401 });
   try {
-    const { service, appointmentDate, appointmentTime, purpose } = await request.json();
-    if (!service || !appointmentDate || !appointmentTime || !purpose?.trim()) return NextResponse.json({ message: 'Service, date, time, and purpose are required.' }, { status: 400 });
+    const { appointmentDate, appointmentTime, purpose } = await request.json();
+    if (!appointmentDate || !appointmentTime || !purpose?.trim()) return NextResponse.json({ message: 'Date, time, and purpose are required.' }, { status: 400 });
     const date = new Date(appointmentDate);
     if (Number.isNaN(date.getTime()) || date < new Date(new Date().setHours(0, 0, 0, 0))) return NextResponse.json({ message: 'Please choose a future appointment date.' }, { status: 400 });
     await connectDB();
     const user = await User.findById(session.user.id).select('status').lean();
-    if (!user || user.status !== 'active') return NextResponse.json({ message: 'Your account is unavailable.' }, { status: 403 });
+    // Older accounts predate the status field; they are active unless explicitly disabled.
+    if (!user || (user.status && user.status !== 'active')) return NextResponse.json({ message: 'Your account is unavailable.' }, { status: 403 });
     const appointmentNumber = `APT-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const appointment = await Appointment.create({ appointmentNumber, userId: user._id, service: service.slice(0, 120), appointmentDate: date, appointmentTime: appointmentTime.slice(0, 30), purpose: purpose.trim() });
+    const appointment = await Appointment.create({ appointmentNumber, userId: user._id, service: 'General Panchayat Appointment', appointmentDate: date, appointmentTime: appointmentTime.slice(0, 30), purpose: purpose.trim() });
     await CitizenNotification.create({ userId: user._id, title: `${appointmentNumber} booked`, message: 'Your appointment request is pending approval.', type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });
     return NextResponse.json({ message: 'Appointment requested successfully.', appointmentNumber, id: appointment._id.toString() }, { status: 201 });
   } catch (error) {

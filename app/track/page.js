@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme } from "@/app/theme-provider";
@@ -15,6 +14,7 @@ export default function TrackPage() {
   const [query, setQuery] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [loginRequired, setLoginRequired] = useState(false);
 
   const bgClass = isDark ? "bg-gray-800" : "bg-white";
   const textClass = isDark ? "text-white" : "text-gray-900";
@@ -22,7 +22,10 @@ export default function TrackPage() {
     ? "bg-gray-700 text-white border-gray-600"
     : "bg-white text-gray-900 border-gray-300";
   const labelClass = isDark ? "text-gray-300" : "text-gray-700";
-  useEffect(() => { if (status === 'unauthenticated') router.replace('/signin?callbackUrl=%2Ftrack'); }, [status, router]);
+  useEffect(() => {
+    const savedQueryId = window.sessionStorage.getItem('pendingTrackQueryId');
+    if (savedQueryId) setQueryId(savedQueryId);
+  }, []);
 
   const handleTrack = async (e) => {
     e.preventDefault();
@@ -30,6 +33,13 @@ export default function TrackPage() {
     setMessage("");
     setQuery(null);
 
+    if (status !== 'authenticated') {
+      window.sessionStorage.setItem('pendingTrackQueryId', queryId);
+      setLoginRequired(true);
+      setMessage('Please login first to view your personal query status. Your query ID has been saved.');
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch('/api/my-queries');
 
@@ -44,6 +54,7 @@ export default function TrackPage() {
       const found = data.queries?.find(q => q.queryId === queryId);
 
       if (found) {
+        window.sessionStorage.removeItem('pendingTrackQueryId');
         setQuery(found);
         setMessage("");
       } else {
@@ -79,7 +90,7 @@ export default function TrackPage() {
 
             {message && (
               <div className={`mb-4 p-3 rounded-lg ${message.includes("not found") || message.includes("Error") ? "bg-red-100 text-red-800 dark:bg-red-900" : "bg-blue-100 text-blue-800 dark:bg-blue-900"}`}>
-                {message}
+                {message}{loginRequired && <button type="button" onClick={() => router.push('/signin?callbackUrl=%2Ftrack')} className="ml-3 rounded bg-green-700 px-3 py-1 text-sm font-semibold text-white">Login now</button>}
               </div>
             )}
 
@@ -99,7 +110,7 @@ export default function TrackPage() {
 
               <button
                 type="submit"
-                disabled={loading || !queryId || status !== 'authenticated'}
+                disabled={loading || !queryId}
                 className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold disabled:opacity-50"
               >
                 {loading ? "Searching..." : "Track Query"}

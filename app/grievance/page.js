@@ -15,20 +15,30 @@ export default function GrievancePage() {
   const [queryId, setQueryId] = useState("");
   const [captcha, setCaptcha] = useState({ num1: 0, num2: 0, answer: "" });
   const [captchaCorrect, setCaptchaCorrect] = useState(false);
-  const [formData, setFormData] = useState({ name: "", mobile: "", ward: "", category: "Water", subject: "", description: "", address: "", photo: null });
+  const [formData, setFormData] = useState({ name: "", email: "", mobile: "", ward: "", category: "Water", subject: "", description: "", address: "", photo: null });
   const [photoPreview, setPhotoPreview] = useState(null);
   const [rateLimitInfo, setRateLimitInfo] = useState(null);
+  const [loginRequired, setLoginRequired] = useState(false);
   const bgClass = isDark ? "bg-gray-800" : "bg-white";
   const textClass = isDark ? "text-white" : "text-gray-900";
   const inputClass = isDark ? "bg-gray-700 text-white border-gray-600" : "bg-white text-gray-900 border-gray-300";
   const labelClass = isDark ? "text-gray-300" : "text-gray-700";
 
-  useEffect(() => { generateCaptcha(); }, []);
   useEffect(() => {
-    if (status === 'unauthenticated') router.replace('/signin?callbackUrl=%2Fgrievance');
+    generateCaptcha();
+    const saved = window.sessionStorage.getItem('pendingQuery');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData((current) => ({ ...current, ...parsed }));
+        if (parsed.photo) setPhotoPreview(parsed.photo);
+      } catch { window.sessionStorage.removeItem('pendingQuery'); }
+    }
+  }, []);
+  useEffect(() => {
     if (status === 'authenticated') {
       fetch('/api/me').then((res) => res.json()).then((data) => {
-        if (data.user) setFormData((current) => ({ ...current, name: data.user.name || '', mobile: data.user.phone || '', ward: data.user.ward || '' }));
+        if (data.user) setFormData((current) => ({ ...current, name: data.user.name || '', email: data.user.email || '', mobile: data.user.phone || '', ward: data.user.ward || current.ward || '' }));
       });
     }
   }, [status, router]);
@@ -67,9 +77,14 @@ export default function GrievancePage() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setMessage("");
-    if (status !== 'authenticated') { router.push('/signin?callbackUrl=%2Fgrievance'); return; }
+    if (status !== 'authenticated') {
+      window.sessionStorage.setItem('pendingQuery', JSON.stringify(formData));
+      setLoginRequired(true);
+      setMessage('Please login first to submit your query. Your filled details have been saved.');
+      return;
+    }
+    setLoading(true);
     if (!formData.ward || !formData.category || !formData.subject || !formData.description) {
       setMessage("Please fill all required fields");
       setLoading(false);
@@ -93,6 +108,7 @@ export default function GrievancePage() {
       });
       const data = await res.json();
       if (res.ok) {
+        window.sessionStorage.removeItem('pendingQuery');
         setQueryId(data.queryId);
         setStep("success");
       } else {
@@ -113,10 +129,11 @@ export default function GrievancePage() {
           <div className={`${bgClass} rounded-lg shadow-lg p-8`}>
             <h1 className="text-3xl font-bold mb-2 text-green-700 dark:text-yellow-400">शिकायत दर्ज करें</h1>
             <h2 className="text-3xl font-bold mb-6">Raise Query</h2>
-            {message && <div className={`mb-4 p-3 rounded-lg ${message.includes("Error") || message.includes("reached") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>{message}</div>}
+            {message && <div className={`mb-4 p-3 rounded-lg ${message.includes("Error") || message.includes("reached") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>{message}{loginRequired && <button type="button" onClick={() => router.push('/signin?callbackUrl=%2Fgrievance')} className="ml-3 rounded bg-green-700 px-3 py-1 text-sm font-semibold text-white">Login now</button>}</div>}
             {rateLimitInfo && <div className={`mb-4 p-3 rounded-lg ${isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"}`}>{rateLimitInfo.message}</div>}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Full Name</label><input type="text" value={formData.name} readOnly className={`w-full px-4 py-2 border rounded opacity-70 ${inputClass}`} /></div>
+              <div><label className={`block ${labelClass} mb-2 font-semibold`}>Email</label><input type="email" value={formData.email} readOnly className={`w-full px-4 py-2 border rounded opacity-70 ${inputClass}`} /></div>
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Mobile</label><input type="tel" value={formData.mobile} readOnly className={`w-full px-4 py-2 border rounded opacity-70 ${inputClass}`} /></div>
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Ward *</label><select name="ward" value={formData.ward} onChange={handleInputChange} required className={`w-full px-4 py-2 border rounded ${inputClass}`}><option value="">Select Ward</option>{[1,2,3,4,5,6,7,8,9,10].map(w => <option key={w} value={w}>Ward {w}</option>)}</select></div>
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Category *</label><select name="category" value={formData.category} onChange={handleInputChange} required className={`w-full px-4 py-2 border rounded ${inputClass}`}>{QUERY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>

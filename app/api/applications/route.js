@@ -43,7 +43,7 @@ export async function POST(request) {
     if (!SERVICE_TYPES.includes(serviceType)) return NextResponse.json({ message: 'Invalid service type.' }, { status: 400 });
     await connectDB();
     const user = await User.findById(session.user.id).select('name email phone aadhaarLast4 status').lean();
-    if (!user || user.status !== 'active') return NextResponse.json({ message: 'Your account is unavailable.' }, { status: 403 });
+    if (!user || (user.status && user.status !== 'active')) return NextResponse.json({ message: 'Your account is unavailable.' }, { status: 403 });
     const safeDocuments = validateDocuments(documents);
     const applicationNumber = `APP-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const application = await Application.create({

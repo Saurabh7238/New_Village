@@ -1,9 +1,16 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 export default function AppointmentsPage() {
-  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ service: 'Birth Certificate', appointmentDate: '', appointmentTime: '', purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false);
+  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ appointmentDate: '', appointmentTime: '', purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [profile, setProfile] = useState(null); const [appointments, setAppointments] = useState([]);
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    fetch('/api/me').then((res) => res.json()).then((data) => setProfile(data.user || null));
+    fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
+  }, [status]);
+  const loadAppointments = () => fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
+  async function submit(e) { e.preventDefault(); if (status !== 'authenticated') return router.push('/signin?callbackUrl=%2Fappointments'); setLoading(true); const res = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const data = await res.json(); setLoading(false); if (res.ok) { setMessage(`Appointment requested. Reference: ${data.appointmentNumber}`); setForm({ appointmentDate: '', appointmentTime: '', purpose: '' }); loadAppointments(); } else setMessage(data.message || 'Unable to book appointment.'); }
   async function submit(e) { e.preventDefault(); if (status !== 'authenticated') return router.push('/signin?callbackUrl=%2Fappointments'); setLoading(true); const res = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const data = await res.json(); setLoading(false); setMessage(res.ok ? `Appointment requested. Reference: ${data.appointmentNumber}` : (data.message || 'Unable to book appointment.')); }
   if (status === 'loading') return <p className="pt-36 text-center">Loading…</p>;
   return (
@@ -17,16 +24,8 @@ export default function AppointmentsPage() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <form className="space-y-4" onSubmit={submit}>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Service
-            </label>
-            <select value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })} className="mt-1 w-full border rounded p-2">
-              <option>Birth Certificate</option>
-              <option>Death Certificate</option>
-              <option>Aadhar Update</option>
-            </select>
-          </div>
+          {profile && <div className="rounded border border-green-200 bg-green-50 p-4 text-sm text-green-900"><p><strong>Name:</strong> {profile.name}</p><p><strong>Email:</strong> {profile.email || 'Not provided'}</p><p><strong>Mobile:</strong> {profile.phone}</p></div>}
+          <p className="rounded bg-gray-50 p-3 text-sm text-gray-600">The Panchayat office will review your purpose and confirm the appropriate service.</p>
           <div>
             <label className="block text-sm font-semibold text-gray-700">
               Date
@@ -44,6 +43,7 @@ export default function AppointmentsPage() {
           </button>
         </form>
       </div>
+      {status === 'authenticated' && <div className="mt-6 rounded-lg bg-white p-6 shadow"><h2 className="mb-3 text-xl font-bold text-green-700">My Appointments</h2>{appointments.length ? <div className="space-y-2">{appointments.map((appointment) => <div key={appointment.id} className="flex flex-wrap items-center justify-between rounded border p-3 text-sm"><span><strong>{appointment.appointmentNumber}</strong> · {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.appointmentTime}</span><span className="font-semibold text-green-700">{appointment.status}</span></div>)}</div> : <p className="text-sm text-gray-600">No appointments booked yet.</p>}</div>}
     </div>
   );
 }
