@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { Bell, Moon, Sun } from "lucide-react";
 import logoImage from "../Gemini_Generated_Image_vj7e1vj7e1vj7e1v.png";
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
@@ -13,7 +14,13 @@ import { useLanguage } from "@/app/language-provider";
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [darkMode, setDarkMode] = useState(false);
+  const notificationRef = useRef(null);
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const { labels: langLabels, toggleLanguage } = useLanguage();
 
@@ -28,6 +35,49 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    setDarkMode(document.documentElement.classList.contains("dark"));
+
+    const loadNotifications = () => {
+      fetch("/api/notifications?page=1&limit=5")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          const items = Array.isArray(data?.notifications)
+            ? data.notifications
+            : Array.isArray(data)
+              ? data
+              : [];
+          setNotifications(items);
+          setNotificationCount(typeof data?.total === "number" ? data.total : items.length);
+        })
+        .catch(() => {
+          setNotifications([]);
+          setNotificationCount(0);
+        });
+    };
+
+    const closeNotifications = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    loadNotifications();
+    const notificationInterval = setInterval(loadNotifications, 30000);
+    document.addEventListener("mousedown", closeNotifications);
+    return () => {
+      clearInterval(notificationInterval);
+      document.removeEventListener("mousedown", closeNotifications);
+    };
+  }, []);
+
+  const toggleDarkMode = () => {
+    const nextMode = !darkMode;
+    setDarkMode(nextMode);
+    document.documentElement.classList.toggle("dark", nextMode);
+    localStorage.setItem("theme", nextMode ? "dark" : "light");
+  };
 
 
   const navItems = [
@@ -50,7 +100,7 @@ export default function Header() {
     navItems.push(["Admin Panel", "/admin"]);
   }
 
-  const baseClass = "fixed top-0 left-0 w-full z-50 transition-all duration-300";
+  const baseClass = "sticky top-0 left-0 w-full z-50 transition-all duration-300";
   const scrolledClass = scrolled
     ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
@@ -82,7 +132,7 @@ export default function Header() {
           <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12">
             <Image
               src={logoImage}
-              alt="Chhiutahara Heritage Village logo"
+              alt="Chiutahara Heritage Village logo"
               fill
               sizes="(max-width: 640px) 40px, 48px"
               className="object-cover"
@@ -96,6 +146,50 @@ export default function Header() {
 
         <div className="relative ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 md:gap-3">
           <WeatherBadge />
+          <div className="relative" ref={notificationRef}>
+            <button
+              onClick={() => setShowNotifications((current) => !current)}
+              className="relative grid h-10 w-10 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105"
+              aria-label="Notifications"
+              aria-expanded={showNotifications}
+            >
+              <Bell className="h-5 w-5" />
+              {notificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-red-500 px-1 text-[10px] font-bold leading-4 text-white">
+                  {notificationCount}
+                </span>
+              )}
+            </button>
+            {showNotifications && (
+              <div className="absolute right-0 top-full z-50 mt-3 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-800 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                <div className="border-b border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">Notifications</div>
+                <ul className="max-h-72 overflow-y-auto">
+                  {notifications.length > 0 ? notifications.map((note) => (
+                    <li key={note.id}>
+                      <button
+                        className="w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 dark:hover:bg-slate-700"
+                        onClick={() => {
+                          setShowNotifications(false);
+                          router.push(note.link || "/notifications");
+                        }}
+                      >
+                        {note.title}
+                      </button>
+                    </li>
+                  )) : (
+                    <li className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">No notifications</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={toggleDarkMode}
+            className="grid h-10 w-10 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
           <button
             onClick={toggleLanguage}
             className="rounded-md bg-white px-2.5 py-2 font-semibold whitespace-nowrap text-green-700 shadow transition hover:scale-105 sm:px-3"

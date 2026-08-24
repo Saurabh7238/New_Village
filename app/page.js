@@ -2,71 +2,30 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 // Ensure you have this file: ../components/ServiceCard.jsx
 import ServiceCard from "../components/ServiceCard"; 
-import { Globe, Moon, Sun, Bell } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useLanguage } from "@/app/language-provider";
 
 export default function HomePage() {
-  const router = useRouter();
-
   const { language } = useLanguage();
-  const [darkMode, setDarkMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [visitCount, setVisitCount] = useState(null);
   const [showBanner, setShowBanner] = useState(true);
-  const [notifications, setNotifications] = useState([]);
-  const [notificationCount, setNotificationCount] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [reviewName, setReviewName] = useState("");
   const [reviewWard, setReviewWard] = useState("");
   const [reviewMessage, setReviewMessage] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewFeedback, setReviewFeedback] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef();
-
-  const toggleDarkMode = () => setDarkMode(!darkMode);
   const toggleModal = () => setShowModal(!showModal);
-  const toggleDropdown = () => setShowDropdown(!showDropdown);
 
   const loadReviews = () => {
     fetch("/api/reviews")
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setReviews(Array.isArray(data) ? data : []))
       .catch(() => setReviews([]));
-  };
-
-  const loadNotifications = () => {
-    const params = new URLSearchParams();
-    params.append("page", "1");
-    params.append("limit", "5");
-
-    fetch(`/api/notifications?${params.toString()}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!data) {
-          setNotifications([]);
-          setNotificationCount(0);
-          return;
-        }
-
-        const items = Array.isArray(data.notifications)
-          ? data.notifications
-          : Array.isArray(data)
-            ? data
-            : [];
-
-        setNotifications(items);
-        setNotificationCount(typeof data.total === "number" ? data.total : items.length);
-      })
-      .catch(() => {
-        setNotifications([]);
-        setNotificationCount(0);
-      });
   };
 
   // Visitor count: record once per browser session, then poll count
@@ -101,13 +60,6 @@ export default function HomePage() {
     }, 30000);
 
     return () => clearInterval(visitInterval);
-  }, []);
-
-  // Notifications API: load on mount and refresh periodically so new admin posts appear
-  useEffect(() => {
-    loadNotifications();
-    const notificationInterval = setInterval(loadNotifications, 30000);
-    return () => clearInterval(notificationInterval);
   }, []);
 
   // Reviews: load on mount and refresh every 15s for real-time updates
@@ -152,35 +104,19 @@ export default function HomePage() {
     }
   };
 
-  // Dark mode toggle: Runs when darkMode state changes
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", darkMode);
-  }, [darkMode]);
-
-  // Close dropdown if clicked outside: Runs once on mount
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const labels = {
     en: {
-      welcome: "Welcome to Gram panchayat chiutahra",
+      welcome: "Welcome to Gram Panchayat Chiutahara",
       description: "Manage certificates, budget, members, development & more",
       services: "Services",
       lang: "हिंदी",
       dark: "Dark Mode",
       slogan: "Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen",
-      footer: "© 2026 Gram panchayat chiutahra | Powered by Local Governance",
+      footer: "© 2026 Gram Panchayat Chiutahara | Powered by Local Governance",
       fab: "📞",
       whatsappLink:
         "https://wa.me/qr/D5EKI63JQJHLC1?text=Hello%20Gram%20Panchayat%20Team%2C%20I%20have%20a%20query.",
-      contactTitle: "Contact Gram Panchayat Chiutahra",
+      contactTitle: "Contact Gram Panchayat Chiutahara",
       contactMessage: "Send us a message or reach out via WhatsApp.",
       close: "Close",
       whatsapp: "Open WhatsApp",
@@ -234,117 +170,52 @@ export default function HomePage() {
   const t = labels[language];
 
   const services = [
-    { title: "Raise Query / शिकायत दर्ज", href: "/grievance" },
-    { title: "Track Query / शिकायत ट्रैक करें", href: "/track" },
-    { title: "Birth Certificates", href: "/birth" },
-    { title: "Death Certificates", href: "/death" },
-    { title: "Aadhar Create / Update", href: "/aadhar" },
-    { title: "Voter List", href: "/voter" },
-    { title: "Gram Budget", href: "/budget" },
-    { title: "Panchayat Funds", href: "/funds" },
-    { title: "Development Projects", href: "/development" },
-    { title: "Panchayat Members", href: "/members" },
-    { title: "Appointments", href: "/appointments" },
-    { title: "Gallery", href: "/gallery" },
-    { title: "Map", href: "/map" },
-    { title: "Rivers, Roads & Lights", href: "/infrastructure" },
+    { title: "Raise Query", hindi: "शिकायत दर्ज करें", href: "/grievance" },
+    { title: "Track Query", hindi: "शिकायत ट्रैक करें", href: "/track" },
+    { title: "Birth Certificates", hindi: "जन्म प्रमाण पत्र", href: "/birth" },
+    { title: "Death Certificates", hindi: "मृत्यु प्रमाण पत्र", href: "/death" },
+    { title: "Aadhaar Create / Update", hindi: "आधार बनवाएं / अपडेट करें", href: "/aadhar" },
+    { title: "Voter List", hindi: "मतदाता सूची", href: "/voter" },
+    { title: "Gram Budget", hindi: "ग्राम बजट", href: "/budget" },
+    { title: "Panchayat Funds", hindi: "पंचायत निधि", href: "/funds" },
+    { title: "Development Projects", hindi: "विकास परियोजनाएं", href: "/development" },
+    { title: "Panchayat Members", hindi: "पंचायत सदस्य", href: "/members" },
+    { title: "Appointments", hindi: "नियुक्तियां", href: "/appointments" },
+    { title: "Gallery", hindi: "गैलरी", href: "/gallery" },
+    { title: "Map", hindi: "मानचित्र", href: "/map" },
+    { title: "Rivers, Roads & Lights", hindi: "नदियां, सड़कें और लाइटें", href: "/infrastructure" },
   ];
 
   const images = ["/slide.png", "/voter.png", "/panchayat.jpg"];
 
-  // The root layout already reserves space for the fixed header.
-  const mainContentPaddingTop = 'pt-2';
-  // Dynamic top position for fixed icons to appear below the banner
-  const fixedIconsTop = showBanner ? 'top-12' : 'top-2'; 
   return (
-    <div className={`${darkMode ? "dark" : ""}`}>
-      <div
-        className={`min-h-screen ${
-          darkMode ? "bg-gray-900 text-white" : "bg-white text-black"
-        } relative`}
-      >
+    <div>
+      <div className="relative min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
         {/* Notification Banner */}
         {showBanner && (
-          <div className="bg-yellow-100 dark:bg-yellow-700 text-black dark:text-white text-sm px-4 py-2 flex justify-between items-center fixed top-0 left-0 right-0 z-50 shadow-md">
-            <span>{t.bannerMessage}</span>
+          <div className="mb-4 flex items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100 sm:items-center sm:px-5">
+            <span className="leading-5">{t.bannerMessage}</span>
             <button
               onClick={() => setShowBanner(false)}
-              className="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
+              className="shrink-0 rounded-lg bg-amber-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-800 dark:bg-amber-200 dark:text-amber-950 dark:hover:bg-amber-100"
             >
               {t.close}
             </button>
           </div>
         )}
 
-        {/* Top-right icons */}
-        <div className={`fixed z-[60] right-2 flex gap-2 transition-all duration-300 ${fixedIconsTop}`}>
-          
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={toggleDropdown}
-              className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow"
-              title={t.notificationsTitle}
-            >
-              <Bell className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-            </button>
-            {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
-                {notificationCount}
-              </span>
-            )}
-            {showDropdown && (
-              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 shadow-lg rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 z-50">
-                <div className="p-2 text-sm font-bold border-b border-gray-200 dark:border-gray-700">
-                  {t.notificationsTitle}
-                </div>
-                <ul>
-                  {notifications.length > 0 ? (
-                    notifications.map((note) => (
-                      <li
-                        key={note.id}
-                        className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer"
-                        onClick={() =>
-                          router.push(note.link || "/notifications")
-                        }
-                      >
-                        {note.title}
-                      </li>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-gray-500 text-sm">
-                      {t.noNotifications}
-                    </div>
-                  )}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow"
-            title={t.dark}
-          >
-            {darkMode ? (
-              <Sun className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-            ) : (
-              <Moon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-            )}
-          </button>
-        </div>
-
         {/* Main Content */}
-        <div className={`pb-2 transition-all duration-500 ${mainContentPaddingTop}`}>
-          <section className="text-center py-2 bg-gradient-to-r from-green-100 via-blue-100 to-yellow-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600">
-            <h1 className="text-xl font-bold text-green-700 dark:text-yellow-400">
+        <div className="space-y-5 pb-6 transition-colors duration-300">
+          <section className="overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-sky-50 px-5 py-8 text-center shadow-sm dark:border-emerald-900/70 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-950 sm:px-8 sm:py-10">
+            <h1 className="text-2xl font-bold tracking-tight text-emerald-800 dark:text-emerald-300 sm:text-3xl">
               {t.welcome}
             </h1>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+            <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
               {t.description}
             </p>
           </section>
 
-          <section className="overflow-hidden relative bg-black text-white py-2">
+          <section className="relative overflow-hidden rounded-2xl bg-slate-900 py-2.5 text-white shadow-sm">
             <motion.div
               className="whitespace-nowrap"
               animate={{ x: ["100%", "-100%"] }}
@@ -356,10 +227,10 @@ export default function HomePage() {
             </motion.div>
           </section>
 
-          <section className="py-2 overflow-hidden bg-white dark:bg-gray-800">
+          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-4">
             <div className="relative w-full">
               <motion.div
-                className="flex gap-4"
+                className="flex gap-3"
                 animate={{ x: ["0%", "-100%"] }}
                 transition={{ ease: "linear", duration: 20, repeat: Infinity }}
               >
@@ -368,22 +239,28 @@ export default function HomePage() {
                     key={idx}
                     src={src}
                     alt={`Slide ${idx}`}
-                    className="rounded-md shadow-sm hover:scale-105 transition h-24"
+                    className="h-28 w-44 shrink-0 rounded-2xl object-cover shadow-sm transition-transform duration-300 hover:scale-[1.02] sm:h-36 sm:w-56"
                   />
                 ))}
               </motion.div>
             </div>
           </section>
 
-          <section className="max-w-6xl mx-auto px-2 py-4">
-            <h2 className="text-lg font-bold text-center mb-3 text-green-700 dark:text-yellow-400">
+          <section className="py-3 sm:py-5">
+            <div className="mb-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Citizen portal</p>
+                <h2 className="mt-1 text-center text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {t.services}
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {services.map((s, i) => (
                 <ServiceCard
                   key={s.href}
                   title={s.title}
+                  hindi={s.hindi}
                   href={s.href}
                   index={i}
                 />
@@ -391,8 +268,8 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="max-w-6xl mx-auto px-2 py-6 bg-gradient-to-r from-blue-50 to-green-50 dark:from-gray-700 dark:to-gray-800 rounded-lg border border-blue-200 dark:border-gray-600 shadow-sm">
-            <h2 className="text-lg font-bold text-center mb-4 text-green-700 dark:text-yellow-400">
+          <section className="rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 to-emerald-50 px-4 py-6 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:to-emerald-950/40 sm:px-6 sm:py-8">
+            <h2 className="mb-5 text-xl font-bold tracking-tight text-emerald-800 dark:text-emerald-300">
               📍 About Chiutahara Village
             </h2>
 
@@ -430,7 +307,7 @@ export default function HomePage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Block:</strong> Lalganj</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Gram Panchayat:</strong> Chiutahra</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Gram Panchayat:</strong> Chiutahara</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Villages Served:</strong> 3</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Chiutahara, Lauhara, Malikan</p>
                 </div>
@@ -478,7 +355,7 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="max-w-6xl mx-auto px-2 py-6 border-t border-gray-200 dark:border-gray-700">
+          <section className="rounded-3xl border border-slate-200 bg-white px-4 py-6 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:px-6 sm:py-8">
             <h2 className="text-lg font-bold text-center text-green-700 dark:text-yellow-400">
               {t.reviewsTitle}
             </h2>
@@ -550,26 +427,22 @@ export default function HomePage() {
           </section>
         </div>
 
-        <section className="text-center py-2 bg-gray-100 dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700">
+        <section className="rounded-2xl border border-slate-200 bg-slate-50 py-3 text-center dark:border-slate-700 dark:bg-slate-800">
           <p className="text-sm text-gray-700 dark:text-gray-300">
             🔢 {t.visitors}: <span className="font-bold">{visitCount ?? "..."}</span>
           </p>
         </section>
 
-        <footer className="fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-gray-800 text-center text-xs py-2 border-t border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300">
-          {t.footer}{" "}
-        </footer>
-
         <button
           onClick={toggleModal}
-          className="fixed bottom-16 right-4 bg-green-500 hover:bg-green-600 text-white text-lg px-4 py-2 rounded-full shadow-lg transition animate-pulse"
+          className="fixed bottom-5 right-4 z-40 rounded-full bg-emerald-600 px-4 py-3 text-lg text-white shadow-lg shadow-emerald-900/20 transition hover:-translate-y-0.5 hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900"
         >
           {t.fab}
         </button>
 
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-900 text-black dark:text-white rounded-lg p-6 w-80 shadow-xl">
+            <div className="w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-white p-6 text-black shadow-xl dark:bg-gray-900 dark:text-white">
               <h3 className="text-lg font-bold mb-2">{t.contactTitle}</h3>
               <p className="text-sm mb-4">{t.contactMessage}</p>
               <div className="flex justify-end gap-2">

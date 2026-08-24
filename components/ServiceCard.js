@@ -14,8 +14,8 @@ import {
 
 // Icon mapping by title
 const iconMap = {
-  "Raise Query / शिकायत दर्ज": FaClipboard,
-  "Track Query / शिकायत ट्रैक करें": FaSearch,
+  "Raise Query": FaClipboard,
+  "Track Query": FaSearch,
   "Birth Certificates": FaFileAlt,
   "Death Certificates": FaFileAlt,
   "Aadhar Create / Update": FaCogs,
@@ -25,7 +25,7 @@ const iconMap = {
   "Map": FaMapMarkedAlt,
 };
 
-export default function ServiceCard({ title, href, index }) {
+export default function ServiceCard({ title, hindi, href, index }) {
   const Icon = iconMap[title] || FaCogs;
 
   return (
@@ -42,19 +42,19 @@ export default function ServiceCard({ title, href, index }) {
       <Link
         href={href}
         aria-label={`Manage ${title}`}
-        className="group block p-6 sm:p-4 rounded-xl shadow-md
-          hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02]
-          transition-all duration-300 ease-out
-          border-l-4 border-green-600 hover:border-green-700
-          bg-gradient-to-br from-white to-green-50"
+        className="group flex min-h-[5.5rem] items-center rounded-2xl border border-slate-200 bg-white p-4 shadow-sm
+          transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md
+          dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700"
       >
-        <div className="flex items-center gap-3 mb-2">
-          <Icon className="text-green-700 text-xl transform transition-transform duration-200 group-hover:scale-110" />
-          <h3 className="text-lg font-semibold text-green-700">{title}</h3>
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700 transition-transform duration-200 group-hover:scale-105 dark:bg-emerald-950/50 dark:text-emerald-300">
+            <Icon className="text-lg" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold leading-5 text-slate-800 dark:text-slate-100">{title}</h3>
+            <p className="mt-0.5 text-xs leading-4 text-slate-500 dark:text-slate-400">{hindi}</p>
+          </div>
         </div>
-        <p className="text-sm text-gray-600">
-          Click to manage {title.toLowerCase()}.
-        </p>
       </Link>
     </motion.article>
   );

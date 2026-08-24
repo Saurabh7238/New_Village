@@ -1,13 +1,12 @@
 import "./globals.css";
 import Header from "../components/Header";
-import LanguageBanner from "../components/LanguageBanner";
 import Providers from "./auth-provider";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import WelcomeToast from "../components/WelcomeToast";
 import { LanguageProvider } from "./language-provider";
 
 export const metadata = {
-  title: "Gram panchayat chiutahra",
+  title: "Gram Panchayat Chiutahara",
   description: "Manage Gram Panchayat information for Chiutahra",
   icons: {
     icon: "/favicon.ico",
@@ -41,15 +40,14 @@ export default function RootLayout({ children }) {
               </div>
             </noscript>
             <Header />
-            <LanguageBanner />
-            <main className="max-w-6xl mx-auto px-4 pt-36 pb-8">
+            <main className="max-w-6xl mx-auto px-4">
               <WelcomeToast />
               {children}
             </main>
             <ScrollToTopButton />
-            <footer className="bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700 text-white mt-8">
+            <footer className="bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700 text-white">
                 <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm">
-                © {new Date().getFullYear()} Gram panchayat chiutahra
+                © {new Date().getFullYear()} Gram Panchayat Chiutahara
               </div>
             </footer>
           </LanguageProvider>

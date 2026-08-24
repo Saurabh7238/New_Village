@@ -86,7 +86,7 @@ async function generatePDF(query, type) {
   };
 
   // Header
-  drawText('GRAM PANCHAYAT CHIUTAHRA', 14, true);
+  drawText('GRAM PANCHAYAT CHIUTAHARA', 14, true);
   drawText('Lalganj, Azamgarh District, Uttar Pradesh', 9);
   y -= 5;
   drawLine();
