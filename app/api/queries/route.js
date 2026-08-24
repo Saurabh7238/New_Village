@@ -116,17 +116,20 @@ export async function GET(request) {
     const ward = searchParams.get('ward');
     const category = searchParams.get('category');
     const status = searchParams.get('status');
-    const mobile = searchParams.get('mobile');
+    const assignedTo = searchParams.get('assignedTo');
+    const priority = searchParams.get('priority');
+    const page = Math.max(1, Number(searchParams.get('page')) || 1);
+    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit')) || 25));
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
 
     const session = await requireAdminSession();
     const isAdmin = !!session;
 
-    if (!isAdmin && !mobile) {
+    if (!isAdmin) {
       return NextResponse.json(
-        { message: 'Mobile number is required for public tracking' },
-        { status: 403 }
+        { message: 'Unauthorized' },
+        { status: 401 }
       );
     }
 
@@ -144,9 +147,9 @@ export async function GET(request) {
       if (ward) filter.ward = parseInt(ward);
       if (category) filter.category = category;
       if (status) filter.status = status;
+      if (assignedTo) filter.assignedTo = assignedTo;
+      if (priority) filter.priority = priority;
     }
-
-    if (mobile) filter.mobile = mobile;
 
     if (isAdmin && (dateFrom || dateTo)) {
       filter.createdAt = {};
@@ -158,9 +161,17 @@ export async function GET(request) {
       }
     }
 
-    const queries = await Query.find(filter).sort({ createdAt: -1 }).lean();
+    const [queries, total] = await Promise.all([
+      Query.find(filter)
+        .select('queryId name mobile ward category subject status priority assignedTo escalate createdAt updatedAt')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Query.countDocuments(filter),
+    ]);
 
-    return NextResponse.json(queries, { status: 200 });
+    return NextResponse.json({ queries, pagination: { page, limit, total, pages: Math.ceil(total / limit) } }, { status: 200 });
   } catch (error) {
     console.error('Query fetch error:', error);
     return NextResponse.json(

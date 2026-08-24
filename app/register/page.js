@@ -11,9 +11,8 @@ export default function RegisterPage() {
     phone: "",
     password: "",
     confirmPassword: "",
-    village: "",
     ward: "",
-    address: "",
+    aadhaarNumber: "",
   });
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -52,8 +51,12 @@ export default function RegisterPage() {
       setError("Passwords do not match");
       return;
     }
-    if (!formData.village.trim() || !formData.ward || !formData.address.trim()) {
-      setError("Village, ward number, and address are required");
+    if (!formData.ward) {
+      setError("Ward number is required");
+      return;
+    }
+    if (formData.aadhaarNumber.replace(/\D/g, "").length !== 12) {
+      setError("Enter a valid 12-digit Aadhaar number");
       return;
     }
 
@@ -68,9 +71,8 @@ export default function RegisterPage() {
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-          village: formData.village,
           ward: formData.ward,
-          address: formData.address,
+          aadhaarNumber: formData.aadhaarNumber,
         }),
       });
 
@@ -131,18 +133,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Village</label>
-            <input type="text" name="village" value={formData.village} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm" required />
-          </div>
-          <div>
             <label className="block text-sm font-medium text-gray-700">Ward Number</label>
             <input type="number" min="1" max="50" name="ward" value={formData.ward} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm" required />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Address</label>
-            <textarea name="address" value={formData.address} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm" rows="3" required />
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Mobile Number
@@ -157,6 +150,12 @@ export default function RegisterPage() {
               maxLength={10}
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Aadhaar Number</label>
+            <input type="password" inputMode="numeric" name="aadhaarNumber" value={formData.aadhaarNumber} onChange={(e) => setFormData({ ...formData, aadhaarNumber: e.target.value.replace(/\D/g, "").slice(0, 12) })} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200" placeholder="12-digit Aadhaar number" maxLength={12} required />
+            <p className="mt-1 text-xs text-gray-500">Stored securely; it will never be displayed in full.</p>
           </div>
 
           <div>

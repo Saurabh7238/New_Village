@@ -63,13 +63,16 @@ export default function AdminQueriesPage() {
       if (filters.priority) params.append("priority", filters.priority);
       if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
       if (filters.dateTo) params.append("dateTo", filters.dateTo);
+      params.append("page", String(page));
+      params.append("limit", "25");
 
       const res = await fetch(`/api/queries?${params.toString()}`);
       const data = await res.json();
 
-      if (Array.isArray(data)) {
-        setQueries(data);
-        calculateStats(data);
+      const queryList = Array.isArray(data) ? data : data.queries;
+      if (Array.isArray(queryList)) {
+        setQueries(queryList);
+        calculateStats(queryList);
       }
       setLoading(false);
     } catch (error) {

@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useTheme } from "@/app/theme-provider";
 import { getStatusBgClass, formatQueryDate, calculateProgressPercentage, getProgressColor, maskMobile, getTimeRemaining, getSlaDeadline, QUERY_SLA_MATRIX } from "@/lib/queryDisplay";
 
 export default function TrackPage() {
   const { isDark } = useTheme();
+  const { status } = useSession();
+  const router = useRouter();
   const [queryId, setQueryId] = useState("");
-  const [mobile, setMobile] = useState("");
   const [query, setQuery] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -18,6 +22,7 @@ export default function TrackPage() {
     ? "bg-gray-700 text-white border-gray-600"
     : "bg-white text-gray-900 border-gray-300";
   const labelClass = isDark ? "text-gray-300" : "text-gray-700";
+  useEffect(() => { if (status === 'unauthenticated') router.replace('/signin?callbackUrl=%2Ftrack'); }, [status, router]);
 
   const handleTrack = async (e) => {
     e.preventDefault();
@@ -26,9 +31,7 @@ export default function TrackPage() {
     setQuery(null);
 
     try {
-      const res = await fetch(`/api/queries?mobile=${mobile}`, {
-        headers: { "Authorization": "Bearer " + queryId }
-      });
+      const res = await fetch('/api/my-queries');
 
       if (!res.ok) {
         const data = await res.json();
@@ -38,7 +41,7 @@ export default function TrackPage() {
       }
 
       const data = await res.json();
-      const found = Array.isArray(data) ? data.find(q => q.queryId === queryId && q.mobile === mobile) : null;
+      const found = data.queries?.find(q => q.queryId === queryId);
 
       if (found) {
         setQuery(found);
@@ -93,22 +96,10 @@ export default function TrackPage() {
                 />
               </div>
 
-              <div>
-                <label className={`block ${labelClass} mb-2 font-semibold`}>Mobile Number *</label>
-                <input
-                  type="tel"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="10-digit mobile number"
-                  maxLength="10"
-                  required
-                  className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
-                />
-              </div>
 
               <button
                 type="submit"
-                disabled={loading || !queryId || mobile.length !== 10}
+                disabled={loading || !queryId || status !== 'authenticated'}
                 className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold disabled:opacity-50"
               >
                 {loading ? "Searching..." : "Track Query"}

@@ -10,14 +10,14 @@ export async function POST(req) {
   await dbConnect();
 
   try {
-    const { name, email: rawEmail, phone: rawPhone, password, village, ward, address, aadhaarNumber, profilePhoto } = await req.json();
+    const { name, email: rawEmail, phone: rawPhone, password, ward, aadhaarNumber, profilePhoto } = await req.json();
     const email = rawEmail?.trim().toLowerCase() || null;
 
     const phone = normalizePhone(rawPhone);
 
-    if (!name?.trim() || !phone || !password || !village?.trim() || !ward || !address?.trim()) {
+    if (!name?.trim() || !phone || !password || !ward || !aadhaarNumber) {
       return NextResponse.json(
-        { error: "Name, mobile number, village, ward, address, and password are required" },
+        { error: "Name, mobile number, ward number, Aadhaar number, and password are required" },
         { status: 400 }
       );
     }
@@ -69,9 +69,9 @@ export async function POST(req) {
       email,
       phone,
       password: hashedPassword,
-      village: village?.trim() || '',
+      village: '',
       ward: wardNumber,
-      address: address?.trim() || '',
+      address: '',
       aadhaarHash,
       aadhaarLast4: normalizedAadhaar ? normalizedAadhaar.slice(-4) : null,
       profilePhoto: typeof profilePhoto === 'string' ? profilePhoto : null,

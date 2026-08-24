@@ -4,7 +4,7 @@ import User from '@/models/User';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import { isValidIndianMobile, normalizePhone } from '@/lib/phoneValidation';
 
-const PROFILE_FIELDS = 'name phone email village ward address profilePhoto uniqueId role status createdAt';
+const PROFILE_FIELDS = 'name phone email village ward address profilePhoto uniqueId role status aadhaarLast4 createdAt';
 
 export async function GET() {
   try {

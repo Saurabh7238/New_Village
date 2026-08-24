@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useTheme } from "@/app/theme-provider";
 import { QUERY_CATEGORIES } from "@/lib/queryDisplay";
 export default function GrievancePage() {
   const router = useRouter();
+  const { status } = useSession();
   const { isDark } = useTheme();
   const [step, setStep] = useState("form");
   const [loading, setLoading] = useState(false);
@@ -22,6 +24,14 @@ export default function GrievancePage() {
   const labelClass = isDark ? "text-gray-300" : "text-gray-700";
 
   useEffect(() => { generateCaptcha(); }, []);
+  useEffect(() => {
+    if (status === 'unauthenticated') router.replace('/signin?callbackUrl=%2Fgrievance');
+    if (status === 'authenticated') {
+      fetch('/api/me').then((res) => res.json()).then((data) => {
+        if (data.user) setFormData((current) => ({ ...current, name: data.user.name || '', mobile: data.user.phone || '', ward: data.user.ward || '' }));
+      });
+    }
+  }, [status, router]);
 
   const generateCaptcha = () => {
     const num1 = Math.floor(Math.random() * 20) + 1;
@@ -59,7 +69,8 @@ export default function GrievancePage() {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-    if (!formData.name || !formData.mobile || !formData.ward || !formData.category || !formData.subject || !formData.description) {
+    if (status !== 'authenticated') { router.push('/signin?callbackUrl=%2Fgrievance'); return; }
+    if (!formData.ward || !formData.category || !formData.subject || !formData.description) {
       setMessage("Please fill all required fields");
       setLoading(false);
       return;
@@ -75,14 +86,6 @@ export default function GrievancePage() {
       return;
     }
     try {
-      const rateLimitRes = await fetch(`/api/queries/rate-limit/check?mobile=${formData.mobile}`);
-      const rateLimitData = await rateLimitRes.json();
-      if (!rateLimitData.allowed) {
-        setMessage(rateLimitData.message || "You have reached your daily query limit");
-        setLoading(false);
-        return;
-      }
-      setRateLimitInfo(rateLimitData);
       const res = await fetch("/api/queries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,8 +116,8 @@ export default function GrievancePage() {
             {message && <div className={`mb-4 p-3 rounded-lg ${message.includes("Error") || message.includes("reached") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>{message}</div>}
             {rateLimitInfo && <div className={`mb-4 p-3 rounded-lg ${isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"}`}>{rateLimitInfo.message}</div>}
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div><label className={`block ${labelClass} mb-2 font-semibold`}>Full Name *</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required className={`w-full px-4 py-2 border rounded ${inputClass}`} /></div>
-              <div><label className={`block ${labelClass} mb-2 font-semibold`}>Mobile *</label><input type="tel" name="mobile" value={formData.mobile} onChange={(e) => setFormData({...formData, mobile: e.target.value.replace(/[^0-9]/g, "").slice(0, 10)})} maxLength="10" required className={`w-full px-4 py-2 border rounded ${inputClass}`} /></div>
+              <div><label className={`block ${labelClass} mb-2 font-semibold`}>Full Name</label><input type="text" value={formData.name} readOnly className={`w-full px-4 py-2 border rounded opacity-70 ${inputClass}`} /></div>
+              <div><label className={`block ${labelClass} mb-2 font-semibold`}>Mobile</label><input type="tel" value={formData.mobile} readOnly className={`w-full px-4 py-2 border rounded opacity-70 ${inputClass}`} /></div>
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Ward *</label><select name="ward" value={formData.ward} onChange={handleInputChange} required className={`w-full px-4 py-2 border rounded ${inputClass}`}><option value="">Select Ward</option>{[1,2,3,4,5,6,7,8,9,10].map(w => <option key={w} value={w}>Ward {w}</option>)}</select></div>
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Category *</label><select name="category" value={formData.category} onChange={handleInputChange} required className={`w-full px-4 py-2 border rounded ${inputClass}`}>{QUERY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Subject *</label><input type="text" name="subject" value={formData.subject} onChange={handleInputChange} maxLength="100" required className={`w-full px-4 py-2 border rounded ${inputClass}`} /><p className={`text-xs mt-1 ${labelClass}`}>{formData.subject.length}/100</p></div>
