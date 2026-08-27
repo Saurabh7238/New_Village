@@ -28,11 +28,11 @@ export function useToast() {
 
 export function ToastContainer({ toasts, removeToast, isDark }) {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+    <div className="fixed left-3 right-3 top-3 z-50 space-y-2 sm:left-auto sm:right-4 sm:top-4 sm:w-full sm:max-w-md">
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className={`p-4 rounded-lg shadow-lg flex justify-between items-center animate-slide-in ${
+          className={`flex min-h-12 items-center justify-between rounded-lg p-3 shadow-lg animate-slide-in sm:p-4 ${
             toast.type === "success"
               ? isDark
                 ? "bg-green-900 text-green-200 border border-green-700"
@@ -53,7 +53,8 @@ export function ToastContainer({ toasts, removeToast, isDark }) {
           <span className="flex-1">{toast.message}</span>
           <button
             onClick={() => removeToast(toast.id)}
-            className="ml-4 text-lg hover:opacity-70"
+            className="ml-3 grid h-11 w-11 shrink-0 place-items-center rounded text-lg hover:opacity-70"
+            aria-label="Dismiss notification"
           >
             ×
           </button>

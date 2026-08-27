@@ -68,7 +68,7 @@ export default function AdminPanel() {
             <Link href="/admin/appointments" className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               Appointments
             </Link>
-            <Link href="/admin/members" className="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/members" className="hidden">
               👥 Members
             </Link>
             <Link href="/admin/notifications" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">

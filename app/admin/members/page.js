@@ -69,7 +69,7 @@ function MemberForm({ member, onSubmit, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
           <input
@@ -427,7 +427,7 @@ export default function AdminMembersPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="overflow-x-auto rounded-lg bg-white shadow">
         <table className="w-full">
           <thead className="bg-gray-100 border-b">
             <tr>

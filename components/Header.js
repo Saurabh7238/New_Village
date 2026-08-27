@@ -157,9 +157,9 @@ export default function Header() {
         </motion.div>
       </div>
 
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-4 lg:px-8">
+      <div className="mx-auto flex max-w-6xl flex-nowrap items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-4 lg:px-8">
         <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
-          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12">
+          <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12">
             <Image
               src={logoImage}
               alt="Chiutahara Heritage Village logo"
@@ -170,23 +170,30 @@ export default function Header() {
             />
           </span>
           <span className="min-w-0 leading-tight text-white">
-            <span className="block truncate text-lg font-bold tracking-wide sm:text-2xl">Chiutahara Portal</span>
+            <span className="block truncate text-base font-bold tracking-wide sm:text-2xl">Chiutahara Portal</span>
           </span>
         </Link>
 
         <div className="relative ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 md:gap-3">
-          <WeatherBadge />
+          <div className="hidden sm:block"><WeatherBadge /></div>
+          <button
+            onClick={toggleDarkMode}
+            className="grid h-9 w-9 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105 sm:h-10 sm:w-10"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
+          </button>
           <div className="relative" ref={notificationRef}>
             <button
               onClick={() => {
                 setOpen(false);
                 setShowNotifications((current) => !current);
               }}
-              className="relative grid h-10 w-10 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105"
+              className="relative grid h-9 w-9 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105 sm:h-10 sm:w-10"
               aria-label="Notifications"
               aria-expanded={showNotifications}
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
               {visibleNotificationCount > 0 && (
                 <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-red-500 px-1 text-[10px] font-bold leading-4 text-white">
                   {visibleNotificationCount > 99 ? "99+" : visibleNotificationCount}
@@ -222,18 +229,11 @@ export default function Header() {
             )}
           </div>
           <button
-            onClick={toggleDarkMode}
-            className="grid h-10 w-10 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
-          <button
             onClick={() => {
               setShowNotifications(false);
               setOpen(!open);
             }}
-            className="rounded-md bg-white px-3 py-2 font-semibold whitespace-nowrap text-green-700 shadow transition hover:scale-105 sm:px-4"
+            className="rounded-md bg-white px-2.5 py-2 text-sm font-semibold whitespace-nowrap text-green-700 shadow transition hover:scale-105 sm:px-4 sm:text-base"
             aria-expanded={open}
             aria-controls="main-menu"
             aria-label={open ? langLabels.close : langLabels.menu}
