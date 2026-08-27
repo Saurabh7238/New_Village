@@ -2,9 +2,22 @@
 
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function AdminPanel() {
   const { data: session, status } = useSession();
+  const [serviceCounts, setServiceCounts] = useState({});
+
+  useEffect(() => {
+    if (status !== 'authenticated' || session?.user?.role !== 'admin') return;
+    const load = () => fetch('/api/service-notifications').then((response) => response.ok ? response.json() : null).then((data) => setServiceCounts(data?.byService || {})).catch(() => setServiceCounts({}));
+    load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
+  }, [status, session?.user?.role]);
+  const queryCount = Object.entries(serviceCounts).filter(([type]) => type.startsWith('query:')).reduce((sum, [, count]) => sum + count, 0);
+  const applicationCount = Object.entries(serviceCounts).filter(([type]) => !type.startsWith('query:')).reduce((sum, [, count]) => sum + count, 0);
+  const badge = (count) => count > 0 ? <span className="ml-2 inline-grid min-w-5 place-items-center rounded-full bg-white px-1.5 py-0.5 text-xs font-bold text-red-700">{count}</span> : null;
 
   if (status === "loading") {
     return <div className="p-8 text-center">Loading...</div>;
@@ -31,8 +44,26 @@ export default function AdminPanel() {
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Management Sections</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link href="/admin/applications?service=aadhaar-request" className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              Aadhaar Requests {badge(serviceCounts['aadhaar-request'] || 0)}
+            </Link>
+            <Link href="/admin/applications?service=birth-certificate" className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              Birth Certificates {badge(serviceCounts['birth-certificate'] || 0)}
+            </Link>
+            <Link href="/admin/applications?service=death-certificate" className="bg-slate-600 hover:bg-slate-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              Death Certificates {badge(serviceCounts['death-certificate'] || 0)}
+            </Link>
+            <Link href="/admin/members" className="bg-green-700 hover:bg-green-800 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              Panchayat Members
+            </Link>
+            <Link href="/admin/applications" className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              Service Applications {badge(applicationCount)}
+            </Link>
             <Link href="/admin/queries" className="bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               🎯 Queries / 📋 शिकायत
+            </Link>
+            <Link href="/admin/queries" className="bg-rose-700 hover:bg-rose-800 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              New Query Requests {badge(queryCount)}
             </Link>
             <Link href="/admin/appointments" className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               Appointments

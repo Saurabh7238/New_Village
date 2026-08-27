@@ -3,6 +3,7 @@ import dbConnect from '@/lib/dbConnect';
 import Query from '@/models/Query';
 import QueryMessage from '@/models/QueryMessage';
 import CitizenNotification from '@/models/CitizenNotification';
+import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession, isAdminOrStaff } from '@/lib/sessionAuth';
 
 async function getAuthorizedQuery(id, session) {
@@ -34,6 +35,9 @@ export async function POST(request, { params }) {
   if (!message?.trim() || message.trim().length > 4000) return NextResponse.json({ message: 'Enter a message up to 4,000 characters' }, { status: 400 });
   const senderRole = isAdminOrStaff(session) ? session.user.role : 'citizen';
   const saved = await QueryMessage.create({ queryId: query._id, senderId: session.user.id, senderRole, message: message.trim() });
-  if (senderRole !== 'citizen') await CitizenNotification.create({ userId: query.userId, title: `New response on ${query.queryId}`, message: 'Panchayat Admin has replied to your query.', type: 'message', relatedType: 'query', relatedId: query._id });
+  if (senderRole !== 'citizen') {
+    await ServiceNotification.findOneAndUpdate({ relatedType: 'query', relatedId: query._id }, { $set: { adminResponded: new Date(), isRead: false } });
+    await CitizenNotification.create({ userId: query.userId, title: `New response on ${query.queryId}`, message: 'Panchayat Admin has replied to your query.', type: 'message', relatedType: 'query', relatedId: query._id });
+  }
   return NextResponse.json({ message: { ...saved.toObject(), id: saved._id.toString() } }, { status: 201 });
 }

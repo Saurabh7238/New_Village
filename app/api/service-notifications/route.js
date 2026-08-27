@@ -1,48 +1,53 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/dbConnect';
-import CitizenNotification from '@/models/CitizenNotification';
-import AdminNotification from '@/models/AdminNotification';
+import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 
-function notificationModel(role) {
-  return role === 'admin' ? AdminNotification : CitizenNotification;
-}
+const links = {
+  application: (id, admin) => admin ? `/admin/applications?application=${id}` : `/dashboard/applications?application=${id}`,
+  query: (id, admin) => admin ? `/admin/queries/${id}` : '/track',
+};
 
 export async function GET() {
   const session = await requireAuthenticatedSession();
   if (!session) return NextResponse.json({ message: 'Please sign in.' }, { status: 401 });
-
   await connectDB();
-  const Model = notificationModel(session.user.role);
-  const filter = { userId: session.user.id };
-  if (session.user.role !== 'admin') filter.type = 'application';
-
-  const [notifications, unread] = await Promise.all([
-    Model.find(filter).sort({ createdAt: -1 }).limit(5).lean(),
-    Model.countDocuments({ ...filter, isRead: false }),
-  ]);
-
+  const isAdmin = session.user.role === 'admin';
+  const filter = isAdmin
+    ? { adminIsRead: false }
+    : { userId: session.user.id, adminResponded: { $ne: null }, isRead: false };
+  const notifications = await ServiceNotification.find(filter).sort({ updatedAt: -1 }).limit(100).lean();
+  const byService = notifications.reduce((counts, notification) => {
+    counts[notification.serviceType] = (counts[notification.serviceType] || 0) + 1;
+    return counts;
+  }, {});
   return NextResponse.json({
+    unread: notifications.length,
+    byService,
     notifications: notifications.map((notification) => ({
       ...notification,
       id: notification._id.toString(),
-      link: session.user.role === 'admin' ? '/admin/applications' : '/dashboard/applications',
+      relatedId: notification.relatedId.toString(),
+      link: links[notification.relatedType](notification.relatedId.toString(), isAdmin),
+      title: isAdmin ? `New ${notification.serviceType.replace(/[-:]/g, ' ')} request` : `Update for your ${notification.serviceType.replace(/-/g, ' ')}`,
     })),
-    unread,
   });
 }
 
 export async function PATCH(request) {
   const session = await requireAuthenticatedSession();
   if (!session) return NextResponse.json({ message: 'Please sign in.' }, { status: 401 });
-
-  const { id } = await request.json();
+  const { id, relatedId, relatedType } = await request.json();
   await connectDB();
-  const Model = notificationModel(session.user.role);
-  const filter = { userId: session.user.id };
-  if (session.user.role !== 'admin') filter.type = 'application';
-
-  if (id) await Model.updateOne({ ...filter, _id: id }, { isRead: true });
-  else await Model.updateMany({ ...filter, isRead: false }, { isRead: true });
+  const isAdmin = session.user.role === 'admin';
+  const filter = id ? { _id: id } : relatedId ? { relatedId, relatedType } : { relatedType };
+  if (!id && !relatedType) return NextResponse.json({ message: 'Notification target is required.' }, { status: 400 });
+  if (!isAdmin && !id && !relatedId) return NextResponse.json({ message: 'Notification target is required.' }, { status: 400 });
+  if (isAdmin) {
+    await ServiceNotification.updateMany(filter, { adminIsRead: true, adminAcknowledgedAt: new Date() });
+  } else {
+    // The user id and an admin response are both required; clients cannot clear another citizen's badge.
+    await ServiceNotification.updateMany({ ...filter, userId: session.user.id, adminResponded: { $ne: null } }, { isRead: true });
+  }
   return NextResponse.json({ success: true });
 }

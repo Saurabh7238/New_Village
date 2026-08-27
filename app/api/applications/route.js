@@ -4,6 +4,7 @@ import Application from '@/models/Application';
 import User from '@/models/User';
 import CitizenNotification from '@/models/CitizenNotification';
 import AdminNotification from '@/models/AdminNotification';
+import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 
 const SERVICE_TYPES = ['birth-certificate', 'death-certificate', 'aadhaar-request', 'voter-request', 'other'];
@@ -55,6 +56,7 @@ export async function POST(request) {
       formData: { ...formData, applicant: { name: user.name, email: user.email || '', phone: user.phone, aadhaarLast4: user.aadhaarLast4 || null } },
       documents: safeDocuments,
     });
+    await ServiceNotification.create({ userId: user._id, serviceType, relatedType: 'application', relatedId: application._id, queryRaised: application.createdAt });
     await CitizenNotification.create({ userId: user._id, title: `${applicationNumber} submitted`, message: 'Your application has been submitted for review.', type: 'application', relatedType: 'application', relatedId: application._id });
     const admins = await User.find({ role: 'admin', status: 'active' }).select('_id').lean();
     if (admins.length) {

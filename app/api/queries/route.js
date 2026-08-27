@@ -8,6 +8,7 @@ import { requireAdminSession } from '@/lib/adminAuth';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import User from '@/models/User';
 import CitizenNotification from '@/models/CitizenNotification';
+import ServiceNotification from '@/models/ServiceNotification';
 
 export async function POST(request) {
   await connectDB();
@@ -82,6 +83,7 @@ export async function POST(request) {
     });
 
     await newQuery.save();
+    await ServiceNotification.create({ userId: citizen._id, serviceType: `query:${category}`, relatedType: 'query', relatedId: newQuery._id, queryRaised: newQuery.createdAt });
 
     await CitizenNotification.create({
       userId: citizen._id,

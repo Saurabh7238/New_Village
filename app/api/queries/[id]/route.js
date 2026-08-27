@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
 import { checkSlaBreach } from '@/lib/escalationRules';
 import { requireAdminSession } from '@/lib/adminAuth';
+import ServiceNotification from '@/models/ServiceNotification';
+import CitizenNotification from '@/models/CitizenNotification';
 
 export async function GET(request, { params }) {
   await connectDB();
@@ -34,6 +36,11 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
+
+    await ServiceNotification.updateOne(
+      { relatedType: 'query', relatedId: query._id },
+      { adminIsRead: true, adminAcknowledgedAt: new Date() }
+    );
 
     const breach = checkSlaBreach(query);
     if (breach.breached && !query.escalate) {
@@ -109,6 +116,13 @@ export async function PUT(request, { params }) {
         { message: 'Query not found' },
         { status: 404 }
       );
+    }
+    if (adminRemarks !== undefined || status) {
+      await ServiceNotification.findOneAndUpdate(
+        { relatedType: 'query', relatedId: query._id },
+        { $set: { adminResponded: new Date(), isRead: false } },
+      );
+      await CitizenNotification.create({ userId: query.userId, title: `Query ${query.queryId} updated`, message: query.adminRemarks || `Your query status is now ${query.status}.`, type: 'query', relatedType: 'query', relatedId: query._id });
     }
 
     return NextResponse.json(query, { status: 200 });
