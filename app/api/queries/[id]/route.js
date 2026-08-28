@@ -6,6 +6,7 @@ import { checkSlaBreach } from '@/lib/escalationRules';
 import { requireAdminSession } from '@/lib/adminAuth';
 import ServiceNotification from '@/models/ServiceNotification';
 import CitizenNotification from '@/models/CitizenNotification';
+import QueryMessage from '@/models/QueryMessage';
 
 export async function GET(request, { params }) {
   await connectDB();
@@ -132,5 +133,31 @@ export async function PUT(request, { params }) {
       { message: 'Error updating query' },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(_request, { params }) {
+  const session = await requireAdminSession();
+  if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
+
+  if (!params.id || !mongoose.Types.ObjectId.isValid(params.id)) {
+    return NextResponse.json({ message: 'Invalid query ID format' }, { status: 400 });
+  }
+
+  try {
+    await connectDB();
+    const query = await Query.findByIdAndDelete(params.id);
+    if (!query) return NextResponse.json({ message: 'Query not found' }, { status: 404 });
+
+    await Promise.all([
+      QueryMessage.deleteMany({ queryId: query._id }),
+      ServiceNotification.deleteMany({ relatedType: 'query', relatedId: query._id }),
+      CitizenNotification.deleteMany({ userId: query.userId, relatedType: 'query', relatedId: query._id }),
+    ]);
+
+    return NextResponse.json({ message: `Query ${query.queryId} deleted successfully.` });
+  } catch (error) {
+    console.error('Query deletion error:', error);
+    return NextResponse.json({ message: 'Unable to delete query.' }, { status: 500 });
   }
 }

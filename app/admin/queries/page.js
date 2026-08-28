@@ -161,6 +161,20 @@ export default function AdminQueriesPage() {
     }
   };
 
+  const handleDelete = async (query) => {
+    if (!window.confirm(`Delete query ${query.queryId}? This also removes its messages and notifications. This cannot be undone.`)) return;
+    try {
+      const response = await fetch(`/api/queries/${query._id}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Unable to delete query');
+      setQueries((items) => items.filter((item) => item._id !== query._id));
+      setSelectedRows((items) => { const next = new Set(items); next.delete(query._id); return next; });
+      setMessage(data.message);
+    } catch (error) {
+      setMessage(error.message || 'Error deleting query');
+    }
+  };
+
   const handleExport = async () => {
     try {
       const res = await fetch("/api/queries/export", {
@@ -403,9 +417,7 @@ export default function AdminQueriesPage() {
                     <td className="px-4 py-3 text-sm">{query.assignedTo || "-"}</td>
                     <td className="px-4 py-3 text-xs">{formatQueryDate(query.createdAt)}</td>
                     <td className="px-4 py-3 text-sm">
-                      <Link href={`/admin/queries/${query._id}`} className="text-blue-600 hover:underline">
-                        View
-                      </Link>
+                      <div className="flex gap-3"><Link href={`/admin/queries/${query._id}`} className="text-blue-600 hover:underline">View</Link><button onClick={() => handleDelete(query)} className="text-red-600 hover:underline">Delete</button></div>
                     </td>
                   </tr>
                 ))
