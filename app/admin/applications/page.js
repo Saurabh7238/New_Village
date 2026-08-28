@@ -45,7 +45,9 @@ function AdminApplicationsContent() {
   };
   const save = async (application) => {
     setSavingId(application.id);
-    const response = await fetch('/api/admin/applications', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: application.id, status: application.status, adminRemarks: application.adminRemarks, adminDocuments: application.adminDocuments || [] }) });
+    const payload = { id: application.id, status: application.status, adminRemarks: application.adminRemarks };
+    if (application.adminDocuments !== undefined) payload.adminDocuments = application.adminDocuments;
+    const response = await fetch('/api/admin/applications', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     setSavingId(null);
     if (response.ok) loadApplications();
   };

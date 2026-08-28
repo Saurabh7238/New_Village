@@ -27,7 +27,9 @@ export async function GET() {
   const applications = await Application.find({})
     .populate('userId', 'name email phone')
     .sort({ createdAt: -1 })
-    .select('applicationNumber serviceType status formData documents adminDocuments adminRemarks userId createdAt updatedAt')
+    // Documents are base64 payloads and can be several MB each. They are not
+    // needed to render the admin list, so never send every document with it.
+    .select('applicationNumber serviceType status formData adminRemarks userId createdAt updatedAt')
     .lean();
   return NextResponse.json({ applications: applications.map((application) => ({ ...application, id: application._id.toString() })) });
 }

@@ -15,7 +15,9 @@ export async function GET() {
   await connectDB();
   const isAdmin = session.user.role === 'admin';
   const filter = isAdmin
-    ? { adminIsRead: false }
+    // The admin bell is only for new citizen submissions. An admin's own
+    // reply/update must never reappear as a notification-bell item.
+    ? { adminIsRead: false, adminResponded: null }
     : { userId: session.user.id, adminResponded: { $ne: null }, isRead: false };
   const notifications = await ServiceNotification.find(filter).sort({ updatedAt: -1 }).limit(100).lean();
   const byService = notifications.reduce((counts, notification) => {
