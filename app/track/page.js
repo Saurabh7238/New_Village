@@ -173,6 +173,18 @@ export default function TrackPage() {
                   <p className="text-sm mt-2">{query.adminRemarks}</p>
                 </div>
               )}
+              {query.attachments?.length > 0 && (
+                <div className={`${isDark ? "bg-gray-700" : "bg-gray-100"} rounded-lg p-4`}>
+                  <p className={`text-xs font-semibold ${labelClass}`}>Supporting Documents</p>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {query.attachments.map((attachment, index) => (
+                      <li key={`${attachment.fileName}-${index}`}>
+                        <a href={attachment.fileUrl} download={attachment.fileName} className="text-green-700 underline dark:text-green-300">{attachment.fileName || `Document ${index + 1}`}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* Timeline */}

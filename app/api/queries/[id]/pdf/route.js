@@ -3,8 +3,11 @@ import Query from '@/models/Query';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
 import { PDFDocument, rgb } from 'pdf-lib';
+import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 
 export async function GET(request, { params }) {
+  const session = await requireAuthenticatedSession();
+  if (!session) return NextResponse.json({ message: 'Please sign in.' }, { status: 401 });
   await connectDB();
 
   try {
@@ -33,6 +36,9 @@ export async function GET(request, { params }) {
         { message: 'Query not found' },
         { status: 404 }
       );
+    }
+    if (session.user.role !== 'admin' && query.userId?.toString() !== session.user.id) {
+      return NextResponse.json({ message: 'You cannot access this acknowledgement.' }, { status: 403 });
     }
 
     // Generate PDF using pdf-lib
@@ -113,6 +119,16 @@ async function generatePDF(query, type) {
     drawText(`Description: ${query.description}`, 9);
     drawText(`Status: ${query.status}`, 9);
     drawText(`Priority: ${query.priority}`, 9);
+    if (query.adminRemarks) {
+      y -= 4;
+      drawText('Latest Panchayat Update:', 10, true);
+      drawText(`Admin Remarks: ${query.adminRemarks}`, 9);
+    }
+    if (query.attachments?.length) {
+      y -= 4;
+      drawText('Supporting Documents:', 10, true);
+      query.attachments.forEach((attachment, index) => drawText(`${index + 1}. ${attachment.fileName || 'Attached document'}`, 9));
+    }
     y -= 8;
 
     drawText(
