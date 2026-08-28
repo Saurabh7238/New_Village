@@ -39,7 +39,7 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    if (status !== "authenticated") {
+    if (status !== "authenticated" || session?.user?.role !== "admin") {
       setServiceNotifications([]);
       setServiceUnreadCount(0);
       return;

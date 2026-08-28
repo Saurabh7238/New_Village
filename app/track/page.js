@@ -185,6 +185,12 @@ export default function TrackPage() {
                   </ul>
                 </div>
               )}
+              {query.resolutionPhoto && (
+                <div className={`${isDark ? "bg-gray-700" : "bg-gray-100"} mt-4 rounded-lg p-4`}>
+                  <p className={`text-xs font-semibold ${labelClass}`}>Document from Panchayat</p>
+                  <a href={query.resolutionPhoto} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-green-700 underline dark:text-green-300">View uploaded document</a>
+                </div>
+              )}
             </div>
 
             {/* Timeline */}

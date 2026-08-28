@@ -32,7 +32,7 @@ export async function GET() {
   await connectDB();
   const applications = await Application.find({ userId: session.user.id })
     .sort({ createdAt: -1 })
-    .select('applicationNumber serviceType status formData documents adminRemarks createdAt updatedAt')
+    .select('applicationNumber serviceType status formData documents adminDocuments adminRemarks createdAt updatedAt')
     .lean();
   return NextResponse.json({ applications: applications.map((item) => ({ ...item, id: item._id.toString() })) });
 }

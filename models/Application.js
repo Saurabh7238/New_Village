@@ -7,6 +7,7 @@ const ApplicationSchema = new mongoose.Schema({
   status: { type: String, enum: ['Submitted', 'Under Review', 'Need Documents', 'Approved', 'Rejected', 'Completed'], default: 'Submitted', index: true },
   formData: { type: mongoose.Schema.Types.Mixed, default: {} },
   documents: [{ fileName: String, fileUrl: String, mimeType: String, uploadedAt: { type: Date, default: Date.now } }],
+  adminDocuments: [{ fileName: String, fileUrl: String, mimeType: String, uploadedAt: { type: Date, default: Date.now } }],
   adminRemarks: { type: String, default: '' },
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: true });
