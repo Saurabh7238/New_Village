@@ -127,7 +127,7 @@ export default function Header() {
     navItems.push(["Admin Panel", "/admin"]);
   }
 
-  const baseClass = "sticky top-0 left-0 w-full z-50 transition-all duration-300";
+  const baseClass = "sticky top-0 z-[100] w-full self-start transition-all duration-300";
   const scrolledClass = scrolled
     ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
@@ -138,8 +138,19 @@ export default function Header() {
   const menuItemInactiveClass =
     "text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200";
   const isAuthenticated = status === "authenticated";
-  const visibleNotifications = isAuthenticated ? serviceNotifications : notifications;
-  const visibleNotificationCount = isAuthenticated ? serviceUnreadCount : notificationCount;
+  // Service requests are operational alerts for administrators. Keep them on
+  // admin pages so a citizen submission never appears in the public/homepage
+  // notification dropdown.
+  const showServiceNotifications =
+    isAuthenticated &&
+    session?.user?.role === "admin" &&
+    pathname.startsWith("/admin");
+  const visibleNotifications = showServiceNotifications
+    ? serviceNotifications
+    : notifications;
+  const visibleNotificationCount = showServiceNotifications
+    ? serviceUnreadCount
+    : notificationCount;
 
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
@@ -210,7 +221,7 @@ export default function Header() {
                         className="w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 dark:hover:bg-slate-700"
                         onClick={() => {
                           setShowNotifications(false);
-                          if (isAuthenticated && !note.isRead) {
+                          if (showServiceNotifications && !note.isRead) {
                             fetch("/api/service-notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: note.id }) });
                             setServiceUnreadCount((count) => Math.max(0, count - 1));
                             setServiceNotifications((items) => items.map((item) => item.id === note.id ? { ...item, isRead: true } : item));
