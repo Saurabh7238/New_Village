@@ -193,7 +193,7 @@ export default function HomePage() {
 
   return (
     <div className="relative isolate overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[44rem] bg-[radial-gradient(circle_at_12%_20%,rgba(110,231,183,.35),transparent_28%),radial-gradient(circle_at_88%_12%,rgba(125,211,252,.32),transparent_28%)] dark:bg-[radial-gradient(circle_at_12%_20%,rgba(6,78,59,.5),transparent_28%),radial-gradient(circle_at_88%_12%,rgba(12,74,110,.45),transparent_28%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[38rem] bg-[radial-gradient(circle_at_8%_12%,rgba(167,243,208,.55),transparent_30%),radial-gradient(circle_at_92%_18%,rgba(186,230,253,.5),transparent_30%),linear-gradient(135deg,#f0fdf4,#f8fafc_48%,#ecfeff)] dark:bg-[radial-gradient(circle_at_8%_12%,rgba(6,78,59,.6),transparent_30%),radial-gradient(circle_at_92%_18%,rgba(12,74,110,.5),transparent_30%)]" />
       <div className="relative min-h-screen text-black dark:text-white">
         {/* Notification Banner */}
         {showBanner && (
@@ -209,8 +209,8 @@ export default function HomePage() {
         )}
 
         {/* Main Content */}
-        <div className="space-y-8 pb-8 transition-colors duration-300 sm:space-y-10">
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 px-5 py-10 text-center shadow-[0_24px_80px_-36px_rgba(6,78,59,.45)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/65 sm:px-10 sm:py-16 lg:px-16">
+        <div className="space-y-5 pb-5 transition-colors duration-300 sm:space-y-7">
+          <section className="relative overflow-hidden rounded-[1.75rem] border border-emerald-100/80 bg-white/80 px-5 py-7 text-center shadow-[0_20px_60px_-34px_rgba(6,78,59,.45)] backdrop-blur-xl dark:border-emerald-900/60 dark:bg-slate-900/80 sm:px-10 sm:py-10 lg:px-16">
             <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-300/35 blur-3xl dark:bg-emerald-700/25" /><div className="absolute -bottom-24 -left-14 h-64 w-64 rounded-full bg-sky-300/30 blur-3xl dark:bg-sky-800/25" />
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .55 }} className="relative mx-auto max-w-4xl">
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/90 px-3 py-1.5 text-xs font-bold uppercase tracking-[.14em] text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" />Digital village services</span>
@@ -220,8 +220,8 @@ export default function HomePage() {
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
               {t.description}
             </p>
-            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/grievance" className="group inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900">Raise a request <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link><Link href="/track" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-800 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100">Track your request <ChevronRight className="h-4 w-4" /></Link></div>
-            <p className="mt-5 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400"><ShieldCheck className="h-4 w-4 text-emerald-600" />Simple, secure access to Panchayat services</p>
+            <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/grievance" className="group inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900">Raise a request <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link><Link href="/track" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">Track your request <ChevronRight className="h-4 w-4" /></Link></div>
+            <p className="mt-4 flex items-center justify-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300"><ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />Simple, secure access to Panchayat services</p>
             </motion.div>
           </section>
 
@@ -367,25 +367,25 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-white/70 bg-white/75 px-5 py-8 shadow-xl shadow-slate-900/5 backdrop-blur dark:border-slate-700 dark:bg-slate-800/85 sm:px-8 sm:py-10">
-            <h2 className="text-center text-2xl font-bold text-green-800 dark:text-yellow-400">
+          <section className="rounded-2xl border border-emerald-100 bg-white/85 px-4 py-5 shadow-lg shadow-slate-900/5 backdrop-blur dark:border-slate-700 dark:bg-slate-800/90 sm:px-6">
+            <h2 className="text-center text-xl font-bold text-emerald-800 dark:text-emerald-300">
               {t.reviewsTitle}
             </h2>
-            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="mb-3 text-center text-xs text-slate-600 dark:text-slate-300">
               {t.reviewsSubtitle}
             </p>
 
             {reviews.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+              <div className="mx-auto mb-4 grid max-w-3xl grid-cols-1 gap-2 md:grid-cols-2">
                 {reviews.map((review) => (
                   <blockquote
                     key={review.id}
-                    className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5 text-left shadow-sm dark:border-gray-600 dark:bg-gray-700"
+                    className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 text-left shadow-sm dark:border-slate-600 dark:bg-slate-700"
                   >
-                    <p className="text-sm italic text-gray-800 dark:text-gray-200">
+                    <p className="text-xs italic leading-5 text-slate-800 dark:text-slate-100">
                       &ldquo;{review.message}&rdquo;
                     </p>
-                    <footer className="mt-2 text-xs font-semibold text-green-700 dark:text-yellow-400">
+                    <footer className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
                       — {review.name}
                       {review.ward ? `, ${review.ward}` : ""}
                     </footer>
@@ -393,30 +393,30 @@ export default function HomePage() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
+              <p className="mb-4 text-center text-sm text-slate-500 dark:text-slate-300">
                 {t.noReviews}
               </p>
             )}
 
             <form
               onSubmit={submitReview}
-              className="mx-auto max-w-xl space-y-3 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+              className="mx-auto max-w-lg space-y-2 rounded-xl border border-slate-200 bg-white/90 p-3 shadow-sm dark:border-slate-600 dark:bg-slate-800"
             >
               <input
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:ring-emerald-900"
+                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-emerald-900"
                 placeholder={t.reviewName}
                 value={reviewName}
                 onChange={(e) => setReviewName(e.target.value)}
                 required
               />
               <input
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:ring-emerald-900"
+                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-emerald-900"
                 placeholder={t.reviewWard}
                 value={reviewWard}
                 onChange={(e) => setReviewWard(e.target.value)}
               />
               <textarea
-                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:ring-emerald-900"
+                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-emerald-900"
                 placeholder={t.reviewMessage}
                 value={reviewMessage}
                 onChange={(e) => setReviewMessage(e.target.value)}
@@ -426,12 +426,12 @@ export default function HomePage() {
               <button
                 type="submit"
                 disabled={reviewSubmitting}
-                className="w-full rounded-xl bg-emerald-700 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/15 transition hover:-translate-y-0.5 hover:bg-emerald-800 disabled:opacity-60"
+                className="w-full rounded-lg bg-emerald-700 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/15 transition hover:-translate-y-0.5 hover:bg-emerald-800 disabled:opacity-60"
               >
                 {reviewSubmitting ? "..." : t.reviewSubmit}
               </button>
               {reviewFeedback && (
-                <p className="text-xs text-center text-green-700 dark:text-yellow-400">
+                <p className="text-center text-xs text-emerald-700 dark:text-emerald-300">
                   {reviewFeedback}
                 </p>
               )}

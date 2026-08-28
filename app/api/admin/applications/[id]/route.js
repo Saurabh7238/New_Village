@@ -16,5 +16,20 @@ export async function GET(_request, { params }) {
     .lean();
   if (!application) return NextResponse.json({ message: 'Application not found.' }, { status: 404 });
 
-  return NextResponse.json({ application: { ...application, id: application._id.toString() } });
+  const documentMetadata = (documents = [], kind) => documents.map((document, index) => ({
+    fileName: document.fileName,
+    mimeType: document.mimeType,
+    viewUrl: `/api/admin/applications/${application._id}/documents?kind=${kind}&index=${index}`,
+  }));
+
+  return NextResponse.json({
+    application: {
+      ...application,
+      id: application._id.toString(),
+      // Do not return base64 file contents with the details JSON. It makes the
+      // admin page heavy and can crash the browser for larger uploads.
+      documents: documentMetadata(application.documents, 'citizen'),
+      adminDocuments: documentMetadata(application.adminDocuments, 'panchayat'),
+    },
+  });
 }
