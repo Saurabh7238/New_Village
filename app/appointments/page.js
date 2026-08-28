@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 export default function AppointmentsPage() {
-  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]);
+  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]); const [updates, setUpdates] = useState({});
   useEffect(() => {
     if (status !== 'authenticated') return;
     fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
+    fetch('/api/service-notifications').then((res) => res.ok ? res.json() : null).then((data) => setUpdates(Object.fromEntries((data?.notifications || []).filter((note) => note.relatedType === 'appointment').map((note) => [note.relatedId, note]))));
   }, [status]);
   const loadAppointments = () => fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
+  const viewUpdate = async (appointment) => { const notification = updates[appointment.id]; if (!notification) return; await fetch('/api/service-notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notification.id }) }); setUpdates((current) => { const next = { ...current }; delete next[appointment.id]; return next; }); };
   async function submit(e) { e.preventDefault(); if (status !== 'authenticated') return router.push('/signin?callbackUrl=%2Fappointments'); setLoading(true); const res = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const data = await res.json(); setLoading(false); if (res.ok) { setMessage(`Appointment requested. Reference: ${data.appointmentNumber}. The Panchayat office will set your date and time.`); setForm({ purpose: '' }); loadAppointments(); } else setMessage(data.message || 'Unable to book appointment.'); }
   if (status === 'loading') return <p className="pt-36 text-center">Loading…</p>;
   return (
@@ -33,7 +35,7 @@ export default function AppointmentsPage() {
           </button>
         </form>
       </div>
-      {status === 'authenticated' && <div className="mt-6 rounded-lg bg-white p-6 shadow"><h2 className="mb-3 text-xl font-bold text-green-700">My Appointments</h2>{appointments.length ? <div className="space-y-2">{appointments.map((appointment) => <div key={appointment.id} className="flex flex-wrap items-center justify-between rounded border p-3 text-sm"><span><strong>{appointment.appointmentNumber}</strong> · {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.appointmentTime}</span><span className="font-semibold text-green-700">{appointment.status}</span></div>)}</div> : <p className="text-sm text-gray-600">No appointments booked yet.</p>}</div>}
+      {status === 'authenticated' && <div className="mt-6 rounded-lg bg-white p-6 shadow"><h2 className="mb-3 text-xl font-bold text-green-700">My Appointments</h2>{appointments.length ? <div className="space-y-2">{appointments.map((appointment) => <div key={appointment.id} className="rounded border p-3 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><span><strong>{appointment.appointmentNumber}</strong> · {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.appointmentTime}</span><div className="flex items-center gap-2">{updates[appointment.id] && <button onClick={() => viewUpdate(appointment)} className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">Updated</button>}<span className="font-semibold text-green-700">{appointment.status}</span></div></div>{appointment.adminRemarks && <p className="mt-2 border-t pt-2"><strong>Admin update:</strong> {appointment.adminRemarks}</p>}</div>)}</div> : <p className="text-sm text-gray-600">No appointments booked yet.</p>}</div>}
     </div>
   );
 }

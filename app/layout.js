@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
               </div>
             </noscript>
             <Header />
-            <main className="max-w-6xl mx-auto px-4">
+            <main className="mx-auto max-w-6xl px-4 pt-[6.75rem] sm:pt-[7.5rem]">
               <WelcomeToast />
               {children}
             </main>

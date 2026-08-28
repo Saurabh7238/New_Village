@@ -127,7 +127,7 @@ export default function Header() {
     navItems.push(["Admin Panel", "/admin"]);
   }
 
-  const baseClass = "sticky top-0 z-[100] w-full self-start transition-all duration-300";
+  const baseClass = "fixed inset-x-0 top-0 z-[100] w-full transition-all duration-300";
   const scrolledClass = scrolled
     ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";

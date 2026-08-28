@@ -287,22 +287,22 @@ export default function HomePage() {
 
             {/* Key Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+              <div className="p-3">
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Population (2011 Census)</p>
                 <p className="text-2xl font-bold text-blue-600">1,768</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Male: 795 | Female: 973</p>
               </div>
-              <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+              <div className="p-3">
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Households</p>
                 <p className="text-2xl font-bold text-green-600">269</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Code: 195584</p>
               </div>
-              <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+              <div className="p-3">
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Schools</p>
                 <p className="text-2xl font-bold text-purple-600">3</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Education Priority</p>
               </div>
-              <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+              <div className="p-3">
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Ward Members</p>
                 <p className="text-2xl font-bold text-orange-600">12</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Elected Representatives</p>
@@ -310,7 +310,7 @@ export default function HomePage() {
             </div>
 
             {/* Gram Panchayat Overview */}
-            <div className="mb-4 rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+            <div className="mb-4 border-y border-sky-200/80 py-5 dark:border-slate-700">
               <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏘️ Gram Panchayat Overview</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <div>
@@ -330,13 +330,13 @@ export default function HomePage() {
 
             {/* Governance & Admin */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+              <div className="p-3">
                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏛️ Local Governance</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">Assembly:</span> Lalganj Constituency</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">Parliament:</span> Lalganj Constituency</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">Sub-District:</span> Lalganj</p>
               </div>
-              <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+              <div className="p-3">
                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🗳️ Political Representatives</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">MLA:</span> Shri Bechai Saroj (Samajwadi Party)</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">MP:</span> Daroga Prasad Saroj (Samajwadi Party)</p>
@@ -345,15 +345,15 @@ export default function HomePage() {
 
             {/* Cultural Heritage & Famous For */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+              <div className="p-3">
                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙏 Famous For</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Hanuman Mandir</strong> - Sacred temple dedicated to Lord Hanuman (God of Strength). People from nearby and far-off villages visit regularly to worship and offer prayers, especially on special occasions.</p>
               </div>
-              <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+              <div className="p-3">
                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🎨 Cultural Heritage</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Traditional Dress:</strong> Dhoti Kurta<br/><strong>Traditional Food:</strong> Dal Chawal<br/><strong>Traditional Ornaments:</strong> Bichhiya</p>
               </div>
-              <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+              <div className="p-3">
                 <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">📮 Postal & Location Info</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Pincode:</strong> 276203</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Postal Area Code:</strong> 276123</p>
@@ -361,7 +361,7 @@ export default function HomePage() {
             </div>
 
             {/* Beliefs & Customs */}
-            <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-gray-800/85">
+            <div className="border-t border-sky-200/80 pt-5 dark:border-slate-700">
               <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙌 Beliefs & Customs</p>
               <p className="text-xs text-gray-600 dark:text-gray-400">The community believes that Lord Hanuman protects the village and its people from all harm. Worship at Hanuman Mandir is a regular practice, strengthening the cultural and spiritual fabric of the village.</p>
             </div>

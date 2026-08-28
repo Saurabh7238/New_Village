@@ -5,6 +5,7 @@ import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 
 const links = {
   application: (id, admin) => admin ? `/admin/applications?application=${id}` : `/dashboard/applications?application=${id}`,
+  appointment: (id, admin) => admin ? '/admin/appointments' : '/appointments',
   query: (id, admin) => admin ? `/admin/queries/${id}` : '/track',
 };
 
@@ -21,9 +22,14 @@ export async function GET() {
     counts[notification.serviceType] = (counts[notification.serviceType] || 0) + 1;
     return counts;
   }, {});
+  const byRelatedType = notifications.reduce((counts, notification) => {
+    counts[notification.relatedType] = (counts[notification.relatedType] || 0) + 1;
+    return counts;
+  }, {});
   return NextResponse.json({
     unread: notifications.length,
     byService,
+    byRelatedType,
     notifications: notifications.map((notification) => ({
       ...notification,
       id: notification._id.toString(),

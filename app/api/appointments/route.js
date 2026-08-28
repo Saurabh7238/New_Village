@@ -3,6 +3,7 @@ import connectDB from '@/lib/dbConnect';
 import Appointment from '@/models/Appointment';
 import User from '@/models/User';
 import CitizenNotification from '@/models/CitizenNotification';
+import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 
 export async function GET() {
@@ -27,6 +28,7 @@ export async function POST(request) {
     if (previousBooking) return NextResponse.json({ message: 'You can book your next appointment 24 hours after your previous booking.' }, { status: 429 });
     const appointmentNumber = `APT-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const appointment = await Appointment.create({ appointmentNumber, userId: user._id, service: 'General Panchayat Appointment', appointmentDate: new Date(), appointmentTime: 'Pending scheduling', purpose: purpose.trim() });
+    await ServiceNotification.create({ userId: user._id, serviceType: 'appointment', relatedType: 'appointment', relatedId: appointment._id, queryRaised: appointment.createdAt });
     await CitizenNotification.create({ userId: user._id, title: `${appointmentNumber} booked`, message: 'Your request has been sent to the Panchayat office. The administrator will set your date and time.', type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });
     return NextResponse.json({ message: 'Appointment requested successfully.', appointmentNumber, id: appointment._id.toString() }, { status: 201 });
   } catch (error) {

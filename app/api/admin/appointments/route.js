@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/dbConnect';
 import Appointment from '@/models/Appointment';
 import CitizenNotification from '@/models/CitizenNotification';
+import ServiceNotification from '@/models/ServiceNotification';
 import { requireAdminSession } from '@/lib/adminAuth';
 
 const STATUSES = ['Pending', 'Approved', 'Rejected', 'Rescheduled', 'Cancelled', 'Completed'];
@@ -52,6 +53,18 @@ export async function PUT(request) {
     await connectDB();
     const appointment = await Appointment.findByIdAndUpdate(id, { ...update, $push: { statusHistory: { status, remarks: update.adminRemarks, changedBy: session.user.id } } }, { new: true, runValidators: true });
     if (!appointment) return NextResponse.json({ message: 'Appointment not found.' }, { status: 404 });
+    await ServiceNotification.findOneAndUpdate(
+      { relatedType: 'appointment', relatedId: appointment._id },
+      {
+        $set: { adminResponded: new Date(), isRead: false },
+        $setOnInsert: {
+          userId: appointment.userId,
+          serviceType: 'appointment',
+          queryRaised: appointment.createdAt,
+        },
+      },
+      { upsert: true },
+    );
     const schedule = appointment.scheduledDate && appointment.scheduledTime ? ` Scheduled for ${appointment.scheduledDate.toLocaleDateString('en-GB')} at ${appointment.scheduledTime}.` : '';
     await CitizenNotification.create({ userId: appointment.userId, title: `Appointment ${status}`, message: `${update.adminRemarks || `Your appointment ${appointment.appointmentNumber} is ${status.toLowerCase()}.`}${schedule}`, type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });
     return NextResponse.json({ message: 'Appointment updated successfully.', appointment });

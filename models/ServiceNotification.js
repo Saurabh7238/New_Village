@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 const ServiceNotificationSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   serviceType: { type: String, required: true, trim: true, index: true },
-  relatedType: { type: String, enum: ['application', 'query'], required: true },
+  relatedType: { type: String, enum: ['application', 'appointment', 'query'], required: true },
   relatedId: { type: mongoose.Schema.Types.ObjectId, required: true },
   queryRaised: { type: Date, default: Date.now, index: true },
   adminResponded: { type: Date, default: null, index: true },
