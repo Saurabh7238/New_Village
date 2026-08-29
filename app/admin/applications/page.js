@@ -4,11 +4,13 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useToast, ToastContainer } from '@/components/Toast';
 
 const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Approved', 'Rejected', 'Completed'];
 
 function AdminApplicationsContent() {
   const { data: session, status: authStatus } = useSession();
+  const { toasts, addToast, removeToast } = useToast();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
@@ -82,6 +84,7 @@ function AdminApplicationsContent() {
       )
     );
     updateLocal(id, 'adminDocuments', documents);
+    addToast(`${documents.length} document(s) uploaded successfully. Click Save to confirm.`, 'success');
   };
 
   const save = async (application) => {
@@ -103,7 +106,12 @@ function AdminApplicationsContent() {
       body: JSON.stringify(payload),
     });
     setSavingId(null);
-    if (response.ok) loadApplications();
+    if (response.ok) {
+      addToast('Application updated successfully.', 'success');
+      loadApplications();
+    } else {
+      addToast('Unable to update application.', 'error');
+    }
   };
 
   const remove = async (application) => {
@@ -121,9 +129,10 @@ function AdminApplicationsContent() {
     });
     setSavingId(null);
     if (response.ok) {
+      addToast('Application deleted successfully.', 'success');
       setApplications((items) => items.filter((item) => item.id !== application.id));
     } else {
-      alert('Unable to delete this application.');
+      addToast('Unable to delete this application.', 'error');
     }
   };
 
@@ -147,7 +156,6 @@ function AdminApplicationsContent() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-8 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl font-bold capitalize text-green-700 dark:text-yellow-400">
@@ -281,28 +289,57 @@ function AdminApplicationsContent() {
                     {new Date(application.createdAt).toLocaleDateString()}
                   </td>
                   <td className="p-3">
-                    <div className="flex gap-1 flex-wrap">
-                      <button
-                        onClick={() => viewDetails(application.id)}
-                        className="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700 whitespace-nowrap"
-                      >
-                        View
-                      </button>
-                      {application.status === 'Need Documents' && <input value={Array.isArray(application.requestedDocuments) ? application.requestedDocuments.join(', ') : ''} onChange={(e) => updateLocal(application.id, 'requestedDocuments', e.target.value)} placeholder="Missing documents" className="w-40 rounded border px-2 py-1 text-xs dark:bg-gray-700" aria-label="Missing documents" />}
-                      <button
-                        onClick={() => save(application)}
-                        disabled={savingId === application.id}
-                        className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50 whitespace-nowrap"
-                      >
-                        {savingId === application.id ? 'Saving...' : 'Save'}
-                      </button>
-                      <button
-                        onClick={() => remove(application)}
-                        disabled={savingId === application.id}
-                        className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700 disabled:opacity-50 whitespace-nowrap"
-                      >
-                        Delete
-                      </button>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-1 flex-wrap">
+                        <button
+                          onClick={() => viewDetails(application.id)}
+                          className="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700 whitespace-nowrap"
+                        >
+                          View
+                        </button>
+                        {application.status === 'Need Documents' && <input value={Array.isArray(application.requestedDocuments) ? application.requestedDocuments.join(', ') : ''} onChange={(e) => updateLocal(application.id, 'requestedDocuments', e.target.value)} placeholder="Missing documents" className="w-40 rounded border px-2 py-1 text-xs dark:bg-gray-700" aria-label="Missing documents" />}
+                        <button
+                          onClick={() => save(application)}
+                          disabled={savingId === application.id}
+                          className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {savingId === application.id ? 'Saving...' : 'Save'}
+                        </button>
+                        <button
+                          onClick={() => remove(application)}
+                          disabled={savingId === application.id}
+                          className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          Admin docs (1 or more)
+                        </label>
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,image/png,image/jpeg"
+                          onChange={(event) => updateDocuments(application.id, event)}
+                          className="block w-full rounded border border-dashed px-2 py-1.5 text-[11px] text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                        />
+                        {application.adminDocuments?.length > 0 && (
+                          <div className="space-y-1">
+                            {application.adminDocuments.map((document, index) => (
+                              <a
+                                key={`${document.fileName || 'doc'}-${index}`}
+                                href={document.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block truncate text-[11px] text-blue-600 underline dark:text-blue-400"
+                              >
+                                {document.fileName || `Admin document ${index + 1}`}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -363,6 +400,34 @@ function AdminApplicationsContent() {
                 </div>
                 {application.status === 'Need Documents' && <input value={Array.isArray(application.requestedDocuments) ? application.requestedDocuments.join(', ') : ''} onChange={(e) => updateLocal(application.id, 'requestedDocuments', e.target.value)} placeholder="Missing documents, comma separated" className="w-full rounded border px-2 py-1 text-xs dark:bg-gray-700" aria-label="Missing documents" />}
 
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Admin docs (1 or more)
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,image/png,image/jpeg"
+                    onChange={(event) => updateDocuments(application.id, event)}
+                    className="block w-full rounded border border-dashed px-2 py-1.5 text-[11px] text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                  />
+                  {application.adminDocuments?.length > 0 && (
+                    <div className="space-y-1">
+                      {application.adminDocuments.map((document, index) => (
+                        <a
+                          key={`${document.fileName || 'doc'}-${index}`}
+                          href={document.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block truncate text-[11px] text-blue-600 underline dark:text-blue-400"
+                        >
+                          {document.fileName || `Admin document ${index + 1}`}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex gap-2">
                   <button
                     onClick={() => viewDetails(application.id)}
@@ -388,6 +453,7 @@ function AdminApplicationsContent() {
             No applications found.
           </div>
         )}
+        <ToastContainer toasts={toasts} removeToast={removeToast} isDark={true} />
       </div>
     </main>
   );

@@ -18,18 +18,19 @@ export async function GET() {
     // The admin bell is only for new citizen submissions. An admin's own
     // reply/update must never reappear as a notification-bell item.
     ? { adminIsRead: false, adminResponded: null }
-    : { userId: session.user.id, adminResponded: { $ne: null }, isRead: false };
+    : { userId: session.user.id, adminResponded: { $ne: null } };
   const notifications = await ServiceNotification.find(filter).sort({ updatedAt: -1 }).limit(100).lean();
-  const byService = notifications.reduce((counts, notification) => {
+  const unreadNotifications = notifications.filter((notification) => notification.isRead !== true);
+  const byService = unreadNotifications.reduce((counts, notification) => {
     counts[notification.serviceType] = (counts[notification.serviceType] || 0) + 1;
     return counts;
   }, {});
-  const byRelatedType = notifications.reduce((counts, notification) => {
+  const byRelatedType = unreadNotifications.reduce((counts, notification) => {
     counts[notification.relatedType] = (counts[notification.relatedType] || 0) + 1;
     return counts;
   }, {});
   return NextResponse.json({
-    unread: notifications.length,
+    unread: unreadNotifications.length,
     byService,
     byRelatedType,
     notifications: notifications.map((notification) => ({
@@ -38,6 +39,7 @@ export async function GET() {
       relatedId: notification.relatedId.toString(),
       link: links[notification.relatedType](notification.relatedId.toString(), isAdmin),
       title: isAdmin ? `New ${notification.serviceType.replace(/[-:]/g, ' ')} request` : `Update for your ${notification.serviceType.replace(/-/g, ' ')}`,
+      isRead: notification.isRead === true,
     })),
   });
 }

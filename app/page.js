@@ -5,17 +5,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, BellRing, ChevronRight, MessageCircle, ShieldCheck, Sparkles, X } from "lucide-react";
 // Ensure you have this file: ../components/ServiceCard.jsx
 import ServiceCard from "../components/ServiceCard"; 
 import { useLanguage } from "@/app/language-provider";
+import { sanitizePublicReviews } from "@/lib/reviewVisibility";
 
 export default function HomePage() {
   const { language } = useLanguage();
-  const router = useRouter();
   const { status: authStatus } = useSession();
   const [showModal, setShowModal] = useState(false);
   const [visitCount, setVisitCount] = useState(null);
@@ -31,7 +30,7 @@ export default function HomePage() {
   const loadReviews = () => {
     fetch("/api/reviews")
       .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setReviews(Array.isArray(data) ? data : []))
+      .then((data) => setReviews(sanitizePublicReviews(Array.isArray(data) ? data : [])))
       .catch(() => setReviews([]));
   };
 
@@ -79,7 +78,7 @@ export default function HomePage() {
   const submitReview = async (e) => {
     e.preventDefault();
     if (authStatus !== "authenticated") {
-      router.push("/signin?callbackUrl=%2F");
+      setReviewFeedback("Please login first to submit your review.");
       return;
     }
     if (!reviewMessage.trim() && reviewReasons.length === 0) return;
@@ -100,13 +99,14 @@ export default function HomePage() {
 
       if (res.ok) {
         const newReview = await res.json();
-        setReviews((prev) => [newReview, ...prev.filter((r) => r.id !== newReview.id)]);
+        setReviews((prev) => sanitizePublicReviews([newReview, ...prev.filter((r) => r.id !== newReview.id)]));
         setReviewMessage("");
         setReviewRating(5);
         setReviewReasons([]);
         setReviewFeedback("Thank you. Your review is waiting for admin approval.");
       } else {
-        setReviewFeedback(t.reviewError);
+        const errorData = await res.json().catch(() => ({}));
+        setReviewFeedback(errorData.message || t.reviewError);
       }
     } catch {
       setReviewFeedback(t.reviewError);
