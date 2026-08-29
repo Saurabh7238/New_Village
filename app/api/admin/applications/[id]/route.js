@@ -12,7 +12,7 @@ export async function GET(_request, { params }) {
   await connectDB();
   const application = await Application.findById(params.id)
     .populate('userId', 'name email phone village ward address')
-    .select('applicationNumber serviceType status formData documents adminDocuments adminRemarks userId createdAt updatedAt')
+    .select('applicationNumber serviceType status formData documents adminDocuments requestedDocuments adminRemarks userId createdAt updatedAt')
     .lean();
   if (!application) return NextResponse.json({ message: 'Application not found.' }, { status: 404 });
 

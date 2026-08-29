@@ -36,7 +36,18 @@ export async function POST(request, { params }) {
   const senderRole = isAdminOrStaff(session) ? session.user.role : 'citizen';
   const saved = await QueryMessage.create({ queryId: query._id, senderId: session.user.id, senderRole, message: message.trim() });
   if (senderRole !== 'citizen') {
-    await ServiceNotification.findOneAndUpdate({ relatedType: 'query', relatedId: query._id }, { $set: { adminResponded: new Date(), isRead: false } });
+    await ServiceNotification.findOneAndUpdate(
+      { relatedType: 'query', relatedId: query._id },
+      {
+        $set: { adminResponded: new Date(), isRead: false },
+        $setOnInsert: {
+          userId: query.userId,
+          serviceType: `query:${query.category}`,
+          queryRaised: query.createdAt,
+        },
+      },
+      { upsert: true },
+    );
     await CitizenNotification.create({ userId: query.userId, title: `New response on ${query.queryId}`, message: 'Panchayat Admin has replied to your query.', type: 'message', relatedType: 'query', relatedId: query._id });
   }
   return NextResponse.json({ message: { ...saved.toObject(), id: saved._id.toString() } }, { status: 201 });

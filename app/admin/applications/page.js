@@ -94,6 +94,9 @@ function AdminApplicationsContent() {
     if (application.adminDocuments !== undefined) {
       payload.adminDocuments = application.adminDocuments;
     }
+    if (application.requestedDocuments !== undefined) {
+      payload.requestedDocuments = String(application.requestedDocuments).split(',').map((document) => document.trim()).filter(Boolean);
+    }
     const response = await fetch('/api/admin/applications', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -285,6 +288,7 @@ function AdminApplicationsContent() {
                       >
                         View
                       </button>
+                      {application.status === 'Need Documents' && <input value={Array.isArray(application.requestedDocuments) ? application.requestedDocuments.join(', ') : ''} onChange={(e) => updateLocal(application.id, 'requestedDocuments', e.target.value)} placeholder="Missing documents" className="w-40 rounded border px-2 py-1 text-xs dark:bg-gray-700" aria-label="Missing documents" />}
                       <button
                         onClick={() => save(application)}
                         disabled={savingId === application.id}
@@ -357,6 +361,7 @@ function AdminApplicationsContent() {
                     ))}
                   </select>
                 </div>
+                {application.status === 'Need Documents' && <input value={Array.isArray(application.requestedDocuments) ? application.requestedDocuments.join(', ') : ''} onChange={(e) => updateLocal(application.id, 'requestedDocuments', e.target.value)} placeholder="Missing documents, comma separated" className="w-full rounded border px-2 py-1 text-xs dark:bg-gray-700" aria-label="Missing documents" />}
 
                 <div className="flex gap-2">
                   <button

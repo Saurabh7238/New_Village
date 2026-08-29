@@ -16,9 +16,15 @@ export default function QueryDetailPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [photoPreview, setPhotoPreview] = useState(null);
-  const attachmentList = Array.isArray(query?.attachments) && query.attachments.length > 0
-    ? query.attachments
-    : query?.photo ? [{ fileName: 'Uploaded document', fileUrl: query.photo, mimeType: 'image/*' }] : [];
+  const attachmentList = (() => {
+    const attachments = Array.isArray(query?.attachments)
+      ? query.attachments.filter((attachment) => attachment?.fileUrl || attachment?.url)
+      : [];
+    const legacyPhoto = query?.photo && !attachments.some((attachment) => (attachment.fileUrl || attachment.url) === query.photo)
+      ? [{ fileName: 'Uploaded document', fileUrl: query.photo, mimeType: String(query.photo).startsWith('data:application/pdf') ? 'application/pdf' : 'image/*' }]
+      : [];
+    return [...attachments, ...legacyPhoto];
+  })();
 
   const [formData, setFormData] = useState({
     status: "",
@@ -222,10 +228,10 @@ export default function QueryDetailPage() {
                     {attachmentList.map((attachment, index) => (
                       <div key={`${attachment.fileName || 'document'}-${index}`} className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-3`}>
                         <p className="text-sm font-semibold mb-2">{attachment.fileName || `Document ${index + 1}`}</p>
-                        {attachment.fileUrl?.startsWith('data:application/pdf') || attachment.mimeType?.includes('pdf') ? (
-                          <a href={attachment.fileUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline dark:text-blue-400">Open PDF</a>
+                        {(attachment.fileUrl || attachment.url)?.startsWith('data:application/pdf') || attachment.mimeType?.includes('pdf') ? (
+                          <a href={attachment.fileUrl || attachment.url} target="_blank" rel="noreferrer" className="text-blue-600 underline dark:text-blue-400">Open PDF</a>
                         ) : (
-                          <img src={attachment.fileUrl} alt={attachment.fileName || 'Uploaded document'} className="max-w-xs rounded-lg border border-gray-200 dark:border-gray-600" />
+                          <img src={attachment.fileUrl || attachment.url} alt={attachment.fileName || 'Uploaded document'} className="max-w-xs rounded-lg border border-gray-200 dark:border-gray-600" />
                         )}
                       </div>
                     ))}

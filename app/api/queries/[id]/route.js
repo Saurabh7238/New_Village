@@ -7,6 +7,7 @@ import { requireAdminSession } from '@/lib/adminAuth';
 import ServiceNotification from '@/models/ServiceNotification';
 import CitizenNotification from '@/models/CitizenNotification';
 import QueryMessage from '@/models/QueryMessage';
+import { writeAuditLog } from '@/lib/writeAuditLog';
 
 export async function GET(request, { params }) {
   await connectDB();
@@ -37,7 +38,6 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
-
     await ServiceNotification.updateOne(
       { relatedType: 'query', relatedId: query._id },
       { adminIsRead: true, adminAcknowledgedAt: new Date() }
@@ -118,10 +118,19 @@ export async function PUT(request, { params }) {
         { status: 404 }
       );
     }
+    await writeAuditLog({ session, action: 'Query updated', details: { queryId: query._id.toString(), publicQueryId: query.queryId, status: query.status, priority: query.priority, assignedTo: query.assignedTo } });
     if (adminRemarks !== undefined || status) {
       await ServiceNotification.findOneAndUpdate(
         { relatedType: 'query', relatedId: query._id },
-        { $set: { adminResponded: new Date(), isRead: false } },
+        {
+          $set: { adminResponded: new Date(), isRead: false },
+          $setOnInsert: {
+            userId: query.userId,
+            serviceType: `query:${query.category}`,
+            queryRaised: query.createdAt,
+          },
+        },
+        { upsert: true },
       );
       await CitizenNotification.create({ userId: query.userId, title: `Query ${query.queryId} updated`, message: query.adminRemarks || `Your query status is now ${query.status}.`, type: 'query', relatedType: 'query', relatedId: query._id });
     }

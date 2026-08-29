@@ -15,6 +15,11 @@ export default function TrackPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [loginRequired, setLoginRequired] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackReasons, setFeedbackReasons] = useState([]);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackOutcome, setFeedbackOutcome] = useState("resolved");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
 
   const bgClass = isDark ? "bg-gray-800" : "bg-white";
   const textClass = isDark ? "text-white" : "text-gray-900";
@@ -78,6 +83,27 @@ export default function TrackPage() {
     ];
 
     return timeline.filter(item => item.status !== "In Progress" || query.status !== "New");
+  };
+
+  const submitFeedback = async (event) => {
+    event.preventDefault();
+    setFeedbackMessage("");
+    if (!feedbackComment.trim() && feedbackReasons.length === 0) {
+      setFeedbackMessage("Select a reason or add a comment.");
+      return;
+    }
+    const response = await fetch('/api/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating: feedbackRating, reasons: feedbackReasons, message: feedbackComment, relatedType: 'query', relatedId: query._id, outcome: feedbackOutcome }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setFeedbackMessage(data.message || 'Unable to submit feedback.');
+      return;
+    }
+    setFeedbackMessage(feedbackOutcome === 'not-resolved' ? 'Thank you. The query has been reopened for review.' : 'Thank you. Your feedback is waiting for admin approval.');
+    if (feedbackOutcome === 'not-resolved') setQuery((current) => ({ ...current, status: 'In Progress', resolvedAt: null }));
   };
 
   return (
@@ -190,6 +216,24 @@ export default function TrackPage() {
                   <p className={`text-xs font-semibold ${labelClass}`}>Document from Panchayat</p>
                   <a href={query.resolutionPhoto} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-green-700 underline dark:text-green-300">View uploaded document</a>
                 </div>
+              )}
+              {query.status === "Resolved" && (
+                <form onSubmit={submitFeedback} className={`${isDark ? "bg-gray-700" : "bg-gray-100"} mt-4 rounded-lg p-4`}>
+                  <h3 className="font-semibold">How was this resolution?</h3>
+                  <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
+                    {["Fast response", "Issue solved", "Clear communication", "Issue not solved", "Slow response"].map((reason) => <label key={reason} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={feedbackReasons.includes(reason)} onChange={(event) => setFeedbackReasons((current) => event.target.checked ? [...current, reason] : current.filter((item) => item !== reason))} />{reason}</label>)}
+                  </div>
+                  <select value={feedbackRating} onChange={(event) => setFeedbackRating(Number(event.target.value))} className={`mt-3 w-full rounded border p-2 ${inputClass}`} aria-label="Rating">
+                    {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} / 5</option>)}
+                  </select>
+                  <select value={feedbackOutcome} onChange={(event) => setFeedbackOutcome(event.target.value)} className={`mt-2 w-full rounded border p-2 ${inputClass}`} aria-label="Resolution outcome">
+                    <option value="resolved">Issue is resolved</option>
+                    <option value="not-resolved">Issue is not resolved, reopen it</option>
+                  </select>
+                  <textarea value={feedbackComment} onChange={(event) => setFeedbackComment(event.target.value)} placeholder="Optional comments" rows={2} className={`mt-2 w-full rounded border p-2 ${inputClass}`} />
+                  <button type="submit" className="mt-3 rounded bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700">Submit feedback</button>
+                  {feedbackMessage && <p className="mt-2 text-sm text-green-700 dark:text-green-300">{feedbackMessage}</p>}
+                </form>
               )}
             </div>
 

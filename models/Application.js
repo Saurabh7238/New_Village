@@ -8,6 +8,7 @@ const ApplicationSchema = new mongoose.Schema({
   formData: { type: mongoose.Schema.Types.Mixed, default: {} },
   documents: [{ fileName: String, fileUrl: String, mimeType: String, uploadedAt: { type: Date, default: Date.now } }],
   adminDocuments: [{ fileName: String, fileUrl: String, mimeType: String, uploadedAt: { type: Date, default: Date.now } }],
+  requestedDocuments: { type: [String], default: [] },
   adminRemarks: { type: String, default: '' },
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: true });

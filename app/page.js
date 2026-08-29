@@ -5,6 +5,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, BellRing, ChevronRight, MessageCircle, ShieldCheck, Sparkles, X } from "lucide-react";
 // Ensure you have this file: ../components/ServiceCard.jsx
@@ -13,13 +15,15 @@ import { useLanguage } from "@/app/language-provider";
 
 export default function HomePage() {
   const { language } = useLanguage();
+  const router = useRouter();
+  const { status: authStatus } = useSession();
   const [showModal, setShowModal] = useState(false);
   const [visitCount, setVisitCount] = useState(null);
   const [showBanner, setShowBanner] = useState(true);
   const [reviews, setReviews] = useState([]);
-  const [reviewName, setReviewName] = useState("");
-  const [reviewWard, setReviewWard] = useState("");
   const [reviewMessage, setReviewMessage] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewReasons, setReviewReasons] = useState([]);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewFeedback, setReviewFeedback] = useState("");
   const toggleModal = () => setShowModal(!showModal);
@@ -74,7 +78,11 @@ export default function HomePage() {
 
   const submitReview = async (e) => {
     e.preventDefault();
-    if (!reviewName.trim() || !reviewMessage.trim()) return;
+    if (authStatus !== "authenticated") {
+      router.push("/signin?callbackUrl=%2F");
+      return;
+    }
+    if (!reviewMessage.trim() && reviewReasons.length === 0) return;
 
     setReviewSubmitting(true);
     setReviewFeedback("");
@@ -84,19 +92,19 @@ export default function HomePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: reviewName,
-          ward: reviewWard,
           message: reviewMessage,
+          rating: reviewRating,
+          reasons: reviewReasons,
         }),
       });
 
       if (res.ok) {
         const newReview = await res.json();
         setReviews((prev) => [newReview, ...prev.filter((r) => r.id !== newReview.id)]);
-        setReviewName("");
-        setReviewWard("");
         setReviewMessage("");
-        setReviewFeedback(t.reviewSuccess);
+        setReviewRating(5);
+        setReviewReasons([]);
+        setReviewFeedback("Thank you. Your review is waiting for admin approval.");
       } else {
         setReviewFeedback(t.reviewError);
       }
@@ -130,11 +138,12 @@ export default function HomePage() {
       noNotifications: "No notifications",
       reviewsTitle: "Citizen Reviews",
       reviewsSubtitle: "What people say about our portal",
-      reviewName: "Your name",
-      reviewWard: "Ward (optional)",
+      reviewLogin: "Sign in to submit a review",
+      reviewRating: "Rating",
+      reviewReasons: "What went well or needs improvement?",
       reviewMessage: "Your review",
       reviewSubmit: "Submit Review",
-      reviewSuccess: "Thank you! Your review is live.",
+      reviewSuccess: "Thank you. Your review is waiting for admin approval.",
       reviewError: "Could not submit review. Please try again.",
       noReviews: "No reviews yet. Be the first to share!",
     },
@@ -160,11 +169,12 @@ export default function HomePage() {
       noNotifications: "कोई सूचनाएँ नहीं",
       reviewsTitle: "नागरिक समीक्षाएँ",
       reviewsSubtitle: "लोग हमारे पोर्टल के बारे में क्या कहते हैं",
-      reviewName: "आपका नाम",
-      reviewWard: "वार्ड (वैकल्पिक)",
+      reviewLogin: "समीक्षा भेजने के लिए लॉग इन करें",
+      reviewRating: "रेटिंग",
+      reviewReasons: "क्या अच्छा रहा या सुधार की जरूरत है?",
       reviewMessage: "आपकी समीक्षा",
       reviewSubmit: "समीक्षा भेजें",
-      reviewSuccess: "धन्यवाद! आपकी समीक्षा प्रकाशित हो गई।",
+      reviewSuccess: "धन्यवाद! आपकी समीक्षा व्यवस्थापक की स्वीकृति की प्रतीक्षा कर रही है।",
       reviewError: "समीक्षा भेज नहीं सकी। कृपया पुनः प्रयास करें।",
       noReviews: "अभी कोई समीक्षा नहीं। पहले अपना अनुभव साझा करें!",
     },
@@ -386,6 +396,7 @@ export default function HomePage() {
                       &ldquo;{review.message}&rdquo;
                     </p>
                     <footer className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                      <span className="mr-2 text-amber-500">{"★".repeat(review.rating || 0)}{"☆".repeat(5 - (review.rating || 0))}</span>
                       — {review.name}
                       {review.ward ? `, ${review.ward}` : ""}
                     </footer>
@@ -402,26 +413,27 @@ export default function HomePage() {
               onSubmit={submitReview}
               className="mx-auto max-w-lg space-y-2 rounded-xl border border-slate-200 bg-white/90 p-3 shadow-sm dark:border-slate-600 dark:bg-slate-800"
             >
-              <input
-                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-emerald-900"
-                placeholder={t.reviewName}
-                value={reviewName}
-                onChange={(e) => setReviewName(e.target.value)}
-                required
-              />
-              <input
-                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-emerald-900"
-                placeholder={t.reviewWard}
-                value={reviewWard}
-                onChange={(e) => setReviewWard(e.target.value)}
-              />
+              {authStatus !== "authenticated" && <p className="rounded-lg bg-amber-50 p-2.5 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">{t.reviewLogin}</p>}
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">{t.reviewRating}</label>
+              <select
+                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                value={reviewRating}
+                onChange={(e) => setReviewRating(Number(e.target.value))}
+              >
+                {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} / 5</option>)}
+              </select>
+              <fieldset>
+                <legend className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">{t.reviewReasons}</legend>
+                <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                  {["Fast response", "Issue solved", "Clear communication", "Issue not solved", "Slow response"].map((reason) => <label key={reason} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"><input type="checkbox" checked={reviewReasons.includes(reason)} onChange={(e) => setReviewReasons((current) => e.target.checked ? [...current, reason] : current.filter((item) => item !== reason))} />{reason}</label>)}
+                </div>
+              </fieldset>
               <textarea
                 className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-emerald-900"
                 placeholder={t.reviewMessage}
                 value={reviewMessage}
                 onChange={(e) => setReviewMessage(e.target.value)}
                 rows={3}
-                required
               />
               <button
                 type="submit"

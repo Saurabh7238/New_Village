@@ -4,6 +4,7 @@ import Appointment from '@/models/Appointment';
 import CitizenNotification from '@/models/CitizenNotification';
 import ServiceNotification from '@/models/ServiceNotification';
 import { requireAdminSession } from '@/lib/adminAuth';
+import { writeAuditLog } from '@/lib/writeAuditLog';
 
 const STATUSES = ['Pending', 'Approved', 'Rejected', 'Rescheduled', 'Cancelled', 'Completed'];
 
@@ -53,6 +54,7 @@ export async function PUT(request) {
     await connectDB();
     const appointment = await Appointment.findByIdAndUpdate(id, { ...update, $push: { statusHistory: { status, remarks: update.adminRemarks, changedBy: session.user.id } } }, { new: true, runValidators: true });
     if (!appointment) return NextResponse.json({ message: 'Appointment not found.' }, { status: 404 });
+    await writeAuditLog({ session, action: 'Appointment updated', details: { appointmentId: appointment._id.toString(), appointmentNumber: appointment.appointmentNumber, status } });
     await ServiceNotification.findOneAndUpdate(
       { relatedType: 'appointment', relatedId: appointment._id },
       {

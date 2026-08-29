@@ -60,10 +60,7 @@ export default function AdminPanel() {
               Service Applications {badge(applicationCount)}
             </Link>
             <Link href="/admin/queries" className="bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
-              🎯 Queries / 📋 शिकायत
-            </Link>
-            <Link href="/admin/queries" className="bg-rose-700 hover:bg-rose-800 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
-              New Query Requests {badge(queryCount)}
+              🎯 Query Management {badge(queryCount)}
             </Link>
             <Link href="/admin/appointments" className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               Appointments
@@ -76,6 +73,9 @@ export default function AdminPanel() {
             </Link>
             <Link href="/admin/reviews" className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               ⭐ Reviews
+            </Link>
+            <Link href="/admin/activity-log" className="bg-slate-700 hover:bg-slate-800 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              Activity Log
             </Link>
             <Link href="/admin/gallery" className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               🖼️ Gallery

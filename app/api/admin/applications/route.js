@@ -4,6 +4,7 @@ import Application from '@/models/Application';
 import CitizenNotification from '@/models/CitizenNotification';
 import ServiceNotification from '@/models/ServiceNotification';
 import { requireAdminSession } from '@/lib/adminAuth';
+import { writeAuditLog } from '@/lib/writeAuditLog';
 
 const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Approved', 'Rejected', 'Completed'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -29,7 +30,7 @@ export async function GET() {
     .sort({ createdAt: -1 })
     // Documents are base64 payloads and can be several MB each. They are not
     // needed to render the admin list, so never send every document with it.
-    .select('applicationNumber serviceType status formData adminRemarks userId createdAt updatedAt')
+    .select('applicationNumber serviceType status formData adminRemarks requestedDocuments userId createdAt updatedAt')
     .lean();
   return NextResponse.json({ applications: applications.map((application) => ({ ...application, id: application._id.toString() })) });
 }
@@ -39,7 +40,7 @@ export async function PUT(request) {
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
 
   try {
-    const { id, status, adminRemarks = '', adminDocuments } = await request.json();
+    const { id, status, adminRemarks = '', adminDocuments, requestedDocuments } = await request.json();
     if (!id || !STATUSES.includes(status)) return NextResponse.json({ message: 'A valid application and status are required.' }, { status: 400 });
 
     await connectDB();
@@ -50,22 +51,34 @@ export async function PUT(request) {
     const nextRemarks = String(adminRemarks).slice(0, 2000);
     const remarksChanged = application.adminRemarks !== nextRemarks;
     const nextAdminDocuments = adminDocuments === undefined ? application.adminDocuments : validateDocuments(adminDocuments);
+    const nextRequestedDocuments = requestedDocuments === undefined ? application.requestedDocuments : (Array.isArray(requestedDocuments) ? requestedDocuments.map((document) => String(document).trim()).filter(Boolean).slice(0, 10) : []);
     const documentsChanged = JSON.stringify(application.adminDocuments || []) !== JSON.stringify(nextAdminDocuments || []);
+    const requestedDocumentsChanged = JSON.stringify(application.requestedDocuments || []) !== JSON.stringify(nextRequestedDocuments || []);
     application.status = status;
     application.adminRemarks = nextRemarks;
     application.adminDocuments = nextAdminDocuments;
+    application.requestedDocuments = nextRequestedDocuments;
     application.reviewedBy = session.user.id;
     await application.save();
+    await writeAuditLog({ session, action: 'Application updated', details: { applicationId: application._id.toString(), applicationNumber: application.applicationNumber, status, requestedDocuments: nextRequestedDocuments } });
 
-    if (statusChanged || remarksChanged || documentsChanged) {
+    if (statusChanged || remarksChanged || documentsChanged || requestedDocumentsChanged) {
       await ServiceNotification.findOneAndUpdate(
         { relatedType: 'application', relatedId: application._id },
-        { $set: { adminResponded: new Date(), isRead: false } },
+        {
+          $set: { adminResponded: new Date(), isRead: false },
+          $setOnInsert: {
+            userId: application.userId,
+            serviceType: application.serviceType,
+            queryRaised: application.createdAt,
+          },
+        },
+        { upsert: true },
       );
       await CitizenNotification.create({
         userId: application.userId,
         title: `Application ${status}`,
-        message: application.adminRemarks || (documentsChanged ? 'Panchayat office added a document to your application.' : `Your application ${application.applicationNumber} has been ${status.toLowerCase()}.`),
+        message: application.adminRemarks || (requestedDocumentsChanged ? `Please submit: ${nextRequestedDocuments.join(', ')}.` : documentsChanged ? 'Panchayat office added a document to your application.' : `Your application ${application.applicationNumber} has been ${status.toLowerCase()}.`),
         type: 'application',
         relatedType: 'application',
         relatedId: application._id,

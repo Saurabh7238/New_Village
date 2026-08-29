@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 import { BUDGET_STATUSES, formatBudgetAmount, formatLastUpdated } from "@/lib/budgetDisplay";
 
 export default function AdminBudgetPage() {
@@ -14,12 +15,15 @@ export default function AdminBudgetPage() {
   const [editingBudgetId, setEditingBudgetId] = useState(null);
   const [budgetPdfFileName, setBudgetPdfFileName] = useState("No PDF chosen");
   const [removeBudgetDocument, setRemoveBudgetDocument] = useState(false);
+  const [loadingBudgets, setLoadingBudgets] = useState(true);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     fetch("/api/budget")
       .then((res) => res.json())
       .then((data) => setBudgetList(Array.isArray(data) ? data : []))
-      .catch((err) => { console.error("Error:", err); setBudgetList([]); });
+      .catch((err) => { console.error("Error:", err); setBudgetList([]); setMessage("Unable to load budget records."); })
+      .finally(() => setLoadingBudgets(false));
   }, []);
 
   const handleBudgetPdfChange = (e) => {
@@ -79,9 +83,13 @@ export default function AdminBudgetPage() {
       if (res.ok) {
         setBudgetList((prev) => editingBudgetId ? prev.map((item) => String(item._id) === String(result._id) ? result : item) : [result, ...prev]);
         resetBudgetForm();
+        setMessage(editingBudgetId ? "Budget record updated." : "Budget record added.");
+      } else {
+        setMessage(result.message || "Unable to save budget record.");
       }
     } catch (error) {
       console.error("Error:", error);
+      setMessage("Unable to save budget record.");
     }
   };
 
@@ -99,9 +107,14 @@ export default function AdminBudgetPage() {
       if (res.ok) {
         setBudgetList((prev) => prev.filter((item) => item._id !== id));
         if (editingBudgetId === id) resetBudgetForm();
+        setMessage("Budget record deleted.");
+      } else {
+        const result = await res.json();
+        setMessage(result.message || "Unable to delete budget record.");
       }
     } catch (error) {
       console.error("Error:", error);
+      setMessage("Unable to delete budget record.");
     }
   };
 
@@ -113,8 +126,13 @@ export default function AdminBudgetPage() {
       <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-yellow-400">Manage Budget</h1>
-          <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm">Sign Out</button>
+          <div className="flex gap-2">
+            <Link href="/admin" className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm">Admin Panel</Link>
+            <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm">Sign Out</button>
+          </div>
         </div>
+
+        {message && <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{message}</div>}
 
         <form onSubmit={submitBudget} className="mb-8 space-y-4 p-4 sm:p-6 border rounded-lg bg-white dark:bg-gray-800 shadow">
           <h3 className="text-lg sm:text-xl font-semibold text-emerald-700 dark:text-yellow-400">{editingBudgetId ? "Update" : "Add"} Budget Record</h3>
@@ -174,7 +192,7 @@ export default function AdminBudgetPage() {
             {editingBudgetId && (
               <>
                 <button type="button" onClick={resetBudgetForm} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 text-sm font-medium">Cancel</button>
-                {budgetForm.documentData && (
+                {budgetForm.documentName && (
                   <button type="button" onClick={() => setRemoveBudgetDocument(true)} className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 text-sm font-medium">Remove PDF</button>
                 )}
               </>
@@ -196,7 +214,7 @@ export default function AdminBudgetPage() {
                 </tr>
               </thead>
               <tbody>
-                {budgetList.map((item) => (
+                {loadingBudgets ? <tr><td colSpan="6" className="p-8 text-center">Loading budget records...</td></tr> : budgetList.map((item) => (
                   <tr key={item._id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="p-3">{item.financialYear}</td>
                     <td className="p-3">{item.schemeName}</td>

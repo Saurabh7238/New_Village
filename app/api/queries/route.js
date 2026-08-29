@@ -57,7 +57,16 @@ export async function POST(request) {
 
     const queryId = generateQueryId(counter.count);
     const assignedTo = getAutoAssignedOfficer(ward);
-    const normalizedAttachment = attachment || (photo ? {
+    const submittedAttachment = Array.isArray(attachment) ? attachment[0] : attachment;
+    const submittedAttachmentUrl = typeof submittedAttachment === 'string'
+      ? submittedAttachment
+      : submittedAttachment?.fileUrl;
+    const normalizedAttachment = submittedAttachmentUrl ? {
+      fileName: submittedAttachment?.fileName || `query-document-${Date.now()}`,
+      fileUrl: submittedAttachmentUrl,
+      mimeType: submittedAttachment?.mimeType || (submittedAttachmentUrl.startsWith('data:application/pdf') ? 'application/pdf' : 'image/*'),
+      uploadedAt: submittedAttachment?.uploadedAt || new Date()
+    } : (photo ? {
       fileName: `query-document-${Date.now()}.${String(photo).startsWith('data:application/pdf') ? 'pdf' : 'jpg'}`,
       fileUrl: photo,
       mimeType: String(photo).startsWith('data:application/pdf') ? 'application/pdf' : 'image/jpeg',
