@@ -15,6 +15,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState(null);
+  const [visitedLinks, setVisitedLinks] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -65,6 +66,15 @@ export default function Header() {
   }, [status, session?.user?.role]);
 
   useEffect(() => {
+    try {
+      const savedVisited = JSON.parse(localStorage.getItem("portal-visited-links") || "[]");
+      if (Array.isArray(savedVisited)) {
+        setVisitedLinks(savedVisited.filter(Boolean).slice(-20));
+      }
+    } catch (error) {
+      console.warn("Unable to read saved visited links", error);
+    }
+
     setDarkMode(document.documentElement.classList.contains("dark"));
 
     const loadNotifications = () => {
@@ -99,6 +109,19 @@ export default function Header() {
       document.removeEventListener("mousedown", closeNotifications);
     };
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("portal-visited-links", JSON.stringify(visitedLinks));
+    } catch (error) {
+      console.warn("Unable to save visited links", error);
+    }
+  }, [visitedLinks]);
+
+  const markVisited = (route) => {
+    if (!route) return;
+    setVisitedLinks((current) => [...new Set([route, ...current])].slice(0, 20));
+  };
 
   const toggleDarkMode = () => {
     const nextMode = !darkMode;
@@ -137,9 +160,11 @@ export default function Header() {
     ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
   const menuItemBaseClass =
-    "flex w-full items-center rounded-2xl bg-slate-100 px-5 py-4 text-left text-base font-semibold transition-colors dark:bg-slate-700";
+    "flex w-full items-center rounded-lg bg-slate-100 px-2.5 py-2.5 text-left text-xs sm:text-sm font-semibold transition-colors dark:bg-slate-700";
   const menuItemActiveClass =
     "bg-emerald-600 text-white dark:bg-emerald-600";
+  const menuItemVisitedClass =
+    "bg-amber-100 text-amber-900 ring-1 ring-amber-300 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-800/70";
   const menuItemInactiveClass =
     "text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200";
   const isAuthenticated = status === "authenticated";
@@ -265,7 +290,7 @@ export default function Header() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.97 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute right-0 top-full mt-3 max-h-[calc(100dvh-8rem)] w-[min(92vw,44rem)] origin-top-right overflow-y-auto overscroll-contain rounded-3xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-700 dark:bg-slate-800 sm:p-4"
+                className="absolute right-0 top-full mt-2 max-h-[calc(100dvh-8rem)] w-[min(78vw,21rem)] origin-top-right overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800"
               >
                 <ul className="space-y-3">
                   {navItems.map(([label, href, subItems]) => (
@@ -285,7 +310,7 @@ export default function Header() {
                           <span className={`transition-transform ${openSubmenu === label ? "rotate-180" : ""}`}>▼</span>
                         </button>
                         {openSubmenu === label && (
-                          <div className="mt-2 space-y-2 pl-2 border-l-2 border-emerald-500">
+                          <div className="mt-1.5 space-y-1.5 pl-2 border-l-2 border-emerald-500">
                             {subItems.map(([subLabel, subHref]) => (
                               <Link
                                 key={subHref}
@@ -293,9 +318,12 @@ export default function Header() {
                                 className={`${menuItemBaseClass} text-sm ${
                                   pathname === subHref
                                     ? menuItemActiveClass
-                                    : menuItemInactiveClass
+                                    : visitedLinks.includes(subHref)
+                                      ? menuItemVisitedClass
+                                      : menuItemInactiveClass
                                 }`}
                                 onClick={() => {
+                                  markVisited(subHref);
                                   setOpen(false);
                                   setOpenSubmenu(null);
                                 }}
@@ -313,9 +341,14 @@ export default function Header() {
                         className={`${menuItemBaseClass} ${
                           pathname === href
                             ? menuItemActiveClass
-                            : menuItemInactiveClass
+                            : visitedLinks.includes(href)
+                              ? menuItemVisitedClass
+                              : menuItemInactiveClass
                         }`}
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          markVisited(href);
+                          setOpen(false);
+                        }}
                       >
                         {label}
                       </Link>
@@ -326,10 +359,10 @@ export default function Header() {
                   <li>
                     <button
                       onClick={toggleLanguage}
-                      className="flex w-full items-center justify-between rounded-2xl bg-slate-100 px-5 py-4 text-left text-base font-semibold text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-800 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200"
+                      className="flex w-full items-center justify-between rounded-lg bg-slate-100 px-2.5 py-2.5 text-left text-xs sm:text-sm font-semibold text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-800 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200"
                     >
                       <span>Language</span>
-                      <span className="rounded-xl bg-white px-4 py-1.5 text-sm font-bold text-emerald-700 shadow-sm dark:bg-slate-800 dark:text-emerald-300">
+                      <span className="rounded-lg bg-white px-2 py-1 text-[10px] sm:text-xs font-bold text-emerald-700 shadow-sm dark:bg-slate-800 dark:text-emerald-300">
                         {langLabels.langToggle}
                       </span>
                     </button>
@@ -338,12 +371,12 @@ export default function Header() {
                   {status === "authenticated" && session ? (
                   <>
                     <li>
-                      <Link href="/dashboard" className={`${menuItemBaseClass} ${menuItemInactiveClass}`} onClick={() => setOpen(false)}>
+                      <Link href="/dashboard" className={`${menuItemBaseClass} ${pathname === "/dashboard" ? menuItemActiveClass : visitedLinks.includes("/dashboard") ? menuItemVisitedClass : menuItemInactiveClass}`} onClick={() => { markVisited("/dashboard"); setOpen(false); }}>
                         Dashboard
                       </Link>
                     </li>
                     <li>
-                      <Link href="/dashboard/profile" className={`${menuItemBaseClass} ${menuItemInactiveClass}`} onClick={() => setOpen(false)}>
+                      <Link href="/dashboard/profile" className={`${menuItemBaseClass} ${pathname === "/dashboard/profile" ? menuItemActiveClass : visitedLinks.includes("/dashboard/profile") ? menuItemVisitedClass : menuItemInactiveClass}`} onClick={() => { markVisited("/dashboard/profile"); setOpen(false); }}>
                         My Profile
                       </Link>
                     </li>

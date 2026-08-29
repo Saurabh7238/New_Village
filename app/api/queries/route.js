@@ -24,7 +24,7 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Your account is unavailable. Please contact the Panchayat office.' }, { status: 403 });
     }
 
-    const { category, subject, description, priority, attachment } = await request.json();
+    const { category, subject, description, priority, attachment, photo } = await request.json();
     const { name, phone: mobile, ward, village, address } = citizen;
 
     if (!name || !mobile || !ward || !category || !subject || !description) {
@@ -57,6 +57,12 @@ export async function POST(request) {
 
     const queryId = generateQueryId(counter.count);
     const assignedTo = getAutoAssignedOfficer(ward);
+    const normalizedAttachment = attachment || (photo ? {
+      fileName: `query-document-${Date.now()}.${String(photo).startsWith('data:application/pdf') ? 'pdf' : 'jpg'}`,
+      fileUrl: photo,
+      mimeType: String(photo).startsWith('data:application/pdf') ? 'application/pdf' : 'image/jpeg',
+      uploadedAt: new Date()
+    } : null);
 
     const newQuery = new Query({
       queryId,
@@ -69,7 +75,8 @@ export async function POST(request) {
       subject,
       description,
       address: address || '',
-      attachments: attachment ? [attachment] : [],
+      photo: photo || null,
+      attachments: normalizedAttachment ? [normalizedAttachment] : [],
       assignedTo,
       priority: ['High', 'Medium', 'Low'].includes(priority) ? priority : ['Water', 'Health/PHC'].includes(category) ? 'High' : 'Medium',
       auditLog: [
