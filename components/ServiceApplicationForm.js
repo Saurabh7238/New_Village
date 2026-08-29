@@ -30,6 +30,15 @@ export default function ServiceApplicationForm({ serviceType, fields, requiredDo
     if (status !== 'authenticated') return;
     fetch('/api/applications').then((res) => res.ok ? res.json() : null).then((data) => setApplications(data?.applications || [])).catch(() => setApplications([]));
   }, [status]);
+  
+  // Poll for application updates every 5 seconds when authenticated
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    const interval = setInterval(() => {
+      fetch('/api/applications').then((res) => res.ok ? res.json() : null).then((data) => setApplications(data?.applications || [])).catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [status]);
   async function onFiles(event) {
     const files = Array.from(event.target.files || []);
     try {
@@ -54,11 +63,18 @@ export default function ServiceApplicationForm({ serviceType, fields, requiredDo
       return addToast('Please upload at least one required supporting document.', 'error');
     }
     const response = await fetch('/api/applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serviceType, formData: values, documents }) });
-    const data = await response.json(); setSubmitting(false);
+    const data = await response.json(); 
+    setSubmitting(false);
     if (!response.ok) {
       return addToast(data.message || 'Your application could not be submitted. Please try again.', 'error');
     }
-    addToast(`Submitted successfully. Your reference number is ${data.applicationNumber}.`, 'success');
+    // Clear form and documents on success
+    setValues({});
+    setDocuments([]);
+    // Reload applications list
+    fetch('/api/applications').then((res) => res.ok ? res.json() : null).then((data) => setApplications(data?.applications || [])).catch(() => setApplications([]));
+    // Show success toast
+    addToast(`Submitted successfully. Your reference number is ${data.applicationNumber}.`, 'success', 5000);
   }
   if (status === 'loading') return <p className="pt-36 text-center">Loading your application…</p>;
   if (status === 'unauthenticated') return <div className="rounded border border-green-200 bg-green-50 p-4 text-green-900"><p>Sign in to submit a personal application. You can prepare the required service details and supporting PDF, JPG, or PNG documents first.</p><Link href={`/signin?callbackUrl=${encodeURIComponent(typeof window === 'undefined' ? '/' : window.location.pathname)}`} className="mt-3 inline-block rounded bg-green-700 px-4 py-2 text-white">Sign in to apply</Link></div>;

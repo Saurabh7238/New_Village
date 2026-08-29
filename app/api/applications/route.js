@@ -46,6 +46,20 @@ export async function POST(request) {
     await connectDB();
     const user = await User.findById(session.user.id).select('name email phone aadhaarLast4 status').lean();
     if (!user || (user.status && user.status !== 'active')) return NextResponse.json({ message: 'Your account is unavailable.' }, { status: 403 });
+    
+    // Check for duplicate request within 24 hours for the same service type
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const existingRequest = await Application.findOne({
+      userId: user._id,
+      serviceType,
+      createdAt: { $gte: twentyFourHoursAgo }
+    }).lean();
+    if (existingRequest) {
+      return NextResponse.json({ 
+        message: `You can only submit one ${serviceType.replace(/-/g, ' ')} request every 24 hours. Please wait before submitting another.` 
+      }, { status: 429 });
+    }
+    
     const safeDocuments = validateDocuments(documents);
     const applicationNumber = `APP-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const application = await Application.create({
@@ -56,18 +70,21 @@ export async function POST(request) {
       formData: { ...formData, applicant: { name: user.name, email: user.email || '', phone: user.phone, aadhaarLast4: user.aadhaarLast4 || null } },
       documents: safeDocuments,
     });
-    await ServiceNotification.create({ userId: user._id, serviceType, relatedType: 'application', relatedId: application._id, queryRaised: application.createdAt });
-    await CitizenNotification.create({ userId: user._id, title: `${applicationNumber} submitted`, message: 'Your application has been submitted for review.', type: 'application', relatedType: 'application', relatedId: application._id });
+    
+    // Run notification creation in parallel to speed up response time
     const admins = await User.find({ role: 'admin', status: 'active' }).select('_id').lean();
-    if (admins.length) {
-      await AdminNotification.insertMany(admins.map((admin) => ({
+    await Promise.all([
+      ServiceNotification.create({ userId: user._id, serviceType, relatedType: 'application', relatedId: application._id, queryRaised: application.createdAt }),
+      CitizenNotification.create({ userId: user._id, title: `${applicationNumber} submitted`, message: 'Your application has been submitted for review.', type: 'application', relatedType: 'application', relatedId: application._id }),
+      admins.length ? AdminNotification.insertMany(admins.map((admin) => ({
         userId: admin._id,
         title: `New service application: ${applicationNumber}`,
         message: `${user.name} submitted a ${serviceType.replace(/-/g, ' ')} request.`,
         relatedType: 'application',
         relatedId: application._id,
-      })));
-    }
+      }))) : Promise.resolve()
+    ]);
+    
     return NextResponse.json({ message: 'Application submitted successfully.', applicationNumber, id: application._id.toString(), createdAt: application.createdAt }, { status: 201 });
   } catch (error) {
     console.error('Application creation error:', error);
