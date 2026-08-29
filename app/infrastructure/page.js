@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   FaRoad,
   FaLightbulb,
@@ -41,6 +42,7 @@ const TYPE_ICONS = {
 
 export default function InfrastructurePage() {
   const [counts, setCounts] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/infrastructure")
@@ -54,8 +56,13 @@ export default function InfrastructurePage() {
       .catch((err) => {
         console.error("Failed to fetch infrastructure counts:", err);
         setCounts(countByInfraType([]));
-      });
+      })
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return <LoadingSpinner message="Loading Infrastructure Service..." />;
+  }
 
   return (
     <div className="pt-36 max-w-5xl mx-auto px-4">

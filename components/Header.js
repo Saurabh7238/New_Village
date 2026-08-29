@@ -14,6 +14,7 @@ import { useLanguage } from "@/app/language-provider";
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -107,8 +108,7 @@ export default function Header() {
   };
 
 
-  const navItems = [
-    [langLabels.home, "/"],
+  const serviceItems = [
     [langLabels.birth, "/birth"],
     [langLabels.death, "/death"],
     [langLabels.aadhar, "/aadhar"],
@@ -121,6 +121,11 @@ export default function Header() {
     [langLabels.gallery, "/gallery"],
     [langLabels.map, "/map"],
     [langLabels.infra, "/infrastructure"],
+  ];
+
+  const navItems = [
+    [langLabels.home, "/"],
+    ["Services", null, serviceItems],
   ];
 
   if (session?.user?.role === "admin") {
@@ -263,19 +268,58 @@ export default function Header() {
                 className="absolute right-0 top-full mt-3 max-h-[calc(100dvh-8rem)] w-[min(92vw,44rem)] origin-top-right overflow-y-auto overscroll-contain rounded-3xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-700 dark:bg-slate-800 sm:p-4"
               >
                 <ul className="space-y-3">
-                  {navItems.map(([label, href]) => (
-                  <li key={href}>
-                    <Link
-                      href={href}
-                      className={`${menuItemBaseClass} ${
-                        pathname === href
-                          ? menuItemActiveClass
-                          : menuItemInactiveClass
-                      }`}
-                      onClick={() => setOpen(false)}
-                    >
-                      {label}
-                    </Link>
+                  {navItems.map(([label, href, subItems]) => (
+                  <li key={label}>
+                    {subItems ? (
+                      // Services dropdown
+                      <div>
+                        <button
+                          onClick={() => setOpenSubmenu(openSubmenu === label ? null : label)}
+                          className={`${menuItemBaseClass} justify-between ${
+                            openSubmenu === label
+                              ? menuItemActiveClass
+                              : menuItemInactiveClass
+                          }`}
+                        >
+                          <span>{label}</span>
+                          <span className={`transition-transform ${openSubmenu === label ? "rotate-180" : ""}`}>▼</span>
+                        </button>
+                        {openSubmenu === label && (
+                          <div className="mt-2 space-y-2 pl-2 border-l-2 border-emerald-500">
+                            {subItems.map(([subLabel, subHref]) => (
+                              <Link
+                                key={subHref}
+                                href={subHref}
+                                className={`${menuItemBaseClass} text-sm ${
+                                  pathname === subHref
+                                    ? menuItemActiveClass
+                                    : menuItemInactiveClass
+                                }`}
+                                onClick={() => {
+                                  setOpen(false);
+                                  setOpenSubmenu(null);
+                                }}
+                              >
+                                {subLabel}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      // Regular menu items
+                      <Link
+                        href={href}
+                        className={`${menuItemBaseClass} ${
+                          pathname === href
+                            ? menuItemActiveClass
+                            : menuItemInactiveClass
+                        }`}
+                        onClick={() => setOpen(false)}
+                      >
+                        {label}
+                      </Link>
+                    )}
                   </li>
                   ))}
 

@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-export default function AppointmentsPage() {
+import { useSession } from 'next-auth/react';import LoadingSpinner from '@/components/LoadingSpinner';export default function AppointmentsPage() {
   const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]); const [updates, setUpdates] = useState({});
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -12,7 +11,7 @@ export default function AppointmentsPage() {
   const loadAppointments = () => fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
   const viewUpdate = async (appointment) => { const notification = updates[appointment.id]; if (!notification) return; await fetch('/api/service-notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notification.id }) }); setUpdates((current) => { const next = { ...current }; delete next[appointment.id]; return next; }); };
   async function submit(e) { e.preventDefault(); if (status !== 'authenticated') return router.push('/signin?callbackUrl=%2Fappointments'); setLoading(true); const res = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const data = await res.json(); setLoading(false); if (res.ok) { setMessage(`Appointment requested. Reference: ${data.appointmentNumber}. The Panchayat office will set your date and time.`); setForm({ purpose: '' }); loadAppointments(); } else setMessage(data.message || 'Unable to book appointment.'); }
-  if (status === 'loading') return <p className="pt-36 text-center">Loading…</p>;
+  if (status === 'loading') return <LoadingSpinner message="Loading Appointments..." />;
   return (
     <div className="pt-36 max-w-5xl mx-auto px-4">
       <h1 className="text-3xl font-bold text-green-700 mb-6">

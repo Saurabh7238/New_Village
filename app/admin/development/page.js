@@ -742,7 +742,7 @@ Print this report and display in Gram Sabha meetings for transparency and social
             </select>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className={`w-full border-collapse text-sm ${isDark ? "border-gray-700" : "border-gray-300"}`}>
               <thead>
                 <tr className={`border-b-2 ${isDark ? "border-gray-700 bg-gray-800" : "border-gray-300 bg-gray-100"}`}>
@@ -797,6 +797,50 @@ Print this report and display in Gram Sabha meetings for transparency and social
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {filteredProjects.length > 0 ? (
+              filteredProjects.map((project) => (
+                <div key={project._id} className={`rounded-lg border ${isDark ? "border-gray-700 bg-gray-700" : "border-gray-300 bg-gray-50"} p-4 shadow`}>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1">
+                        <p className="font-bold text-green-700 dark:text-green-400">{project.title}</p>
+                        <p className="text-gray-600 dark:text-gray-400">{project.scheme}</p>
+                      </div>
+                    </div>
+                    <div className="border-t dark:border-gray-600 pt-2 grid grid-cols-2 gap-2">
+                      <div><strong>Ward:</strong> {project.wardNo}</div>
+                      <div><strong>Progress:</strong> {project.physicalProgress}%</div>
+                      <div className="col-span-2"><strong>Amount:</strong> {formatCurrency(project.sanctionedAmount)}</div>
+                      <div className="col-span-2">
+                        <strong>Status:</strong> <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBgClass(project.status)}`}>{project.status}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={() => handleEdit(project)}
+                        className="flex-1 rounded bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 text-xs font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(project._id)}
+                        className="flex-1 rounded bg-red-600 hover:bg-red-700 text-white px-2 py-2 text-xs font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-gray-500">
+                No projects found
+              </div>
+            )}
           </div>
         </div>
       </div>

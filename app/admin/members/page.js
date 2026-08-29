@@ -427,55 +427,55 @@ export default function AdminMembersPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg bg-white shadow">
+      <div className="hidden md:block overflow-x-auto rounded-lg bg-white shadow dark:bg-gray-800">
         <table className="w-full">
-          <thead className="bg-gray-100 border-b">
+          <thead className="bg-gray-100 dark:bg-gray-700 border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Designation</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Ward</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Mobile</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tenure</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Name</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Designation</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Ward</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Mobile</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Tenure</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredMembers.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="7" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   {searchTerm ? 'No members found' : 'No members added yet'}
                 </td>
               </tr>
             ) : (
               filteredMembers.map(member => (
-                <tr key={member._id} className="border-b hover:bg-gray-50">
-                  <td className="px-6 py-3 text-sm text-gray-900">{member.fullName}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600">{member.designation}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600">{member.wardNo || '—'}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600">{member.mobileNumber}</td>
+                <tr key={member._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-3 text-sm text-gray-900 dark:text-gray-100">{member.fullName}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{member.designation}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{member.wardNo || '—'}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{member.mobileNumber}</td>
                   <td className="px-6 py-3 text-sm">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      member.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      member.status === 'Inactive' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                      member.status === 'Active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                      member.status === 'Inactive' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                      'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                     }`}>
                       {member.status}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-sm text-gray-600">
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
                     {new Date(member.tenureStart).getFullYear()}-{new Date(member.tenureEnd).getFullYear()}
                   </td>
                   <td className="px-6 py-3 text-sm space-x-2">
                     <button
                       onClick={() => { setEditingMember(member); setShowForm(true); }}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(member._id)}
-                      className="text-red-600 hover:text-red-800 font-medium"
+                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
                     >
                       Delete
                     </button>
@@ -485,6 +485,54 @@ export default function AdminMembersPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {filteredMembers.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            {searchTerm ? 'No members found' : 'No members added yet'}
+          </div>
+        ) : (
+          filteredMembers.map(member => (
+            <div key={member._id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow">
+              <div className="space-y-2">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1">
+                    <p className="font-bold text-green-700 dark:text-green-400">{member.fullName}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">{member.designation}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
+                    member.status === 'Active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                    member.status === 'Inactive' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                  }`}>
+                    {member.status}
+                  </span>
+                </div>
+                <div className="border-t dark:border-gray-700 pt-2 grid grid-cols-2 gap-2 text-xs">
+                  <div><strong>Ward:</strong> {member.wardNo || '—'}</div>
+                  <div><strong>Mobile:</strong> {member.mobileNumber}</div>
+                  <div><strong>Tenure:</strong> {new Date(member.tenureStart).getFullYear()}-{new Date(member.tenureEnd).getFullYear()}</div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => { setEditingMember(member); setShowForm(true); }}
+                    className="flex-1 rounded bg-blue-600 dark:bg-blue-700 px-2 py-2 text-xs text-white hover:bg-blue-700 dark:hover:bg-blue-600 font-medium"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(member._id)}
+                    className="flex-1 rounded bg-red-600 dark:bg-red-700 px-2 py-2 text-xs text-white hover:bg-red-700 dark:hover:bg-red-600 font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {filteredMembers.length > 0 && (

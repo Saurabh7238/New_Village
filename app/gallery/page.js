@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const GalleryPage = () => {
     const [images, setImages] = useState([]);
@@ -35,7 +36,7 @@ const GalleryPage = () => {
     }, []);
 
     if (loading) {
-        return <div className="p-8 text-center">Loading Gallery...</div>;
+        return <LoadingSpinner message="Loading Gallery..." />;
     }
 
     if (images.length === 0) {

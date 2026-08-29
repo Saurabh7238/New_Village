@@ -348,8 +348,8 @@ export default function AdminQueriesPage() {
           </button>
         </div>
 
-        {/* Table */}
-        <div className={`${bgClass} rounded-lg shadow overflow-x-auto`}>
+        {/* Desktop Table View */}
+        <div className={`hidden md:block ${bgClass} rounded-lg shadow overflow-x-auto`}>
           <table className="w-full">
             <thead className={`${isDark ? "bg-gray-700" : "bg-gray-100"} border-b`}>
               <tr>
@@ -424,6 +424,77 @@ export default function AdminQueriesPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className={`md:hidden space-y-3`}>
+          {loading ? (
+            <div className="px-4 py-8 text-center">Loading...</div>
+          ) : queries.length === 0 ? (
+            <div className="px-4 py-8 text-center">No queries found</div>
+          ) : (
+            queries.map(query => (
+              <div key={query._id} className={`${bgClass} rounded-lg p-4 shadow border`}>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1">
+                      <p className="font-bold text-green-600">Query #{query.queryId}</p>
+                      <p className="text-sm font-medium">{query.name}</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.has(query._id)}
+                      onChange={() => toggleRowSelection(query._id)}
+                    />
+                  </div>
+                  <div className="border-t border-gray-300 dark:border-gray-600 pt-2 grid grid-cols-2 gap-2">
+                    <div><strong>Mobile:</strong> {maskMobile(query.mobile)}</div>
+                    <div><strong>Ward:</strong> {query.ward}</div>
+                    <div><strong>Category:</strong> {query.category}</div>
+                    <div><strong>Created:</strong> {formatQueryDate(query.createdAt)}</div>
+                  </div>
+                  <div className="space-y-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Status</label>
+                      <select
+                        value={query.status}
+                        onChange={(e) => handleStatusChange(query._id, e.target.value)}
+                        className={`w-full text-xs px-2 py-1 rounded border ${inputClass}`}
+                      >
+                        {QUERY_STATUSES.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Priority</label>
+                      <select
+                        value={query.priority || "Medium"}
+                        onChange={(e) => handlePriorityChange(query._id, e.target.value)}
+                        className={`w-full text-xs px-2 py-1 rounded border ${inputClass}`}
+                      >
+                        {QUERY_PRIORITIES.map(p => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Assigned To</label>
+                      <p className="py-1">{query.assignedTo || "-"}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Link href={`/admin/queries/${query._id}`} className="flex-1 text-center rounded bg-blue-600 px-2 py-2 text-white hover:bg-blue-700 text-xs font-medium">
+                      View
+                    </Link>
+                    <button onClick={() => handleDelete(query)} className="flex-1 rounded bg-red-600 px-2 py-2 text-white hover:bg-red-700 text-xs font-medium">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

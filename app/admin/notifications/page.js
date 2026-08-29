@@ -658,59 +658,106 @@ export default function AdminNotificationsPage() {
               No notifications found. {!showForm && 'Create one to get started.'}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100 dark:bg-gray-700 border-b">
-                  <tr>
-                    <th className="p-3 text-left font-semibold">Title</th>
-                    <th className="p-3 text-left font-semibold">Type</th>
-                    <th className="p-3 text-left font-semibold">Level</th>
-                    <th className="p-3 text-left font-semibold">Status</th>
-                    <th className="p-3 text-left font-semibold">Category</th>
-                    <th className="p-3 text-left font-semibold">Date</th>
-                    <th className="p-3 text-left font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {notifications.map((notif) => (
-                    <tr key={notif.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="p-3 max-w-xs truncate">{notif.title}</td>
-                      <td className="p-3">{getTypeLabel(notif.type)}</td>
-                      <td className="p-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getLevelColor(notif.level)}`}>
-                          {getLevelLabel(notif.level)}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(notif.status)}`}>
-                          {getStatusLabel(notif.status)}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(notif.category)}`}>
-                          {CATEGORY_LABELS[notif.category]}
-                        </span>
-                      </td>
-                      <td className="p-3 text-sm">{formatDate(notif.issueDate)}</td>
-                      <td className="p-3 space-x-2">
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100 dark:bg-gray-700 border-b">
+                    <tr>
+                      <th className="p-3 text-left font-semibold">Title</th>
+                      <th className="p-3 text-left font-semibold">Type</th>
+                      <th className="p-3 text-left font-semibold">Level</th>
+                      <th className="p-3 text-left font-semibold">Status</th>
+                      <th className="p-3 text-left font-semibold">Category</th>
+                      <th className="p-3 text-left font-semibold">Date</th>
+                      <th className="p-3 text-left font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {notifications.map((notif) => (
+                      <tr key={notif.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="p-3 max-w-xs truncate">{notif.title}</td>
+                        <td className="p-3">{getTypeLabel(notif.type)}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getLevelColor(notif.level)}`}>
+                            {getLevelLabel(notif.level)}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(notif.status)}`}>
+                            {getStatusLabel(notif.status)}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(notif.category)}`}>
+                            {CATEGORY_LABELS[notif.category]}
+                          </span>
+                        </td>
+                        <td className="p-3 text-sm">{formatDate(notif.issueDate)}</td>
+                        <td className="p-3 space-x-2">
+                          <button
+                            onClick={() => handleEdit(notif)}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(notif.id)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3 p-3">
+                {notifications.map((notif) => (
+                  <div key={notif.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 p-3">
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1">
+                          <p className="font-bold text-green-700 dark:text-green-400">{notif.title}</p>
+                          <p className="text-gray-600 dark:text-gray-400">{getTypeLabel(notif.type)}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 border-t border-gray-300 dark:border-gray-600 pt-2">
+                        <div>
+                          <strong>Level:</strong> <span className={`px-1 rounded text-xs font-medium ${getLevelColor(notif.level)}`}>{getLevelLabel(notif.level)}</span>
+                        </div>
+                        <div>
+                          <strong>Status:</strong> <span className={`px-1 rounded text-xs font-medium ${getStatusColor(notif.status)}`}>{getStatusLabel(notif.status)}</span>
+                        </div>
+                        <div>
+                          <strong>Category:</strong> {CATEGORY_LABELS[notif.category]}
+                        </div>
+                        <div>
+                          <strong>Date:</strong> {formatDate(notif.issueDate)}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-2">
                         <button
                           onClick={() => handleEdit(notif)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="flex-1 rounded bg-blue-600 dark:bg-blue-700 px-2 py-2 text-white hover:bg-blue-700 dark:hover:bg-blue-600 font-medium"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(notif.id)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          className="flex-1 rounded bg-red-600 dark:bg-red-700 px-2 py-2 text-white hover:bg-red-700 dark:hover:bg-red-600 font-medium"
                         >
                           Delete
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

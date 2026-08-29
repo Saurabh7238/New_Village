@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   DEVELOPMENT_SCHEMES,
   DEVELOPMENT_STATUSES,
@@ -43,11 +44,7 @@ export default function DevelopmentPage() {
   const groupedData = viewType === "scheme" ? groupByScheme(projects) : groupByWard(projects);
 
   if (loading) {
-    return (
-      <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-gray-50"} ${isDark ? "text-white" : "text-gray-900"} flex items-center justify-center`}>
-        <div className="text-xl">Loading projects...</div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading Development Projects..." />;
   }
 
   return (

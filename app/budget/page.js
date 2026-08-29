@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   formatBudgetAmount,
   formatBudgetDate,
@@ -59,6 +60,10 @@ export default function BudgetPage() {
     { allocation: 0, received: 0, balance: 0, beneficiaries: 0 }
   );
 
+  if (loading) {
+    return <LoadingSpinner message="Loading Budget Information..." />;
+  }
+
   return (
     <div className="pt-36 max-w-7xl mx-auto px-4 pb-12">
       <h1 className="text-3xl font-bold text-green-700 mb-2">
@@ -69,7 +74,7 @@ export default function BudgetPage() {
         for each scheme.
       </p>
 
-      {!loading && budgets.length > 0 && (
+      {budgets.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-green-600">
             <p className="text-sm text-gray-500">Total Allocation</p>

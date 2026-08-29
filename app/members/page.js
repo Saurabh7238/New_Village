@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { sortMembersByHierarchy, groupWardMembersByWard, formatTenure, getStatusColor, DESIGNATION_HIERARCHY } from '@/lib/memberDisplay';
 import Image from 'next/image';
 
@@ -130,11 +131,7 @@ export default function MembersPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="pt-36 max-w-5xl mx-auto px-4 text-center">
-        <p className="text-gray-600">Loading members...</p>
-      </div>
-    );
+    return <LoadingSpinner message="Loading Members..." />;
   }
 
   if (error) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   parseVoterListResponse,
   getVoterName,
@@ -43,6 +44,7 @@ async function fetchVotersByType(type) {
 
 export default function VoterSearchPage() {
   const [voters, setVoters] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedConstituency, setSelectedConstituency] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -50,6 +52,7 @@ export default function VoterSearchPage() {
   const [dbError, setDbError] = useState(null);
 
   useEffect(() => {
+    setIsLoading(true);
     console.log("🔄 Fetching all voter types...");
     Promise.allSettled(VOTER_TYPES.map(fetchVotersByType)).then((results) => {
       const merged = [];
@@ -75,6 +78,7 @@ export default function VoterSearchPage() {
 
       console.log(`📊 Total voters loaded: ${merged.length} (${successCount} success, ${failCount} failed)`);
       setVoters(merged);
+      setIsLoading(false);
     });
   }, []);
 
@@ -113,6 +117,11 @@ export default function VoterSearchPage() {
 
     return matchesSearchTerm && matchesConstituency && matchesType;
   });
+
+  // Show loading spinner while fetching voter data
+  if (isLoading) {
+    return <LoadingSpinner message="Loading Voter Details..." />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white pt-20 pb-10">

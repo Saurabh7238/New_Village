@@ -30,10 +30,21 @@ function AdminApplicationsContent() {
   }, [authStatus, session?.user?.role]);
 
   useEffect(() => {
-    if (authStatus === 'authenticated' && session?.user?.role === 'admin') fetch('/api/service-notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ relatedType: 'application' }) });
+    if (authStatus === 'authenticated' && session?.user?.role === 'admin') {
+      fetch('/api/service-notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ relatedType: 'application' })
+      });
+    }
   }, [authStatus, session?.user?.role]);
 
-  const updateLocal = (id, key, value) => setApplications((items) => items.map((item) => item.id === id ? { ...item, [key]: value } : item));
+  const updateLocal = (id, key, value) => {
+    setApplications((items) =>
+      items.map((item) => (item.id === id ? { ...item, [key]: value } : item))
+    );
+  };
+
   const viewDetails = async (id) => {
     setDetailsLoading(true);
     const response = await fetch(`/api/admin/applications/${id}`);
@@ -41,42 +52,346 @@ function AdminApplicationsContent() {
     setSelectedApplication(data?.application || null);
     setDetailsLoading(false);
   };
+
   const updateDocuments = async (id, event) => {
     const files = Array.from(event.target.files || []);
-    if (files.length > 5 || files.some((file) => !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type) || file.size > 5 * 1024 * 1024)) return alert('Choose up to five PDF, JPG, or PNG documents under 5 MB each.');
-    const documents = await Promise.all(files.map((file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve({ fileName: file.name, fileUrl: reader.result, mimeType: file.type });
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    })));
+    if (
+      files.length > 5 ||
+      files.some(
+        (file) =>
+          !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type) ||
+          file.size > 5 * 1024 * 1024
+      )
+    ) {
+      return alert('Choose up to five PDF, JPG, or PNG documents under 5 MB each.');
+    }
+    const documents = await Promise.all(
+      files.map(
+        (file) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () =>
+              resolve({
+                fileName: file.name,
+                fileUrl: reader.result,
+                mimeType: file.type,
+              });
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          })
+      )
+    );
     updateLocal(id, 'adminDocuments', documents);
   };
+
   const save = async (application) => {
     setSavingId(application.id);
-    const payload = { id: application.id, status: application.status, adminRemarks: application.adminRemarks };
-    if (application.adminDocuments !== undefined) payload.adminDocuments = application.adminDocuments;
-    const response = await fetch('/api/admin/applications', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const payload = {
+      id: application.id,
+      status: application.status,
+      adminRemarks: application.adminRemarks,
+    };
+    if (application.adminDocuments !== undefined) {
+      payload.adminDocuments = application.adminDocuments;
+    }
+    const response = await fetch('/api/admin/applications', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
     setSavingId(null);
     if (response.ok) loadApplications();
   };
+
   const remove = async (application) => {
-    if (!window.confirm(`Delete ${application.applicationNumber}? This cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        `Delete ${application.applicationNumber}? This cannot be undone.`
+      )
+    )
+      return;
     setSavingId(application.id);
-    const response = await fetch('/api/admin/applications', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: application.id }) });
+    const response = await fetch('/api/admin/applications', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: application.id }),
+    });
     setSavingId(null);
-    if (response.ok) setApplications((items) => items.filter((item) => item.id !== application.id));
-    else alert('Unable to delete this application.');
+    if (response.ok) {
+      setApplications((items) => items.filter((item) => item.id !== application.id));
+    } else {
+      alert('Unable to delete this application.');
+    }
   };
 
-  if (authStatus === 'loading') return <div className="p-8 text-center">Loading...</div>;
-  if (session?.user?.role !== 'admin') return <div className="p-8 text-center text-red-600">Access denied.</div>;
+  if (authStatus === 'loading') {
+    return <div className="p-8 text-center">Loading...</div>;
+  }
 
-  const visibleApplications = selectedService ? applications.filter((application) => application.serviceType === selectedService) : applications;
-  const serviceTitle = selectedService ? selectedService.replace(/-/g, ' ') : 'Service Applications';
-  return <main className="min-h-screen bg-gray-50 px-4 py-8 dark:bg-gray-900"><div className="mx-auto max-w-7xl"><div className="mb-6 flex items-center justify-between gap-4"><div><h1 className="text-3xl font-bold capitalize text-green-700 dark:text-yellow-400">{serviceTitle}</h1><p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Review citizen details, documents, status, and response remarks.</p></div><Link href="/admin" className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700">Back to Admin</Link></div>{selectedApplication && <section className="mb-6 rounded-lg border border-green-200 bg-white p-5 shadow dark:border-green-800 dark:bg-gray-800"><div className="flex items-start justify-between gap-4"><div><h2 className="text-xl font-bold text-green-700">{selectedApplication.applicationNumber} — citizen details</h2><p className="mt-1 text-sm capitalize">{selectedApplication.serviceType.replace(/-/g, ' ')}</p></div><button onClick={() => setSelectedApplication(null)} className="rounded bg-gray-600 px-3 py-1 text-sm text-white">Close</button></div><div className="mt-4 grid gap-4 md:grid-cols-2"><div><h3 className="font-semibold">Applicant information</h3>{Object.entries(selectedApplication.userId || {}).filter(([key]) => !['_id', 'id'].includes(key)).map(([key, value]) => <p key={key} className="text-sm"><strong className="capitalize">{key}:</strong> {String(value || '-')}</p>)}</div><div><h3 className="font-semibold">Submitted form details</h3>{Object.entries(selectedApplication.formData || {}).filter(([key]) => key !== 'applicant').map(([key, value]) => <p key={key} className="text-sm"><strong className="capitalize">{key.replace(/([A-Z])/g, ' $1')}:</strong> {String(value || '-')}</p>)}</div></div><div className="mt-4"><h3 className="font-semibold">Citizen-uploaded documents</h3>{selectedApplication.documents?.length ? <ul className="mt-1 list-disc pl-5 text-sm">{selectedApplication.documents.map((document, index) => <li key={`${document.fileName}-${index}`}><a href={document.viewUrl} target="_blank" rel="noreferrer" className="text-green-700 underline">{document.fileName || `Document ${index + 1}`}</a></li>)}</ul> : <p className="text-sm text-gray-500">No documents uploaded.</p>}</div></section>}<div className="overflow-x-auto rounded-lg bg-white shadow dark:bg-gray-800"><table className="w-full min-w-[1100px] text-left text-sm"><thead className="bg-gray-100 dark:bg-gray-700"><tr><th className="p-3">Application / Citizen</th><th className="p-3">Service</th><th className="p-3">Submitted</th><th className="p-3">Status</th><th className="p-3">Remarks</th><th className="p-3">Panchayat documents</th><th className="p-3">Action</th></tr></thead><tbody>{loading ? <tr><td colSpan="7" className="p-8 text-center">Loading applications...</td></tr> : visibleApplications.length === 0 ? <tr><td colSpan="7" className="p-8 text-center">No service applications found.</td></tr> : visibleApplications.map((application) => <tr key={application.id} className="border-t align-top dark:border-gray-700"><td className="p-3"><p className="font-semibold text-green-700">{application.applicationNumber}</p><p>{application.userId?.name || application.formData?.applicant?.name || 'Citizen'}</p><p className="text-xs text-gray-500">{application.userId?.phone || application.formData?.applicant?.phone || ''}</p></td><td className="p-3 capitalize">{application.serviceType.replace(/-/g, ' ')}</td><td className="p-3">{new Date(application.createdAt).toLocaleDateString()}</td><td className="p-3"><select value={application.status} onChange={(event) => updateLocal(application.id, 'status', event.target.value)} className="rounded border p-2 dark:bg-gray-700">{STATUSES.map((item) => <option key={item}>{item}</option>)}</select></td><td className="p-3"><textarea rows="3" value={application.adminRemarks || ''} onChange={(event) => updateLocal(application.id, 'adminRemarks', event.target.value)} className="w-full rounded border p-2 dark:bg-gray-700" placeholder="Message for the citizen" /></td><td className="p-3"><input type="file" multiple accept="application/pdf,image/jpeg,image/png" onChange={(event) => updateDocuments(application.id, event)} className="w-48 text-xs" />{application.adminDocuments?.length > 0 && <p className="mt-1 text-xs text-green-700">{application.adminDocuments.length} document(s) ready</p>}</td><td className="p-3"><div className="flex gap-2"><button onClick={() => viewDetails(application.id)} className="rounded bg-slate-600 px-3 py-2 font-semibold text-white">{detailsLoading ? 'Loading...' : 'View details'}</button><button disabled={savingId === application.id} onClick={() => save(application)} className="rounded bg-blue-600 px-3 py-2 font-semibold text-white disabled:opacity-50">{savingId === application.id ? 'Saving...' : 'Save'}</button><button disabled={savingId === application.id} onClick={() => remove(application)} className="rounded bg-red-600 px-3 py-2 font-semibold text-white disabled:opacity-50">Delete</button></div></td></tr>)}</tbody></table></div></div></main>;
+  if (session?.user?.role !== 'admin') {
+    return (
+      <div className="p-8 text-center text-red-600">Access denied.</div>
+    );
+  }
+
+  const visibleApplications = selectedService
+    ? applications.filter((application) => application.serviceType === selectedService)
+    : applications;
+  const serviceTitle = selectedService
+    ? selectedService.replace(/-/g, ' ')
+    : 'Service Applications';
+
+  return (
+    <main className="min-h-screen bg-gray-50 px-4 py-8 dark:bg-gray-900">
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold capitalize text-green-700 dark:text-yellow-400">
+              {serviceTitle}
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+              Review citizen details, documents, status, and response remarks.
+            </p>
+          </div>
+          <Link
+            href="/admin"
+            className="self-start rounded bg-gray-600 px-4 py-2 text-sm text-white hover:bg-gray-700 whitespace-nowrap"
+          >
+            Back to Admin
+          </Link>
+        </div>
+
+        {/* Details Section */}
+        {selectedApplication && (
+          <section className="mb-6 rounded-lg border border-green-200 bg-white p-4 shadow dark:border-green-800 dark:bg-gray-800">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex-1">
+                <h2 className="text-lg sm:text-xl font-bold text-green-700">
+                  {selectedApplication.applicationNumber} — Citizen Details
+                </h2>
+                <p className="mt-1 text-xs sm:text-sm capitalize">
+                  {selectedApplication.serviceType.replace(/-/g, ' ')}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedApplication(null)}
+                className="self-start rounded bg-gray-600 px-3 py-1 text-xs sm:text-sm text-white hover:bg-gray-700 whitespace-nowrap"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <h3 className="font-semibold text-sm mb-2">Applicant Information</h3>
+                <div className="space-y-1 text-xs sm:text-sm">
+                  {Object.entries(selectedApplication.userId || {})
+                    .filter(([key]) => !['_id', 'id'].includes(key))
+                    .map(([key, value]) => (
+                      <p key={key}>
+                        <strong className="capitalize">{key}:</strong>{' '}
+                        {String(value || '-')}
+                      </p>
+                    ))}
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm mb-2">Submitted Form Details</h3>
+                <div className="space-y-1 text-xs sm:text-sm overflow-x-auto">
+                  {Object.entries(selectedApplication.formData || {})
+                    .filter(([key]) => key !== 'applicant')
+                    .map(([key, value]) => (
+                      <p key={key}>
+                        <strong className="capitalize">
+                          {key.replace(/([A-Z])/g, ' $1')}:
+                        </strong>{' '}
+                        {String(value || '-').substring(0, 100)}
+                        {String(value || '').length > 100 ? '...' : ''}
+                      </p>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <h3 className="font-semibold text-sm mb-2">Citizen-Uploaded Documents</h3>
+              {selectedApplication.documents?.length ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {selectedApplication.documents.map((document, index) => (
+                    <a
+                      key={index}
+                      href={document.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 break-all hover:underline"
+                    >
+                      {document.fileName || `Document ${index + 1}`}
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs sm:text-sm text-gray-500">No documents uploaded.</p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto rounded-lg bg-white shadow dark:bg-gray-800">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th className="p-3">Application</th>
+                <th className="p-3">Service</th>
+                <th className="p-3">Applicant</th>
+                <th className="p-3">Status</th>
+                <th className="p-3">Submitted</th>
+                <th className="p-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleApplications.map((application) => (
+                <tr
+                  key={application.id}
+                  className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <td className="p-3 font-mono text-xs">{application.applicationNumber}</td>
+                  <td className="p-3 capitalize text-xs">
+                    {application.serviceType.replace(/-/g, ' ')}
+                  </td>
+                  <td className="p-3 text-xs">{application.userId?.name || 'N/A'}</td>
+                  <td className="p-3">
+                    <select
+                      value={application.status}
+                      onChange={(e) => updateLocal(application.id, 'status', e.target.value)}
+                      className="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600"
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="p-3 text-xs">
+                    {new Date(application.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex gap-1 flex-wrap">
+                      <button
+                        onClick={() => viewDetails(application.id)}
+                        className="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700 whitespace-nowrap"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => save(application)}
+                        disabled={savingId === application.id}
+                        className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {savingId === application.id ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => remove(application)}
+                        disabled={savingId === application.id}
+                        className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700 disabled:opacity-50 whitespace-nowrap"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3">
+          {visibleApplications.map((application) => (
+            <div
+              key={application.id}
+              className="rounded-lg border border-gray-200 bg-white p-4 shadow dark:border-gray-700 dark:bg-gray-800"
+            >
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1">
+                    <p className="font-mono text-xs font-bold">
+                      {application.applicationNumber}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 capitalize">
+                      {application.serviceType.replace(/-/g, ' ')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => remove(application)}
+                    disabled={savingId === application.id}
+                    className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700 disabled:opacity-50 flex-shrink-0 whitespace-nowrap"
+                  >
+                    Delete
+                  </button>
+                </div>
+
+                <div className="border-t dark:border-gray-700 pt-2 space-y-1 text-xs">
+                  <p>
+                    <strong>Applicant:</strong> {application.userId?.name || 'N/A'}
+                  </p>
+                  <p>
+                    <strong>Submitted:</strong>{' '}
+                    {new Date(application.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold block mb-1">Status</label>
+                  <select
+                    value={application.status}
+                    onChange={(e) => updateLocal(application.id, 'status', e.target.value)}
+                    className="w-full rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-600"
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => viewDetails(application.id)}
+                    className="flex-1 rounded bg-blue-600 px-2 py-2 text-xs text-white hover:bg-blue-700 font-medium"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    onClick={() => save(application)}
+                    disabled={savingId === application.id}
+                    className="flex-1 rounded bg-green-600 px-2 py-2 text-xs text-white hover:bg-green-700 disabled:opacity-50 font-medium"
+                  >
+                    {savingId === application.id ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {visibleApplications.length === 0 && (
+          <div className="text-center py-8 text-gray-500 text-sm">
+            No applications found.
+          </div>
+        )}
+      </div>
+    </main>
+  );
 }
 
 export default function AdminApplicationsPage() {
-  return <Suspense fallback={<div className="p-8 text-center">Loading service applications...</div>}><AdminApplicationsContent /></Suspense>;
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading service applications...</div>}>
+      <AdminApplicationsContent />
+    </Suspense>
+  );
 }
