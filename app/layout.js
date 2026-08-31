@@ -19,6 +19,17 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Gram Panchayat Chiutahara",
+              url: "https://www.grampanchayatchiutahara.online",
+            }),
+          }}
+        />
+        <script
           dangerouslySetInnerHTML={{
             __html: `
               try {
@@ -26,6 +37,8 @@ export default function RootLayout({ children }) {
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 const isDark = theme ? theme === 'dark' : prefersDark;
                 if (isDark) document.documentElement.classList.add('dark');
+                if (localStorage.getItem('text-size-large') === 'true') document.documentElement.classList.add('text-size-large');
+                if (localStorage.getItem('high-contrast') === 'true') document.documentElement.classList.add('high-contrast');
               } catch (e) {}
             `,
           }}

@@ -6,6 +6,7 @@ import CitizenNotification from '@/models/CitizenNotification';
 import AdminNotification from '@/models/AdminNotification';
 import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
+import { writeAuditLog } from '@/lib/writeAuditLog';
 
 const SERVICE_TYPES = ['birth-certificate', 'death-certificate', 'aadhaar-request', 'voter-request', 'other'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -71,6 +72,8 @@ export async function POST(request) {
       documents: safeDocuments,
     });
     
+    await writeAuditLog({ session, action: 'Service application submitted', details: { applicationId: application._id.toString(), applicationNumber, serviceType } });
+
     // Run notification creation in parallel to speed up response time
     const admins = await User.find({ role: 'admin', status: 'active' }).select('_id').lean();
     await Promise.all([

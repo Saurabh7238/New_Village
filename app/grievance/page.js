@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme } from "@/app/theme-provider";
 import { QUERY_CATEGORIES } from "@/lib/queryDisplay";
+import LoginRequiredModal from "@/components/LoginRequiredModal";
 export default function GrievancePage() {
   const router = useRouter();
   const { status } = useSession();
@@ -129,7 +130,7 @@ export default function GrievancePage() {
           <div className={`${bgClass} rounded-lg shadow-lg p-8`}>
             <h1 className="text-3xl font-bold mb-2 text-green-700 dark:text-yellow-400">शिकायत दर्ज करें</h1>
             <h2 className="text-3xl font-bold mb-6">Raise Query</h2>
-            {message && <div className={`mb-4 p-3 rounded-lg ${message.includes("Error") || message.includes("reached") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>{message}{loginRequired && <button type="button" onClick={() => router.push('/signin?callbackUrl=%2Fgrievance')} className="ml-3 rounded bg-green-700 px-3 py-1 text-sm font-semibold text-white">Login now</button>}</div>}
+            {message && <div className={`mb-4 p-3 rounded-lg ${message.includes("Error") || message.includes("reached") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>{message}</div>}
             {rateLimitInfo && <div className={`mb-4 p-3 rounded-lg ${isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"}`}>{rateLimitInfo.message}</div>}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Ward *</label><select name="ward" value={formData.ward} onChange={handleInputChange} required className={`w-full px-4 py-2 border rounded ${inputClass}`}><option value="">Select Ward</option>{[1,2,3,4,5,6,7,8,9,10].map(w => <option key={w} value={w}>Ward {w}</option>)}</select></div>
@@ -141,6 +142,7 @@ export default function GrievancePage() {
               <div className={`${isDark ? "bg-gray-700" : "bg-gray-100"} p-4 rounded`}><label className={`block ${labelClass} mb-2 font-semibold`}>Captcha: {captcha.num1} + {captcha.num2} = ?</label><div className="flex gap-2"><input type="number" value={captcha.answer} onChange={(e) => handleCaptchaChange(e.target.value)} className={`flex-1 px-3 py-2 border rounded ${captchaCorrect ? "border-green-500" : "border-red-300"}`} /><button type="button" onClick={generateCaptcha} className="px-3 py-2 bg-gray-500 text-white rounded">🔄</button></div>{captchaCorrect && <p className="text-green-600 text-sm mt-2">✓ Correct</p>}</div>
               <button type="submit" disabled={loading || !captchaCorrect} className="w-full px-4 py-3 bg-green-600 text-white rounded font-semibold disabled:opacity-50">{loading ? "Submitting..." : "Submit"}</button>
             </form>
+            <LoginRequiredModal isOpen={loginRequired} onClose={() => setLoginRequired(false)} callbackUrl="/grievance" />
           </div>
         </div>
       </div>

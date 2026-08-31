@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import LoginRequiredModal from "./LoginRequiredModal";
 import {
   FaFileAlt,
   FaUsers,
@@ -28,7 +30,10 @@ const iconMap = {
 
 export default function ServiceCard({ title, hindi, href, index }) {
   const Icon = iconMap[title] || FaCogs;
+  const { status } = useSession();
   const [isVisited, setIsVisited] = useState(false);
+  const [showLoginWarning, setShowLoginWarning] = useState(false);
+  const requiresLogin = ["Raise Query", "Birth Certificates", "Death Certificates", "Aadhaar Create / Update", "Appointments"].includes(title);
 
   useEffect(() => {
     try {
@@ -49,6 +54,15 @@ export default function ServiceCard({ title, hindi, href, index }) {
     }
   };
 
+  const handleClick = (event) => {
+    if (requiresLogin && status !== "authenticated") {
+      event.preventDefault();
+      setShowLoginWarning(true);
+      return;
+    }
+    markVisited();
+  };
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 20 }}
@@ -63,7 +77,7 @@ export default function ServiceCard({ title, hindi, href, index }) {
       <Link
         href={href}
         aria-label={`Manage ${title}`}
-        onClick={markVisited}
+        onClick={handleClick}
         className={`group flex min-h-[5.5rem] items-center rounded-2xl border p-4 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md ${
           isVisited
             ? "border-amber-300 bg-amber-50 text-amber-900 shadow-amber-100 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200"
@@ -84,6 +98,7 @@ export default function ServiceCard({ title, hindi, href, index }) {
           </div>
         </div>
       </Link>
+      <LoginRequiredModal isOpen={showLoginWarning} onClose={() => setShowLoginWarning(false)} callbackUrl={href} />
     </motion.article>
   );
 }

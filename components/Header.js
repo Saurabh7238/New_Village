@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Bell, Moon, Sun } from "lucide-react";
+import { Bell, Moon, Sun, Phone } from "lucide-react";
 import logoImage from "../Gemini_Generated_Image_vj7e1vj7e1vj7e1v.png";
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
@@ -22,6 +22,7 @@ export default function Header() {
   const [serviceNotifications, setServiceNotifications] = useState([]);
   const [serviceUnreadCount, setServiceUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
+  const [largeText, setLargeText] = useState(false);
   const notificationRef = useRef(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -76,6 +77,7 @@ export default function Header() {
     }
 
     setDarkMode(document.documentElement.classList.contains("dark"));
+    setLargeText(document.documentElement.classList.contains("text-size-large"));
 
     const loadNotifications = () => {
       fetch("/api/notifications?page=1&limit=5")
@@ -123,6 +125,13 @@ export default function Header() {
     setVisitedLinks((current) => [...new Set([route, ...current])].slice(0, 20));
   };
 
+  const toggleLargeText = () => {
+    const nextSize = !largeText;
+    setLargeText(nextSize);
+    document.documentElement.classList.toggle("text-size-large", nextSize);
+    localStorage.setItem("text-size-large", String(nextSize));
+  };
+
   const toggleDarkMode = () => {
     const nextMode = !darkMode;
     setDarkMode(nextMode);
@@ -144,6 +153,7 @@ export default function Header() {
     [langLabels.gallery, "/gallery"],
     [langLabels.map, "/map"],
     [langLabels.infra, "/infrastructure"],
+    ["Emergency Contacts", "/emergency"],
   ];
 
   const navItems = [
@@ -217,6 +227,23 @@ export default function Header() {
 
         <div className="relative ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 md:gap-3">
           <div className="hidden sm:block"><WeatherBadge /></div>
+          <Link
+            href="/emergency"
+            className="grid h-9 w-9 place-items-center rounded-md bg-red-600 text-white shadow transition hover:scale-105 hover:bg-red-700 sm:h-10 sm:w-auto sm:px-3"
+            aria-label="Emergency contacts"
+            title="Emergency contacts"
+          >
+            <Phone className="h-4 w-4" aria-hidden="true" />
+            <span className="ml-1.5 hidden text-sm font-bold sm:inline">Emergency</span>
+          </Link>
+          <button
+            onClick={toggleLargeText}
+            className="grid h-9 w-9 place-items-center rounded-md bg-white text-sm font-bold text-green-700 shadow transition hover:scale-105 sm:h-10 sm:w-10"
+            aria-label={largeText ? "Use normal text size" : "Use larger text size"}
+            aria-pressed={largeText}
+          >
+            A+
+          </button>
           <button
             onClick={toggleDarkMode}
             className="grid h-9 w-9 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105 sm:h-10 sm:w-10"

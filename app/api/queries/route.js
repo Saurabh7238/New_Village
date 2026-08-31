@@ -9,6 +9,7 @@ import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import User from '@/models/User';
 import CitizenNotification from '@/models/CitizenNotification';
 import ServiceNotification from '@/models/ServiceNotification';
+import { writeAuditLog } from '@/lib/writeAuditLog';
 
 export async function POST(request) {
   await connectDB();
@@ -99,6 +100,7 @@ export async function POST(request) {
     });
 
     await newQuery.save();
+    await writeAuditLog({ session, action: 'Query submitted', details: { queryId: newQuery._id.toString(), publicQueryId: queryId, category } });
     await ServiceNotification.create({ userId: citizen._id, serviceType: `query:${category}`, relatedType: 'query', relatedId: newQuery._id, queryRaised: newQuery.createdAt });
 
     await CitizenNotification.create({

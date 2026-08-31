@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, BellRing, ChevronRight, MessageCircle, ShieldCheck, Sparkles, X } from "lucide-react";
 // Ensure you have this file: ../components/ServiceCard.jsx
 import ServiceCard from "../components/ServiceCard"; 
+import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { useLanguage } from "@/app/language-provider";
 import { sanitizePublicReviews } from "@/lib/reviewVisibility";
 
@@ -25,6 +26,7 @@ export default function HomePage() {
   const [reviewReasons, setReviewReasons] = useState([]);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewFeedback, setReviewFeedback] = useState("");
+  const [showLoginWarning, setShowLoginWarning] = useState(false);
   const toggleModal = () => setShowModal(!showModal);
 
   const loadReviews = () => {
@@ -79,6 +81,7 @@ export default function HomePage() {
     e.preventDefault();
     if (authStatus !== "authenticated") {
       setReviewFeedback("Please login first to submit your review.");
+      setShowLoginWarning(true);
       return;
     }
     if (!reviewMessage.trim() && reviewReasons.length === 0) return;
@@ -230,7 +233,7 @@ export default function HomePage() {
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
               {t.description}
             </p>
-            <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/grievance" onClick={() => { try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/grievance", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="group inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900">Raise a request <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link><Link href="/track" onClick={() => { try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/track", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">Track your request <ChevronRight className="h-4 w-4" /></Link></div>
+            <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/grievance" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/grievance", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="group inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900">Raise a request <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link><Link href="/track" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/track", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">Track your request <ChevronRight className="h-4 w-4" /></Link></div>
             <p className="mt-4 flex items-center justify-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300"><ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />Simple, secure access to Panchayat services</p>
             </motion.div>
           </section>
@@ -456,6 +459,8 @@ export default function HomePage() {
             🔢 {t.visitors}: <span className="font-bold">{visitCount ?? "..."}</span>
           </p>
         </section>
+
+        <LoginRequiredModal isOpen={showLoginWarning} onClose={() => setShowLoginWarning(false)} callbackUrl="/" />
 
         <button
           onClick={toggleModal}
