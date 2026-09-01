@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import Providers from "./auth-provider";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import WelcomeToast from "../components/WelcomeToast";
+import ChatWidget from "../components/ChatWidget";
 import { LanguageProvider } from "./language-provider";
 import { PWAProvider } from "./pwa-provider";
 
@@ -76,6 +77,7 @@ export default function RootLayout({ children }) {
               {children}
             </main>
             <ScrollToTopButton />
+            <ChatWidget />
             <footer className="bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700 text-white">
                 <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm">
                 © {new Date().getFullYear()} Gram Panchayat Chiutahara
