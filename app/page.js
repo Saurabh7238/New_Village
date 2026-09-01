@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, BellRing, ChevronRight, MessageCircle, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowRight, BellRing, ChevronRight, ShieldCheck, Sparkles, X } from "lucide-react";
 // Ensure you have this file: ../components/ServiceCard.jsx
 import ServiceCard from "../components/ServiceCard"; 
 import LoginRequiredModal from "@/components/LoginRequiredModal";
@@ -17,7 +17,6 @@ import { sanitizePublicReviews } from "@/lib/reviewVisibility";
 export default function HomePage() {
   const { language } = useLanguage();
   const { status: authStatus } = useSession();
-  const [showModal, setShowModal] = useState(false);
   const [visitCount, setVisitCount] = useState(null);
   const [showBanner, setShowBanner] = useState(true);
   const [reviews, setReviews] = useState([]);
@@ -29,35 +28,6 @@ export default function HomePage() {
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [showLoginWarning, setShowLoginWarning] = useState(false);
   const [activeReviewIndex, setActiveReviewIndex] = useState(0);
-  const tawkPropertyId = process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID;
-  const tawkWidgetId = process.env.NEXT_PUBLIC_TAWK_WIDGET_ID;
-
-  useEffect(() => {
-    if (!tawkPropertyId || !tawkWidgetId || typeof window === 'undefined') return;
-
-    const existingScript = document.querySelector('script[data-tawk]');
-    if (existingScript) return;
-
-    window.Tawk_API = window.Tawk_API || {};
-    window.Tawk_LoadStart = new Date();
-
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = `https://embed.tawk.to/${tawkPropertyId}/${tawkWidgetId}`;
-        script.charset = 'UTF-8';
-    script.setAttribute('crossorigin', '*');
-    script.setAttribute('data-tawk', 'true');
-    document.head.appendChild(script);
-  }, [tawkPropertyId, tawkWidgetId]);
-
-  const toggleModal = () => {
-    if (window.Tawk_API && typeof window.Tawk_API.toggle === 'function') {
-      window.Tawk_API.toggle();
-      return;
-    }
-
-    setShowModal(!showModal);
-  };
 
   const loadReviews = () => {
     fetch("/api/reviews")
@@ -555,50 +525,6 @@ export default function HomePage() {
         </section>
 
         <LoginRequiredModal isOpen={showLoginWarning} onClose={() => setShowLoginWarning(false)} callbackUrl="/" />
-
-        {!tawkPropertyId || !tawkWidgetId ? (
-          <button
-            onClick={toggleModal}
-            aria-label="Chat Support"
-            className="fixed bottom-5 right-4 z-40 flex items-center gap-2 rounded-full bg-emerald-700 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-emerald-900/25 transition hover:-translate-y-1 hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900"
-          >
-            <MessageCircle className="h-5 w-5" aria-hidden="true" />
-            <span>Chat Support</span>
-          </button>
-        ) : null}
-
-        {!tawkPropertyId || !tawkWidgetId ? (
-          <AnimatePresence>{showModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-labelledby="contact-title" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-              <motion.div initial={{ opacity: 0, scale: .96, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .96, y: 10 }} className="w-full max-w-sm rounded-3xl border border-white/70 bg-white p-6 text-black shadow-2xl dark:border-slate-700 dark:bg-gray-900 dark:text-white">
-                <h3 id="contact-title" className="text-lg font-bold mb-2">{t.contactTitle}</h3>
-                <p className="text-sm mb-4">{t.contactMessage}</p>
-                <div className="flex justify-end gap-2">
-                  <a
-                    href={t.whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 text-sm rounded bg-green-600 text-white hover:bg-green-700 transition"
-                  >
-                    {t.whatsapp}
-                  </a>
-                  <a
-                    href="tel:+919336401640"
-                    className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-                  >
-                    {t.call}
-                  </a>
-                  <button
-                    onClick={toggleModal}
-                    className="px-3 py-1 text-sm rounded bg-gray-300 dark:bg-gray-700 text-black dark:text-white hover:bg-gray-400 dark:hover:bg-gray-600 transition"
-                  >
-                    {t.close}
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}</AnimatePresence>
-        ) : null}
       </div>
     </div>
   );
