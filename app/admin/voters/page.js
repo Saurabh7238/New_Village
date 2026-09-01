@@ -45,6 +45,7 @@ export default function AdminVotersPage() {
   const [showImportForm, setShowImportForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedVoterIds, setSelectedVoterIds] = useState([]);
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function AdminVotersPage() {
     if (status === "authenticated" && session?.user?.role === "admin") {
       loadVoters();
     }
+    setSelectedVoterIds([]);
   }, [voterType, status, session?.user?.role]);
 
   const filteredVoters = voterList.filter((voter) => {
@@ -77,16 +79,18 @@ export default function AdminVotersPage() {
     );
   });
 
-  const handleDelete = async (voterId) => {
+  const handleDelete = async (voterId, voterRecord) => {
+    const idToDelete = voterRecord?._id || voterId;
     if (!window.confirm("Are you sure you want to delete this voter?")) return;
     try {
       const res = await fetch("/api/voter-data", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ voterId, voterType }),
+        body: JSON.stringify({ id: idToDelete, type: voterType }),
       });
       if (res.ok) {
-        setVoterList((prev) => prev.filter((v) => getVoterId(v) !== voterId));
+        setVoterList((prev) => prev.filter((v) => (v._id || getVoterId(v)) !== idToDelete));
+        setSelectedVoterIds((prev) => prev.filter((item) => item !== idToDelete));
         addToast("Voter deleted successfully.", "success");
       } else {
         addToast("Failed to delete voter.", "error");
@@ -94,6 +98,41 @@ export default function AdminVotersPage() {
     } catch (error) {
       addToast("Error deleting voter: " + error.message, "error");
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedVoterIds.length) {
+      addToast("Select at least one voter to delete.", "warning");
+      return;
+    }
+
+    if (!window.confirm(`Delete ${selectedVoterIds.length} selected voter(s)?`)) return;
+
+    try {
+      const res = await fetch("/api/voter-data", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedVoterIds, type: voterType }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setVoterList((prev) => prev.filter((v) => !selectedVoterIds.includes(v._id || getVoterId(v))));
+        setSelectedVoterIds([]);
+        addToast(data.message || `Deleted ${selectedVoterIds.length} voter(s).`, "success");
+      } else {
+        addToast(data.error || "Failed to delete selected voters.", "error");
+      }
+    } catch (error) {
+      addToast("Error deleting selected voters: " + error.message, "error");
+    }
+  };
+
+  const toggleVoterSelection = (voter) => {
+    const key = voter._id || getVoterId(voter);
+    setSelectedVoterIds((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
+    );
   };
 
   if (status === "loading") return <div className="p-8 text-center">Loading...</div>;
@@ -146,6 +185,23 @@ export default function AdminVotersPage() {
           <div className="text-xs sm:text-sm py-2">
             Total: <strong>{filteredVoters.length}</strong> voters
           </div>
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedVoterIds(filteredVoters.map((voter) => voter._id || getVoterId(voter)))}
+              className="rounded border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={!selectedVoterIds.length}
+              className="rounded bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Delete selected ({selectedVoterIds.length})
+            </button>
+          </div>
         </div>
 
         {/* Desktop Table View */}
@@ -154,6 +210,20 @@ export default function AdminVotersPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-100 dark:bg-gray-700">
                 <tr>
+                  <th className="p-3"><input type="checkbox" checked={filteredVoters.length > 0 && filteredVoters.every((voter) => selectedVoterIds.includes(voter._id || getVoterId(voter)))} onChange={() => {
+                    const allSelected = filteredVoters.every((voter) => selectedVoterIds.includes(voter._id || getVoterId(voter)));
+                    setSelectedVoterIds((prev) => {
+                      if (allSelected) {
+                        return prev.filter((id) => !filteredVoters.some((voter) => (voter._id || getVoterId(voter)) === id));
+                      }
+                      const next = [...prev];
+                      filteredVoters.forEach((voter) => {
+                        const key = voter._id || getVoterId(voter);
+                        if (!next.includes(key)) next.push(key);
+                      });
+                      return next;
+                    });
+                  }} className="h-4 w-4" /></th>
                   <th className="p-3">Serial No</th>
                   <th className="p-3">Name</th>
                   <th className="p-3">Guardian</th>
@@ -181,9 +251,17 @@ export default function AdminVotersPage() {
                 ) : (
                   filteredVoters.map((voter) => (
                     <tr
-                      key={getVoterId(voter)}
+                      key={getVoterId(voter) || voter._id}
                       className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
+                      <td className="p-3 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={selectedVoterIds.includes(voter._id || getVoterId(voter))}
+                          onChange={() => toggleVoterSelection(voter)}
+                          className="h-4 w-4"
+                        />
+                      </td>
                       <td className="p-3 text-xs">{getVoterSerialNumber(voter)}</td>
                       <td className="p-3 text-xs">{getVoterName(voter)}</td>
                       <td className="p-3 text-xs">{getVoterGuardian(voter)}</td>
@@ -194,7 +272,7 @@ export default function AdminVotersPage() {
                       <td className="p-3 text-xs">{getVoterAge(voter) || "N/A"}</td>
                       <td className="p-3 text-xs">
                         <button
-                          onClick={() => handleDelete(getVoterId(voter))}
+                          onClick={() => handleDelete(getVoterId(voter), voter)}
                           className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700 whitespace-nowrap"
                         >
                           Delete
@@ -217,19 +295,27 @@ export default function AdminVotersPage() {
           ) : (
             filteredVoters.map((voter) => (
               <div
-                key={getVoterId(voter)}
+                key={getVoterId(voter) || voter._id}
                 className="rounded-lg border border-gray-200 bg-white p-4 shadow dark:border-gray-700 dark:bg-gray-800"
               >
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex-1">
-                      <p className="font-bold text-green-700">{getVoterName(voter)}</p>
+                      <div className="mb-2 flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedVoterIds.includes(voter._id || getVoterId(voter))}
+                          onChange={() => toggleVoterSelection(voter)}
+                          className="h-4 w-4"
+                        />
+                        <p className="font-bold text-green-700">{getVoterName(voter)}</p>
+                      </div>
                       <p className="text-gray-600 dark:text-gray-400">
                         Guardian: {getVoterGuardian(voter)}
                       </p>
                     </div>
                     <button
-                      onClick={() => handleDelete(getVoterId(voter))}
+                      onClick={() => handleDelete(getVoterId(voter), voter)}
                       className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700 flex-shrink-0 whitespace-nowrap"
                     >
                       Delete

@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Bell, Moon, Sun, Phone } from "lucide-react";
-import logoImage from "../Gemini_Generated_Image_vj7e1vj7e1vj7e1v.png";
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
 import { TYPE_LABELS } from "@/lib/notificationConstants";
@@ -233,7 +232,7 @@ export default function Header() {
         <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
           <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12">
             <Image
-              src={logoImage}
+              src="/favicon .ico"
               alt="Chiutahara Heritage Village logo"
               fill
               sizes="(max-width: 640px) 40px, 48px"

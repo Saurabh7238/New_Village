@@ -399,7 +399,19 @@ export default function HomePage() {
                     <p className="text-xs italic leading-5 text-slate-800 dark:text-slate-100">
                       &ldquo;{review.message}&rdquo;
                     </p>
-                    <footer className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    {review.reasons && review.reasons.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {review.reasons.map((reason) => (
+                          <span
+                            key={reason}
+                            className="inline-block rounded-full bg-emerald-200 px-2 py-0.5 text-xs font-medium text-emerald-900 dark:bg-emerald-700 dark:text-emerald-100"
+                          >
+                            {reason}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <footer className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
                       <span className="mr-2 text-amber-500">{"★".repeat(review.rating || 0)}{"☆".repeat(5 - (review.rating || 0))}</span>
                       — {review.name}
                       {review.ward ? `, ${review.ward}` : ""}

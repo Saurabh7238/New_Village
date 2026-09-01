@@ -164,16 +164,53 @@ export async function DELETE(request) {
 
   try {
     const body = await request.json();
-    const { id, type } = body;
+    const { id, ids, type } = body;
 
-    if (!id || !type || !VALID_TYPES.includes(type)) {
+    if (!type || !VALID_TYPES.includes(type)) {
       return NextResponse.json(
-        { error: "ID and valid type are required" },
+        { error: "Valid type is required" },
         { status: 400 }
       );
     }
 
-    const result = await VoterData.deleteOne({ _id: id, type });
+    const deleteIds = Array.isArray(ids) ? ids.filter(Boolean) : [];
+    const singleId = id ? String(id) : "";
+
+    if (!singleId && deleteIds.length === 0) {
+      return NextResponse.json(
+        { error: "ID or IDs are required" },
+        { status: 400 }
+      );
+    }
+
+    if (deleteIds.length > 0) {
+      const criteria = {
+        type,
+        $or: [
+          { _id: { $in: deleteIds } },
+          { voterId: { $in: deleteIds } },
+          { elector_id: { $in: deleteIds } },
+          { electorId: { $in: deleteIds } },
+        ],
+      };
+
+      const result = await VoterData.deleteMany(criteria);
+
+      return NextResponse.json({
+        message: `${result.deletedCount} item(s) deleted successfully`,
+        deletedCount: result.deletedCount,
+      });
+    }
+
+    const result = await VoterData.deleteOne({
+      type,
+      $or: [
+        { _id: singleId },
+        { voterId: singleId },
+        { elector_id: singleId },
+        { electorId: singleId },
+      ],
+    });
 
     if (result.deletedCount === 0) {
       return NextResponse.json(

@@ -18,8 +18,8 @@ export const metadata = {
     userScalable: true,
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: "/favicon .ico",
+    shortcut: "/favicon .ico",
     apple: "/icon-192.png",
   },
   appleWebApp: {
@@ -41,6 +41,8 @@ export default function RootLayout({ children }) {
               "@type": "Organization",
               name: "Gram Panchayat Chiutahara",
               url: "https://www.grampanchayatchiutahara.online",
+              logo: "https://www.grampanchayatchiutahara.online/favicon .ico",
+              sameAs: [],
             }),
           }}
         />
