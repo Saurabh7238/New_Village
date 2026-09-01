@@ -23,6 +23,7 @@ export default function HomePage() {
   const [reviews, setReviews] = useState([]);
   const [reviewMessage, setReviewMessage] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
   const [reviewReasons, setReviewReasons] = useState([]);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewFeedback, setReviewFeedback] = useState("");
@@ -418,13 +419,32 @@ export default function HomePage() {
             >
               {authStatus !== "authenticated" && <p className="rounded-lg bg-amber-50 p-2.5 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">{t.reviewLogin}</p>}
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">{t.reviewRating}</label>
-              <select
-                className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-900 outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-                value={reviewRating}
-                onChange={(e) => setReviewRating(Number(e.target.value))}
-              >
-                {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} / 5</option>)}
-              </select>
+              <div className="flex items-center justify-center gap-1 py-2">
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button
+                      key={rating}
+                      type="button"
+                      aria-label={`${rating} star${rating > 1 ? 's' : ''}`}
+                      onClick={() => setReviewRating(rating)}
+                      onMouseEnter={() => setHoverRating(rating)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      className="appearance-none border-0 bg-transparent p-0 cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none"
+                    >
+                      <span className={`inline-block text-4xl leading-none transition-all duration-300 ${
+                        (hoverRating || reviewRating) >= rating 
+                          ? 'text-amber-500 drop-shadow-md' 
+                          : 'text-slate-200 dark:text-slate-500'
+                      }`}>
+                        {(hoverRating || reviewRating) >= rating ? '★' : '☆'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <span className="ml-4 text-sm font-bold text-amber-700 dark:text-amber-300">
+                  {hoverRating || reviewRating}/5
+                </span>
+              </div>
               <fieldset>
                 <legend className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">{t.reviewReasons}</legend>
                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">

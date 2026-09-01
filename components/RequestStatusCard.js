@@ -1,6 +1,6 @@
 "use client";
 
-const applicationSteps = ["Submitted", "Under Review", "Need Documents", "Approved", "Completed"];
+const applicationSteps = ["Submitted", "Under Review", "Need Documents", "Updated", "Approved", "Completed"];
 const appointmentSteps = ["Requested", "Scheduled", "Completed"];
 
 function downloadReceipt({ reference, title, status, date, details = "" }) {

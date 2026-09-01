@@ -6,7 +6,7 @@ import ServiceNotification from '@/models/ServiceNotification';
 import { requireAdminSession } from '@/lib/adminAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 
-const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Approved', 'Rejected', 'Completed'];
+const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Updated', 'Approved', 'Rejected', 'Completed'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
 const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
 

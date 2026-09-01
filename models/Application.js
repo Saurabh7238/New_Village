@@ -4,7 +4,7 @@ const ApplicationSchema = new mongoose.Schema({
   applicationNumber: { type: String, required: true, unique: true, index: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   serviceType: { type: String, enum: ['birth-certificate', 'death-certificate', 'aadhaar-request', 'voter-request', 'other'], required: true, index: true },
-  status: { type: String, enum: ['Submitted', 'Under Review', 'Need Documents', 'Approved', 'Rejected', 'Completed'], default: 'Submitted', index: true },
+  status: { type: String, enum: ['Submitted', 'Under Review', 'Need Documents', 'Updated', 'Approved', 'Rejected', 'Completed'], default: 'Submitted', index: true },
   formData: { type: mongoose.Schema.Types.Mixed, default: {} },
   documents: [{ fileName: String, fileUrl: String, mimeType: String, uploadedAt: { type: Date, default: Date.now } }],
   adminDocuments: [{ fileName: String, fileUrl: String, mimeType: String, uploadedAt: { type: Date, default: Date.now } }],

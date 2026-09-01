@@ -225,25 +225,48 @@ function AdminApplicationsContent() {
               </div>
             </div>
 
-            <div className="mt-4">
-              <h3 className="font-semibold text-sm mb-2">Citizen-Uploaded Documents</h3>
-              {selectedApplication.documents?.length ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {selectedApplication.documents.map((document, index) => (
-                    <a
-                      key={index}
-                      href={document.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 break-all hover:underline"
-                    >
-                      {document.fileName || `Document ${index + 1}`}
-                    </a>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs sm:text-sm text-gray-500">No documents uploaded.</p>
-              )}
+            <div className="mt-4 space-y-4">
+              <div>
+                <h3 className="font-semibold text-sm mb-2">Citizen-Uploaded Documents</h3>
+                {selectedApplication.documents?.length ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedApplication.documents.map((document, index) => (
+                      <a
+                        key={`citizen-${index}`}
+                        href={document.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 break-all hover:underline"
+                      >
+                        {document.fileName || `Document ${index + 1}`}
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs sm:text-sm text-gray-500">No citizen documents uploaded.</p>
+                )}
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-sm mb-2">Panchayat-Uploaded Documents</h3>
+                {selectedApplication.adminDocuments?.length ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedApplication.adminDocuments.map((document, index) => (
+                      <a
+                        key={`admin-${index}`}
+                        href={document.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs sm:text-sm text-green-600 dark:text-green-400 break-all hover:underline"
+                      >
+                        {document.fileName || `Admin document ${index + 1}`}
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs sm:text-sm text-gray-500">No panchayat documents uploaded.</p>
+                )}
+              </div>
             </div>
           </section>
         )}
@@ -297,7 +320,7 @@ function AdminApplicationsContent() {
                         >
                           View
                         </button>
-                        {application.status === 'Need Documents' && <input value={Array.isArray(application.requestedDocuments) ? application.requestedDocuments.join(', ') : ''} onChange={(e) => updateLocal(application.id, 'requestedDocuments', e.target.value)} placeholder="Missing documents" className="w-40 rounded border px-2 py-1 text-xs dark:bg-gray-700" aria-label="Missing documents" />}
+                        {(application.status === 'Need Documents' || application.status === 'Updated' || application.status === 'Rejected') && <input value={Array.isArray(application.requestedDocuments) ? application.requestedDocuments.join(', ') : ''} onChange={(e) => updateLocal(application.id, 'requestedDocuments', e.target.value)} placeholder="Missing documents" className="w-40 rounded border px-2 py-1 text-xs dark:bg-gray-700" aria-label="Missing documents" />}
                         <button
                           onClick={() => save(application)}
                           disabled={savingId === application.id}
@@ -398,7 +421,7 @@ function AdminApplicationsContent() {
                     ))}
                   </select>
                 </div>
-                {application.status === 'Need Documents' && <input value={Array.isArray(application.requestedDocuments) ? application.requestedDocuments.join(', ') : ''} onChange={(e) => updateLocal(application.id, 'requestedDocuments', e.target.value)} placeholder="Missing documents, comma separated" className="w-full rounded border px-2 py-1 text-xs dark:bg-gray-700" aria-label="Missing documents" />}
+                {(application.status === 'Need Documents' || application.status === 'Updated' || application.status === 'Rejected') && <input value={Array.isArray(application.requestedDocuments) ? application.requestedDocuments.join(', ') : ''} onChange={(e) => updateLocal(application.id, 'requestedDocuments', e.target.value)} placeholder="Missing documents, comma separated" className="w-full rounded border px-2 py-1 text-xs dark:bg-gray-700" aria-label="Missing documents" />}
 
                 <div className="space-y-2">
                   <label className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">

@@ -3,10 +3,13 @@
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import AdminAnalyticsDashboard from "@/components/AdminAnalyticsDashboard";
+import { BarChart3, ChevronDown } from "lucide-react";
 
 export default function AdminPanel() {
   const { data: session, status } = useSession();
   const [serviceCounts, setServiceCounts] = useState({});
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
     if (status !== 'authenticated' || session?.user?.role !== 'admin') return;
@@ -36,11 +39,25 @@ export default function AdminPanel() {
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-green-700 dark:text-yellow-400">Admin Panel</h1>
-          <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-            Sign Out
-          </button>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Analytics
+            </button>
+            <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+              Sign Out
+            </button>
+          </div>
         </div>
 
+        {showAnalytics && (
+          <AdminAnalyticsDashboard />
+        )}
+
+        {!showAnalytics && (
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Management Sections</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -97,13 +114,16 @@ export default function AdminPanel() {
             </Link>
           </div>
         </div>
+        )}
 
+        {!showAnalytics && (
         <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 p-6 rounded-lg border border-green-200 dark:border-gray-600">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Welcome to Admin Dashboard</h3>
           <p className="text-gray-700 dark:text-gray-300">
             Select a management section above to manage different aspects of Chiutahara Portal.
           </p>
         </div>
+        )}
       </div>
     </div>
   );
