@@ -4,10 +4,10 @@ import Application from '@/models/Application';
 import Query from '@/models/Query';
 import Appointment from '@/models/Appointment';
 
-export async function GET(req) {
+export async function GET() {
   try {
     // Check admin authentication
-    const session = await adminAuth(req);
+    const session = await requireAdminSession();
     if (!session) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
