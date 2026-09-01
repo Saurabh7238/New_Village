@@ -9,6 +9,7 @@ export default function ChatWidget() {
   const [input, setInput] = useState("");
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [quickReplies, setQuickReplies] = useState([]);
   const messagesEndRef = useRef(null);
 
   // Initialize userId from localStorage
@@ -47,10 +48,10 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  const handleSend = async (directText) => {
+    const msg = directText || input;
+    if (!msg.trim() || loading) return;
 
-    const userMessage = input;
     setInput("");
     setLoading(true);
 
@@ -58,11 +59,13 @@ export default function ChatWidget() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, message: userMessage }),
+        body: JSON.stringify({ userId, message: msg }),
       });
 
       if (res.ok) {
         const data = await res.json();
+        setQuickReplies(data.quickReplies || []);
+        
         // Refresh messages
         const messagesRes = await fetch(`/api/chat?userId=${userId}`);
         if (messagesRes.ok) {
@@ -95,9 +98,9 @@ export default function ChatWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="absolute bottom-0 right-0 w-80 h-96 bg-gray-900 text-white rounded-lg shadow-2xl flex flex-col overflow-hidden border border-gray-700">
+        <div className="absolute bottom-0 right-0 w-80 h-[500px] bg-slate-900 text-white rounded-xl shadow-2xl flex flex-col overflow-hidden border border-slate-700">
           {/* Header */}
-          <div className="bg-emerald-700 p-4 flex items-center justify-between">
+          <div className="bg-emerald-700 p-4 flex items-center justify-between rounded-t-xl">
             <h3 className="font-bold text-lg">सेवा बॉट</h3>
             <button
               onClick={() => setIsOpen(false)}
@@ -109,12 +112,12 @@ export default function ChatWidget() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-800">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-900">
             {messages.length === 0 ? (
-              <div className="text-center text-gray-400 text-sm py-4">
-                <p className="mb-2">नमस्ते! 🙏</p>
-                <p>कृपया अपनी सेवा का नाम बताएं।</p>
-                <p className="text-xs mt-2">Hello! Please tell your service name.</p>
+              <div className="text-center text-slate-400 text-sm py-6">
+                <p className="mb-2 text-lg">नमस्ते! 🙏</p>
+                <p>कृपया अपनी सेवा चुनें।</p>
+                <p className="text-xs mt-3">Select your service below.</p>
               </div>
             ) : (
               messages.map((msg, idx) => (
@@ -125,10 +128,10 @@ export default function ChatWidget() {
                   }`}
                 >
                   <div
-                    className={`max-w-xs px-3 py-2 rounded-lg text-sm whitespace-pre-wrap ${
+                    className={`max-w-xs px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${
                       msg.sender === "user"
-                        ? "bg-emerald-600 text-white"
-                        : "bg-gray-700 text-gray-100"
+                        ? "bg-emerald-600 text-white rounded-br-none"
+                        : "bg-slate-700 text-slate-100 rounded-bl-none"
                     }`}
                   >
                     {msg.message}
@@ -136,24 +139,45 @@ export default function ChatWidget() {
                 </div>
               ))
             )}
+            
+            {/* Quick Replies */}
+            {quickReplies && quickReplies.length > 0 && (
+              <div className="mt-4 px-2">
+                <div className="flex flex-wrap gap-2">
+                  {quickReplies.map((opt, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setInput(opt);
+                        handleSend(opt);
+                      }}
+                      className="px-3 py-1.5 text-xs font-medium border-2 border-emerald-600 text-emerald-600 rounded-full hover:bg-emerald-600 hover:text-white transition bg-slate-800 whitespace-nowrap"
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
-          <div className="border-t border-gray-700 p-3 flex gap-2">
+          <div className="border-t border-slate-700 p-3 flex gap-2 bg-slate-800">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSend()}
-              placeholder="संदेश भेजें..."
+              placeholder="संदेश भेजें... / Type message..."
               disabled={loading}
-              className="flex-1 bg-gray-700 text-white px-3 py-2 rounded text-sm outline-none focus:ring-2 focus:ring-emerald-500 placeholder-gray-400"
+              className="flex-1 bg-slate-700 text-white px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400"
             />
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={loading}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white p-2 rounded transition disabled:opacity-50 flex-shrink-0"
+              className="bg-emerald-700 hover:bg-emerald-800 text-white p-2.5 rounded-lg transition disabled:opacity-50 flex-shrink-0"
               aria-label="Send message"
             >
               <Send size={18} />

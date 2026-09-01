@@ -1,33 +1,28 @@
 import Chat from "@/models/Chat";
 import dbConnect from "@/lib/dbConnect";
 
+const ALL_SERVICES = [
+  "Birth Certificate",
+  "Death Certificate",
+  "Aadhaar / Voter List",
+  "Raise Query",
+  "Track Query",
+  "Road / Nali / Light",
+  "Water / Handpump / Tank",
+  "School / Hospital",
+  "Budget / Funds",
+];
+
 const SERVICE_MAP = {
-  "Birth Certificates": ["birth", "janm"],
-  "Death Certificates": ["death", "mrityu"],
-  "Aadhaar Create / Update": ["aadhaar"],
-  "Voter List": ["voter"],
-  "Gram Budget": ["budget"],
-  "Panchayat Funds": ["fund", "nidhi"],
-  "Development Projects": ["project", "vikas"],
-  "Panchayat Members": ["member", "pradhan"],
-  "Rivers Roads & Lights": ["road", "sadak", "light"],
-  "Primary Health Centers": ["health", "hospital"],
-  "Government Schools": ["school"],
-  "Sanitation Units Built": ["sanitation", "toilet"],
-  "Community Hall": ["community", "hall"],
-  "Handpumps & Wells": ["pani", "nal", "handpump", "well"],
-  "Water Tanks Installed": ["tank"],
-  "Irrigation Projects": ["irrigation", "sinchai"],
-  "Appointments": ["appointment"],
+  "Birth Certificate": ["birth", "janm", "certificate"],
+  "Death Certificate": ["death", "mrityu"],
+  "Aadhaar / Voter List": ["aadhaar", "voter"],
+  "Raise Query": ["query", "shikayat", "complaint", "raise"],
   "Track Query": ["track", "status"],
-  "Raise Query": ["query", "shikayat", "complaint"],
-  "Panchayat Members": ["member", "pradhan"],
-  "Gallery": ["gallery", "photo"],
-  "Map": ["map", "location"],
-  "Street Lights Installed": ["street light", "bijli"],
-  "Solar Panels": ["solar"],
-  "Internet Coverage": ["internet", "wifi"],
-  "Rivers Monitored": ["river", "nadi"],
+  "Road / Nali / Light": ["road", "sadak", "light", "nali", "bijli"],
+  "Water / Handpump / Tank": ["pani", "nal", "handpump", "well", "tank", "water"],
+  "School / Hospital": ["school", "health", "hospital"],
+  "Budget / Funds": ["budget", "fund", "nidhi"],
 };
 
 const REPLIES = {
@@ -43,6 +38,11 @@ const REPLIES = {
       `✅ Registered. Service: ${s}, Ward: ${w}, Ticket: #${id}\n\nIt has been marked by Gram Pradhan, we will try to resolve it as soon as possible. 🙏`,
     hinglish: (w, s, id) =>
       `✅ Darj ho gaya. Seva: ${s}, Ward: ${w}, Ticket: #${id}\n\nGram Pradhan dwara ye mark kar liya gaya hai, jaldi se jaldi samadhan karne ki koshish hogi. 🙏`,
+  },
+  start: {
+    hi: "नमस्ते! 🙏 कृपया अपनी सेवा चुनें।",
+    en: "Hello! 👋 Please select a service.",
+    hinglish: "Namaste! 🙏 Kripya apni seva chunein.",
   },
 };
 
@@ -109,7 +109,8 @@ export async function POST(req) {
       sender: "bot",
     }).sort({ createdAt: -1 });
 
-    let botReply = "";
+    let reply = "";
+    let quickReplies = [];
     let botData = { language: lang, service };
 
     if (
@@ -121,30 +122,57 @@ export async function POST(req) {
       if (wardMatch) {
         const ward = parseInt(wardMatch[0]);
         const ticket = generateTicket();
-        botReply = REPLIES.final[lang](ward, service || lastBotMessage.service, ticket);
+        reply = REPLIES.final[lang](ward, service || lastBotMessage.service, ticket);
         botData = { ...botData, ward, ticket };
+        quickReplies = ALL_SERVICES;
       } else {
-        botReply = REPLIES.ask_ward[lang](service || "Request");
+        reply = REPLIES.ask_ward[lang](service || "Request");
+        quickReplies = [
+          "Ward 1",
+          "Ward 2",
+          "Ward 3",
+          "Ward 4",
+          "Ward 5",
+          "Ward 6",
+          "Ward 7",
+          "Ward 8",
+          "Ward 9",
+          "Ward 10",
+        ];
       }
     } else if (service) {
-      botReply = REPLIES.ask_ward[lang](service);
+      reply = REPLIES.ask_ward[lang](service);
+      quickReplies = [
+        "Ward 1",
+        "Ward 2",
+        "Ward 3",
+        "Ward 4",
+        "Ward 5",
+        "Ward 6",
+        "Ward 7",
+        "Ward 8",
+        "Ward 9",
+        "Ward 10",
+      ];
     } else {
-      botReply = lang === "hi" 
-        ? "कृपया कोई सेवा चुनें।" 
-        : lang === "hinglish"
-        ? "Kripya koi seva chunein."
-        : "Please select a service.";
+      reply =
+        lang === "hi"
+          ? REPLIES.start.hi
+          : lang === "hinglish"
+          ? REPLIES.start.hinglish
+          : REPLIES.start.en;
+      quickReplies = ALL_SERVICES;
     }
 
     // Save bot reply
     await Chat.create({
       userId,
       sender: "bot",
-      message: botReply,
+      message: reply,
       ...botData,
     });
 
-    return Response.json({ message: botReply, language: lang });
+    return Response.json({ reply, lang, quickReplies });
   } catch (error) {
     console.error("Chat API error:", error);
     return Response.json(
