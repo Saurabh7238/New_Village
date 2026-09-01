@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -130,7 +131,7 @@ export default function DevelopmentPage() {
                       {/* Image Section */}
                       {project.beforePhoto && (
                         <div className="h-48 bg-gray-300 dark:bg-gray-700 overflow-hidden">
-                          <img src={project.beforePhoto} alt={project.title} className="w-full h-full object-cover" />
+                          <Image src={project.beforePhoto} alt={project.title} fill unoptimized className="object-cover" />
                         </div>
                       )}
 

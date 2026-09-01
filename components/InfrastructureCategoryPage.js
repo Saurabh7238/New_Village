@@ -10,9 +10,12 @@ function InfraImage({ src, alt }) {
 
   if (src.startsWith("data:image")) {
     return (
-      <img
+      <Image
         src={src}
         alt={alt}
+        width={400}
+        height={250}
+        unoptimized
         className="rounded mb-3 object-cover w-full h-40"
       />
     );

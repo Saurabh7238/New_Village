@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useState, useEffect, useCallback } from "react";
 import { DEVELOPMENT_SCHEMES, DEVELOPMENT_STATUSES, getStatusBgClass, formatDate, formatCurrency } from "@/lib/developmentDisplay";
 import { useTheme } from "@/app/theme-provider";
 
@@ -39,11 +40,7 @@ export default function DevelopmentAdmin() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (filterScheme) params.append("scheme", filterScheme);
@@ -57,12 +54,11 @@ export default function DevelopmentAdmin() {
       console.error("Error fetching projects:", error);
       setProjects([]);
     }
-  };
+  }, [filterScheme, filterWard, filterStatus]);
 
   useEffect(() => {
-    const delayTimer = setTimeout(fetchProjects, 300);
-    return () => clearTimeout(delayTimer);
-  }, [filterScheme, filterWard, filterStatus]);
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handlePhotoUpload = (e, photoType) => {
     const file = e.target.files[0];
@@ -618,9 +614,12 @@ Print this report and display in Gram Sabha meetings for transparency and social
                   />
                   {beforePhotoPreview && (
                     <div className="mt-3">
-                      <img
+                      <Image
                         src={beforePhotoPreview}
                         alt="Before"
+                        width={128}
+                        height={128}
+                        unoptimized
                         className="w-32 h-32 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
                       />
                     </div>
@@ -637,9 +636,12 @@ Print this report and display in Gram Sabha meetings for transparency and social
                   />
                   {afterPhotoPreview && (
                     <div className="mt-3">
-                      <img
+                      <Image
                         src={afterPhotoPreview}
                         alt="After"
+                        width={128}
+                        height={128}
+                        unoptimized
                         className="w-32 h-32 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
                       />
                     </div>

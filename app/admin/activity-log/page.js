@@ -1,23 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function AdminActivityLogPage() {
   const [logs, setLogs] = useState([]);
   const [action, setAction] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const loadLogs = async () => {
+  const loadLogs = useCallback(async () => {
     setLoading(true);
     const params = action ? `?action=${encodeURIComponent(action)}` : '';
     const response = await fetch(`/api/admin/activity-log${params}`);
     const data = response.ok ? await response.json() : { logs: [] };
     setLogs(data.logs || []);
     setLoading(false);
-  };
+  }, [action]);
 
-  useEffect(() => { loadLogs(); }, [action]);
+  useEffect(() => { loadLogs(); }, [loadLogs]);
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-8 text-gray-900 dark:bg-gray-900 dark:text-white">

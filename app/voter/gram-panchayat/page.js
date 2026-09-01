@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import {
   parseVoterListResponse,
@@ -325,9 +326,12 @@ export default function GramPanchayatPage() {
                 className="bg-white border-2 border-green-200 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition duration-200"
               >
                 {imageSrc && (
-                  <img
+                  <Image
                     src={imageSrc}
                     alt={getVoterName(voter)}
+                    width={400}
+                    height={240}
+                    unoptimized
                     className="w-full h-48 object-cover"
                   />
                 )}

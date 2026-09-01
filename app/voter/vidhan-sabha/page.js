@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import {
   parseVoterListResponse,
@@ -128,9 +129,12 @@ export default function VidhanSabhaPage() {
               className="bg-white border border-gray-200 rounded-lg p-4 shadow hover:shadow-lg transition duration-200"
             >
               {imageSrc && (
-                <img
+                <Image
                   src={imageSrc}
                   alt={getVoterName(voter)}
+                  width={400}
+                  height={240}
+                  unoptimized
                   className="w-full h-48 object-cover rounded mb-4"
                 />
               )}

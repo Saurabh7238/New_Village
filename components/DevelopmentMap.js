@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTheme } from "@/app/theme-provider";
 
 export default function DevelopmentMap({ projects = [], selectedId = null, className = "" }) {
@@ -8,32 +8,7 @@ export default function DevelopmentMap({ projects = [], selectedId = null, class
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
 
-  useEffect(() => {
-    if (!mapContainer.current) return;
-
-    if (!window.L) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
-      document.head.appendChild(link);
-
-      const script = document.createElement("script");
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
-      script.onload = () => initMap();
-      document.body.appendChild(script);
-    } else {
-      initMap();
-    }
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, [projects]);
-
-  const initMap = () => {
+  const initMap = useCallback(() => {
     if (!mapContainer.current || mapRef.current) return;
 
     const projectsWithLocation = projects.filter((p) => p.location?.latitude && p.location?.longitude);
@@ -102,7 +77,32 @@ export default function DevelopmentMap({ projects = [], selectedId = null, class
 
       marker.bindPopup(popupContent);
     });
-  };
+  }, [isDark, projects, selectedId]);
+
+  useEffect(() => {
+    if (!mapContainer.current) return;
+
+    if (!window.L) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
+      document.head.appendChild(link);
+
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+      script.onload = () => initMap();
+      document.body.appendChild(script);
+    } else {
+      initMap();
+    }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [initMap]);
 
   if (projects.filter((p) => p.location?.latitude && p.location?.longitude).length === 0) {
     return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import {
   NOTIFICATION_TYPES,
@@ -63,7 +63,7 @@ export default function AdminNotificationsPage() {
   });
 
   // Fetch notifications
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (status !== 'authenticated' || session?.user?.role !== 'admin') return;
 
     try {
@@ -89,19 +89,19 @@ export default function AdminNotificationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, session?.user?.role, status]);
 
   // Initial fetch on mount
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.role === 'admin') {
       fetchNotifications();
     }
-  }, [status, session]);
+  }, [status, session?.user?.role, fetchNotifications]);
 
   // Re-fetch when filters change
   useEffect(() => {
     fetchNotifications();
-  }, [filters]);
+  }, [fetchNotifications]);
 
   const showMessage = (msg, type) => {
     setMessage(msg);

@@ -1,7 +1,23 @@
 import dbConnect from "@/lib/dbConnect";
 import Chat from "@/models/Chat";
+import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
+function normalizeUserDetail(user) {
+  if (!user) return null;
+
+  const aadhaar = user.aadhaarLast4
+    ? `XXXX-XXXX-${user.aadhaarLast4}`
+    : "Aadhaar not available";
+
+  return {
+    name: user.name || "Unknown User",
+    email: user.email || "",
+    phone: user.phone || "N/A",
+    aadhaar,
+  };
+}
 
 export async function GET() {
   try {
@@ -32,7 +48,27 @@ export async function GET() {
       { $sort: { time: -1 } },
     ]);
 
-    return Response.json(chats);
+    const emails = chats.map((chat) => chat._id).filter(Boolean);
+    const users = await User.find(
+      { email: { $in: emails } },
+      { name: 1, email: 1, phone: 1, aadhaarLast4: 1 }
+    ).lean();
+
+    const userMap = new Map(
+      users.map((user) => [String(user.email).toLowerCase(), normalizeUserDetail(user)])
+    );
+
+    const enrichedChats = chats.map((chat) => {
+      const chatUser = userMap.get(String(chat._id).toLowerCase());
+      return {
+        ...chat,
+        userName: chatUser?.name || "Unknown User",
+        userPhone: chatUser?.phone || "N/A",
+        userAadhaar: chatUser?.aadhaar || "Aadhaar not available",
+      };
+    });
+
+    return Response.json(enrichedChats);
   } catch (error) {
     console.error("Failed to fetch chats:", error);
     return Response.json({ error: "Failed to fetch chats" }, { status: 500 });
@@ -60,7 +96,15 @@ export async function POST(req) {
     }
 
     const messages = await Chat.find({ userId }).sort({ createdAt: 1 });
-    return Response.json(messages);
+    const userProfile = await User.findOne(
+      { email: userId },
+      { name: 1, email: 1, phone: 1, aadhaarLast4: 1 }
+    ).lean();
+
+    return Response.json({
+      messages,
+      user: normalizeUserDetail(userProfile),
+    });
   } catch (error) {
     console.error("Failed to fetch conversation:", error);
     return Response.json(

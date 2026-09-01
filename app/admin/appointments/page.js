@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
@@ -19,7 +19,7 @@ export default function AdminAppointmentsPage() {
   const [message, setMessage] = useState('');
   const [savingId, setSavingId] = useState(null);
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ limit: '50' });
     if (search) params.set('search', search);
@@ -34,11 +34,11 @@ export default function AdminAppointmentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, statusFilter]);
 
   useEffect(() => {
     if (authStatus === 'authenticated' && session?.user?.role === 'admin') fetchAppointments();
-  }, [authStatus, session?.user?.role, statusFilter]);
+  }, [authStatus, session?.user?.role, fetchAppointments]);
 
   const changeLocal = (id, field, value) =>
     setAppointments((rows) =>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "@/app/theme-provider";
@@ -44,11 +45,7 @@ export default function QueryDetailPage() {
 
   const roles = ["Ward Member-1", "Ward Member-2", "Ward Member-3", "Ward Member-4", "Ward Member-5", "Ward Member-6", "Ward Member-7", "Ward Member-8", "Ward Member-9", "Ward Member-10", "Secretary", "JE", "Pradhan"];
 
-  useEffect(() => {
-    fetchQuery();
-  }, [params.id]);
-
-  const fetchQuery = async () => {
+  const fetchQuery = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/queries/${params.id}`);
@@ -76,7 +73,11 @@ export default function QueryDetailPage() {
       setMessage("Error loading query");
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    fetchQuery();
+  }, [fetchQuery]);
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0];
@@ -231,7 +232,7 @@ export default function QueryDetailPage() {
                         {(attachment.fileUrl || attachment.url)?.startsWith('data:application/pdf') || attachment.mimeType?.includes('pdf') ? (
                           <a href={attachment.fileUrl || attachment.url} target="_blank" rel="noreferrer" className="text-blue-600 underline dark:text-blue-400">Open PDF</a>
                         ) : (
-                          <img src={attachment.fileUrl || attachment.url} alt={attachment.fileName || 'Uploaded document'} className="max-w-xs rounded-lg border border-gray-200 dark:border-gray-600" />
+                          <Image src={attachment.fileUrl || attachment.url} alt={attachment.fileName || 'Uploaded document'} width={320} height={220} unoptimized className="max-w-xs rounded-lg border border-gray-200 dark:border-gray-600" />
                         )}
                       </div>
                     ))}
@@ -241,7 +242,7 @@ export default function QueryDetailPage() {
               {!attachmentList.length && query.photo && (
                 <div>
                   <p className={`text-xs ${labelClass} mb-2`}>Citizen Photo/Document</p>
-                  <img src={query.photo} alt="Citizen Photo" className="max-w-xs rounded-lg" />
+                  <Image src={query.photo} alt="Citizen Photo" width={320} height={220} unoptimized className="max-w-xs rounded-lg" />
                 </div>
               )}
             </div>
@@ -369,7 +370,7 @@ export default function QueryDetailPage() {
                   className={`w-full px-3 py-2 border rounded ${inputClass}`}
                 />
                 {photoPreview && (
-                  <img src={photoPreview} alt="Resolution" className="mt-3 max-w-xs rounded" />
+                  <Image src={photoPreview} alt="Resolution" width={320} height={220} unoptimized className="mt-3 max-w-xs rounded" />
                 )}
               </div>
 

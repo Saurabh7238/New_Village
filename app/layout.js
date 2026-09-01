@@ -11,13 +11,6 @@ export const metadata = {
   title: "Gram Panchayat Chiutahara",
   description: "Manage Gram Panchayat information for Chiutahra",
   manifest: "/manifest.json",
-  themeColor: "#059669",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
   icons: {
     icon: "/favicon .ico",
     shortcut: "/favicon .ico",
@@ -28,6 +21,14 @@ export const metadata = {
     statusBarStyle: "default",
     title: "Gram Panchayat",
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: "#059669",
 };
 
 export default function RootLayout({ children }) {

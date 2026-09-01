@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useState, useEffect, useCallback } from "react";
 import { formatDate, formatCurrency, calculateDaysRemaining, getStatusBgClass } from "@/lib/developmentDisplay";
 import { useTheme } from "@/app/theme-provider";
 import DevelopmentMap from "@/components/DevelopmentMap";
@@ -12,11 +13,7 @@ export default function DevelopmentDetailPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [photoIndex, setPhotoIndex] = useState(0);
 
-  useEffect(() => {
-    fetchProject();
-  }, [params.id]);
-
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/development?id=${params.id}`);
@@ -28,7 +25,11 @@ export default function DevelopmentDetailPage({ params }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    fetchProject();
+  }, [fetchProject]);
 
   if (loading) {
     return (
@@ -83,7 +84,7 @@ export default function DevelopmentDetailPage({ params }) {
             {photos.length > 0 && (
               <div className={`${bgClass} rounded-lg shadow-lg overflow-hidden mb-8`}>
                 <div className="relative bg-gray-300 dark:bg-gray-700 h-96">
-                  <img src={photos[photoIndex].src} alt={photos[photoIndex].label} className="w-full h-full object-cover" />
+                  <Image src={photos[photoIndex].src} alt={photos[photoIndex].label} fill unoptimized className="object-cover" />
                   <div className="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm font-semibold">
                     {photos[photoIndex].label}
                   </div>

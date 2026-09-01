@@ -10,6 +10,7 @@ export default function AdminChats() {
   const router = useRouter();
   const [list, setList] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUserInfo, setSelectedUserInfo] = useState(null);
   const [msgs, setMsgs] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -50,6 +51,7 @@ export default function AdminChats() {
   // Open chat conversation
   const openChat = async (userId) => {
     setSelectedUser(userId);
+    setSelectedUserInfo(null);
     setLoading(true);
     try {
       const res = await fetch("/api/admin/chats", {
@@ -59,7 +61,8 @@ export default function AdminChats() {
       });
       if (res.ok) {
         const data = await res.json();
-        setMsgs(data);
+        setMsgs(data.messages || []);
+        setSelectedUserInfo(data.user || null);
       }
     } catch (error) {
       console.error("Failed to fetch conversation:", error);
@@ -115,11 +118,15 @@ export default function AdminChats() {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-bold text-sm text-gray-900 dark:text-white">
-                      {chat.ward ? `Ward ${chat.ward}` : "New User"}
+                      {chat.userName || (chat.ward ? `Ward ${chat.ward}` : "New User")}
                     </span>
                     <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">
                       {chat.ticket || "Pending"}
                     </span>
+                  </div>
+                  <div className="text-[11px] text-gray-700 dark:text-gray-300 mb-1">
+                    <div>{chat.userPhone || "Phone N/A"}</div>
+                    <div>{chat.userAadhaar || "Aadhaar N/A"}</div>
                   </div>
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                     {chat.service || "Unknown"} • {chat.language || "en"}
@@ -147,13 +154,19 @@ export default function AdminChats() {
                 {/* Chat Header */}
                 <div className="p-4 bg-slate-900 text-white font-bold flex justify-between items-center border-b border-slate-700">
                   <div>
-                    <div>{selectedUser}</div>
+                    <div>{selectedUserInfo?.name || selectedUser}</div>
+                    <div className="text-xs font-normal text-slate-300">
+                      {selectedUserInfo?.phone || "Phone N/A"} • {selectedUserInfo?.aadhaar || "Aadhaar N/A"}
+                    </div>
                     <div className="text-xs font-normal text-slate-300">
                       {getWardInfo()} • Ticket: {getTicketInfo()}
                     </div>
                   </div>
                   <button
-                    onClick={() => setSelectedUser(null)}
+                    onClick={() => {
+                      setSelectedUser(null);
+                      setSelectedUserInfo(null);
+                    }}
                     className="p-1 hover:bg-slate-800 rounded"
                   >
                     <X size={20} />
