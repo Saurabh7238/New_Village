@@ -1,10 +1,10 @@
-import { connectDB } from '@/lib/dbConnect';
-import { adminAuth } from '@/lib/adminAuth';
+import dbConnect from '@/lib/dbConnect';
+import { requireAdminSession } from '@/lib/adminAuth';
 import Announcement from '@/models/Announcement';
 
 export async function GET(req) {
   try {
-    await connectDB();
+    await dbConnect();
 
     // Get active announcements for public display
     const now = new Date();
@@ -30,12 +30,12 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const session = await adminAuth(req);
+    const session = await requireAdminSession();
     if (!session) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     const { title, content, type, priority, visibleFrom, visibleUntil } = await req.json();
 

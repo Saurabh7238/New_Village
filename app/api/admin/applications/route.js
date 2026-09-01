@@ -5,6 +5,7 @@ import CitizenNotification from '@/models/CitizenNotification';
 import ServiceNotification from '@/models/ServiceNotification';
 import { requireAdminSession } from '@/lib/adminAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
+import { emitApplicationUpdated, emitDocumentRequested } from '@/lib/socketEmitter';
 
 const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Updated', 'Approved', 'Rejected', 'Completed'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -83,6 +84,13 @@ export async function PUT(request) {
         relatedType: 'application',
         relatedId: application._id,
       });
+
+      // Emit Socket.io events for real-time updates
+      if (requestedDocumentsChanged && nextRequestedDocuments.length > 0) {
+        await emitDocumentRequested(application, nextRequestedDocuments);
+      } else if (statusChanged) {
+        await emitApplicationUpdated(application);
+      }
     }
 
     return NextResponse.json({ message: 'Application updated successfully.' });

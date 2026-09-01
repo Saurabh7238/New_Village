@@ -1,11 +1,11 @@
-import { connectDB } from '@/lib/dbConnect';
+import dbConnect from '@/lib/dbConnect';
 import { getServerSession } from 'next-auth';
 import ServiceFeedback from '@/models/ServiceFeedback';
 
 export async function POST(req) {
   try {
     const session = await getServerSession();
-    await connectDB();
+    await dbConnect();
 
     const { rating, aspects, comments, serviceType, contactAllowed } = await req.json();
 
@@ -31,7 +31,7 @@ export async function GET(req) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     const feedback = await ServiceFeedback.find().sort({ createdAt: -1 }).limit(100);
 

@@ -1,16 +1,17 @@
-import { connectDB } from '@/lib/dbConnect';
-import { adminAuth } from '@/lib/adminAuth';
+import dbConnect from '@/lib/dbConnect';
+import { requireAdminSession } from '@/lib/adminAuth';
 import Escalation from '@/models/Escalation';
 import Query from '@/models/Query';
+import { emitEscalationAlert } from '@/lib/socketEmitter';
 
 export async function POST(req) {
   try {
-    const session = await adminAuth(req);
+    const session = await requireAdminSession();
     if (!session) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     const { queryId, applicationId, reason } = await req.json();
 
@@ -38,7 +39,10 @@ export async function POST(req) {
     });
 
     // Update query status
-    await Query.findByIdAndUpdate(queryId, { escalated: true, escalationId: escalation._id });
+    const updatedQuery = await Query.findByIdAndUpdate(queryId, { escalated: true, escalationId: escalation._id }, { new: true });
+
+    // Emit Socket.io event for escalation alert
+    await emitEscalationAlert(escalation, updatedQuery);
 
     return Response.json(escalation, { status: 201 });
   } catch (error) {
@@ -48,12 +52,12 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
-    const session = await adminAuth(req);
+    const session = await requireAdminSession();
     if (!session) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     const escalations = await Escalation.find({ status: { $ne: 'resolved' } })
       .populate('queryId', 'title category')

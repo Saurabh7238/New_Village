@@ -1,5 +1,5 @@
-import { connectDB } from '@/lib/dbConnect';
-import { adminAuth } from '@/lib/adminAuth';
+import dbConnect from '@/lib/dbConnect';
+import { requireAdminSession } from '@/lib/adminAuth';
 import Application from '@/models/Application';
 import Query from '@/models/Query';
 import Appointment from '@/models/Appointment';
@@ -12,7 +12,7 @@ export async function GET(req) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     // Get date ranges
     const today = new Date();

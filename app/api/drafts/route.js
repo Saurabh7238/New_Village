@@ -1,4 +1,4 @@
-import { connectDB } from '@/lib/dbConnect';
+import dbConnect from '@/lib/dbConnect';
 import { getServerSession } from 'next-auth';
 import Draft from '@/models/Draft';
 
@@ -9,7 +9,7 @@ export async function GET(req) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     const drafts = await Draft.find({
       userId: session.user.id,
@@ -29,7 +29,7 @@ export async function POST(req) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     const { serviceType, title, data } = await req.json();
 
@@ -57,7 +57,7 @@ export async function DELETE(req) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     const { id } = req.nextUrl.searchParams;
 

@@ -1,16 +1,16 @@
-import { connectDB } from '@/lib/dbConnect';
-import { adminAuth } from '@/lib/adminAuth';
+import dbConnect from '@/lib/dbConnect';
+import { requireAdminSession } from '@/lib/adminAuth';
 import Application from '@/models/Application';
 import Query from '@/models/Query';
 
 export async function PATCH(req) {
   try {
-    const session = await adminAuth(req);
+    const session = await requireAdminSession();
     if (!session) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     const { entityType, ids, action, updates } = await req.json();
 

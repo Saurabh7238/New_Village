@@ -4,13 +4,28 @@ import Providers from "./auth-provider";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import WelcomeToast from "../components/WelcomeToast";
 import { LanguageProvider } from "./language-provider";
+import { PWAProvider } from "./pwa-provider";
 
 export const metadata = {
   title: "Gram Panchayat Chiutahara",
   description: "Manage Gram Panchayat information for Chiutahra",
+  manifest: "/manifest.json",
+  themeColor: "#059669",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
+    apple: "/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Gram Panchayat",
   },
 };
 
@@ -46,7 +61,8 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-yellow-50 text-gray-900 font-sans relative dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 dark:text-gray-100 transition-colors">
         <Providers>
-          <LanguageProvider>
+          <PWAProvider>
+            <LanguageProvider>
             <noscript>
               <div className="bg-red-100 text-red-700 text-center p-2 text-sm">
                 This site works best with JavaScript enabled.
@@ -63,8 +79,7 @@ export default function RootLayout({ children }) {
                 © {new Date().getFullYear()} Gram Panchayat Chiutahara
               </div>
             </footer>
-          </LanguageProvider>
-        </Providers>
+          </LanguageProvider>          </PWAProvider>        </Providers>
       </body>
     </html>
   );

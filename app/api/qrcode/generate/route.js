@@ -1,11 +1,11 @@
-import { connectDB } from '@/lib/dbConnect';
+import dbConnect from '@/lib/dbConnect';
 import QRCode from 'qrcode';
 import Application from '@/models/Application';
 import Query from '@/models/Query';
 
 export async function GET(req) {
   try {
-    await connectDB();
+    await dbConnect();
 
     const { type, id } = req.nextUrl.searchParams;
 
