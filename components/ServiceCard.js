@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useSession } from "next-auth/react";
-import LoginRequiredModal from "./LoginRequiredModal";
+
 import {
   FaFileAlt,
   FaUsers,
@@ -30,10 +29,7 @@ const iconMap = {
 
 export default function ServiceCard({ title, hindi, href, index }) {
   const Icon = iconMap[title] || FaCogs;
-  const { status } = useSession();
   const [isVisited, setIsVisited] = useState(false);
-  const [showLoginWarning, setShowLoginWarning] = useState(false);
-  const requiresLogin = ["Raise Query", "Birth Certificates", "Death Certificates", "Aadhaar Create / Update", "Appointments"].includes(title);
 
   useEffect(() => {
     try {
@@ -54,12 +50,7 @@ export default function ServiceCard({ title, hindi, href, index }) {
     }
   };
 
-  const handleClick = (event) => {
-    if (requiresLogin && status !== "authenticated") {
-      event.preventDefault();
-      setShowLoginWarning(true);
-      return;
-    }
+  const handleClick = () => {
     markVisited();
   };
 
@@ -98,7 +89,6 @@ export default function ServiceCard({ title, hindi, href, index }) {
           </div>
         </div>
       </Link>
-      <LoginRequiredModal isOpen={showLoginWarning} onClose={() => setShowLoginWarning(false)} callbackUrl={href} />
     </motion.article>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useToast, ToastContainer } from '@/components/Toast';
 import {
   MEMBER_DESIGNATIONS,
   MEMBER_STATUSES,
@@ -8,7 +10,7 @@ import {
   CATEGORY_OPTIONS
 } from '@/lib/memberDisplay';
 
-function MemberForm({ member, onSubmit, onCancel }) {
+function MemberForm({ member, onSubmit, onCancel, addToast }) {
   const [formData, setFormData] = useState(member || {
     fullName: '',
     designation: 'Ward Member',
@@ -41,7 +43,7 @@ function MemberForm({ member, onSubmit, onCancel }) {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Photo size must be less than 5MB');
+      addToast('Photo size must be less than 5MB.', 'error');
       return;
     }
 
@@ -181,7 +183,7 @@ function MemberForm({ member, onSubmit, onCancel }) {
 
         {photoPreview && (
           <div className="col-span-2 flex items-center gap-4">
-            <img src={photoPreview} alt="Preview" className="w-20 h-20 rounded-full object-cover" />
+            <Image src={photoPreview} alt="Preview" width={80} height={80} unoptimized className="h-20 w-20 rounded-full object-cover" />
             <button
               type="button"
               onClick={() => { setFormData(prev => ({ ...prev, photo: '' })); setPhotoPreview(null); }}
@@ -331,6 +333,7 @@ export default function AdminMembersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     fetchMembers();
@@ -362,8 +365,9 @@ export default function AdminMembersPage() {
       setShowForm(false);
       setEditingMember(null);
       await fetchMembers();
+      addToast(editingMember ? 'Member updated successfully.' : 'Member added successfully.', 'success');
     } catch (err) {
-      alert('Error: ' + err.message);
+      addToast('Error: ' + err.message, 'error');
     }
   }
 
@@ -380,8 +384,9 @@ export default function AdminMembersPage() {
       if (!response.ok) throw new Error('Failed to delete member');
 
       await fetchMembers();
+      addToast('Member deleted successfully.', 'success');
     } catch (err) {
-      alert('Error: ' + err.message);
+      addToast('Error: ' + err.message, 'error');
     }
   }
 
@@ -423,6 +428,7 @@ export default function AdminMembersPage() {
             member={editingMember}
             onSubmit={handleSubmit}
             onCancel={() => { setShowForm(false); setEditingMember(null); }}
+            addToast={addToast}
           />
         </div>
       )}
@@ -488,6 +494,8 @@ export default function AdminMembersPage() {
       </div>
 
       {/* Mobile Card View */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} isDark={false} />
+
       <div className="md:hidden space-y-3">
         {filteredMembers.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">

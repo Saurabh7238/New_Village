@@ -46,7 +46,7 @@ export async function GET() {
 
     return NextResponse.json(responseData, { status: 200 });
   } catch (error) {
-    console.error("GET Reviews Error:", error);
+    console.warn("GET Reviews skipped: MongoDB unavailable.", error?.message || error);
     return NextResponse.json([], { status: 200 });
   }
 }

@@ -10,6 +10,7 @@ import { Bell, Moon, Sun, Phone } from "lucide-react";
 import logoImage from "../Gemini_Generated_Image_vj7e1vj7e1vj7e1v.png";
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
+import { TYPE_LABELS } from "@/lib/notificationConstants";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -192,6 +193,26 @@ export default function Header() {
     ? serviceUnreadCount
     : notificationCount;
 
+  const notificationTypeCounts = ["message", "circular", "order"].reduce((acc, type) => {
+    acc[type] = visibleNotifications.filter((item) => (item.type || item.category || "").toLowerCase() === type).length;
+    return acc;
+  }, { message: 0, circular: 0, order: 0 });
+
+  const notificationTypeStyles = {
+    message: {
+      badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200",
+      dot: "bg-blue-600",
+    },
+    circular: {
+      badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200",
+      dot: "bg-amber-600",
+    },
+    order: {
+      badge: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200",
+      dot: "bg-violet-600",
+    },
+  };
+
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
       <div className="bg-green-600 dark:bg-green-800 overflow-hidden">
@@ -220,8 +241,9 @@ export default function Header() {
               priority
             />
           </span>
-          <span className="min-w-0 leading-tight text-white">
-            <span className="block truncate text-base font-bold tracking-wide sm:text-2xl">Chiutahara Portal</span>
+          <span className="min-w-0 leading-none text-white">
+            <span className="block truncate text-sm font-extrabold tracking-wide text-white sm:text-lg">Chiutahara</span>
+            <span className="mt-0.5 block truncate text-[10px] font-semibold tracking-[0.2em] text-yellow-200 uppercase sm:text-[11px]">Portal</span>
           </span>
         </Link>
 
@@ -263,7 +285,7 @@ export default function Header() {
             >
               <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
               {visibleNotificationCount > 0 && (
-                <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-red-500 px-1 text-[10px] font-bold leading-4 text-white">
+                <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-red-500 px-1 text-[10px] font-bold leading-4 text-white shadow-sm ring-2 ring-white dark:ring-slate-800">
                   {visibleNotificationCount > 99 ? "99+" : visibleNotificationCount}
                 </span>
               )}
@@ -271,6 +293,19 @@ export default function Header() {
             {showNotifications && (
               <div className="absolute right-0 top-full z-[60] mt-3 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-800 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
                 <div className="border-b border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">Notifications</div>
+                <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/60">
+                  {Object.entries(notificationTypeCounts).map(([type, count]) => (
+                    <span
+                      key={type}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${notificationTypeStyles[type]?.badge || "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"}`}
+                    >
+                      <span>{TYPE_LABELS[type] || type}</span>
+                      <span className={`rounded-full px-1.5 text-[9px] text-white ${notificationTypeStyles[type]?.dot || "bg-emerald-600"}`}>
+                        {count}
+                      </span>
+                    </span>
+                  ))}
+                </div>
                 <ul className="max-h-72 overflow-y-auto">
                   {visibleNotifications.length > 0 ? visibleNotifications.map((note) => (
                     <li key={note.id}>
@@ -286,7 +321,14 @@ export default function Header() {
                           router.push(note.link || "/notifications");
                         }}
                       >
-                        {note.title}
+                        <span className="flex items-center justify-between gap-3">
+                          <span className="truncate">{note.title}</span>
+                          {note.type && (
+                            <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-700 dark:bg-slate-600 dark:text-slate-100">
+                              {note.type}
+                            </span>
+                          )}
+                        </span>
                       </button>
                     </li>
                   )) : (

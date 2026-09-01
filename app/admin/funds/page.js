@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useToast, ToastContainer } from "@/components/Toast";
 import { FUND_STATUSES, formatFundAmount, formatFundLastUpdated } from "@/lib/fundsDisplay";
 
 export default function AdminFundsPage() {
@@ -14,6 +15,7 @@ export default function AdminFundsPage() {
   const [editingFundId, setEditingFundId] = useState(null);
   const [fundPdfFileName, setFundPdfFileName] = useState("No PDF chosen");
   const [removeFundDocument, setRemoveFundDocument] = useState(false);
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     fetch("/api/funds")
@@ -26,11 +28,11 @@ export default function AdminFundsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== "application/pdf") {
-      alert("Please upload PDF only.");
+      addToast("Please upload PDF only.", "error");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      alert("PDF too large (max 10MB).");
+      addToast("PDF too large (max 10MB).", "error");
       return;
     }
     const reader = new FileReader();
@@ -45,7 +47,7 @@ export default function AdminFundsPage() {
   const submitFund = async (e) => {
     e.preventDefault();
     if (!fundForm.financialYear.trim() || !fundForm.schemeName.trim()) {
-      alert("Financial year and scheme name required.");
+      addToast("Financial year and scheme name are required.", "error");
       return;
     }
 
@@ -79,9 +81,13 @@ export default function AdminFundsPage() {
       if (res.ok) {
         setFundList((prev) => editingFundId ? prev.map((item) => String(item._id) === String(result._id) ? result : item) : [result, ...prev]);
         resetFundForm();
+        addToast(editingFundId ? "Fund record updated successfully." : "Fund record added successfully.", "success");
+      } else {
+        addToast(result.message || "Unable to save fund record.", "error");
       }
     } catch (error) {
       console.error("Error:", error);
+      addToast("Unable to save fund record.", "error");
     }
   };
 
@@ -99,9 +105,13 @@ export default function AdminFundsPage() {
       if (res.ok) {
         setFundList((prev) => prev.filter((item) => item._id !== id));
         if (editingFundId === id) resetFundForm();
+        addToast("Fund record deleted successfully.", "success");
+      } else {
+        addToast("Unable to delete fund record.", "error");
       }
     } catch (error) {
       console.error("Error:", error);
+      addToast("Unable to delete fund record.", "error");
     }
   };
 
@@ -115,6 +125,8 @@ export default function AdminFundsPage() {
           <h1 className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-yellow-400">Manage Panchayat Funds</h1>
           <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm">Sign Out</button>
         </div>
+
+        <ToastContainer toasts={toasts} removeToast={removeToast} isDark={true} />
 
         <form onSubmit={submitFund} className="mb-8 space-y-4 p-4 sm:p-6 border rounded-lg bg-white dark:bg-gray-800 shadow">
           <h3 className="text-lg sm:text-xl font-semibold text-emerald-700 dark:text-yellow-400">{editingFundId ? "Update" : "Add"} Fund Record</h3>

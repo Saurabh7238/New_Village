@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useToast, ToastContainer } from "@/components/Toast";
 import {
   getVoterName,
   getVoterId,
@@ -44,6 +45,7 @@ export default function AdminVotersPage() {
   const [showImportForm, setShowImportForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     const loadVoters = async () => {
@@ -85,12 +87,12 @@ export default function AdminVotersPage() {
       });
       if (res.ok) {
         setVoterList((prev) => prev.filter((v) => getVoterId(v) !== voterId));
-        alert("Voter deleted successfully");
+        addToast("Voter deleted successfully.", "success");
       } else {
-        alert("Failed to delete voter");
+        addToast("Failed to delete voter.", "error");
       }
     } catch (error) {
-      alert("Error deleting voter: " + error.message);
+      addToast("Error deleting voter: " + error.message, "error");
     }
   };
 
@@ -106,6 +108,8 @@ export default function AdminVotersPage() {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl">
+        <ToastContainer toasts={toasts} removeToast={removeToast} isDark={true} />
+
         {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl sm:text-3xl font-bold text-green-700 dark:text-yellow-400">

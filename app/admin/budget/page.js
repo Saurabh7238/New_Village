@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { useToast, ToastContainer } from "@/components/Toast";
 import { BUDGET_STATUSES, formatBudgetAmount, formatLastUpdated } from "@/lib/budgetDisplay";
 
 export default function AdminBudgetPage() {
@@ -17,6 +18,7 @@ export default function AdminBudgetPage() {
   const [removeBudgetDocument, setRemoveBudgetDocument] = useState(false);
   const [loadingBudgets, setLoadingBudgets] = useState(true);
   const [message, setMessage] = useState("");
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     fetch("/api/budget")
@@ -30,11 +32,11 @@ export default function AdminBudgetPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== "application/pdf") {
-      alert("Please upload PDF only.");
+      addToast("Please upload PDF only.", "error");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      alert("PDF too large (max 10MB).");
+      addToast("PDF too large (max 10MB).", "error");
       return;
     }
     const reader = new FileReader();
@@ -49,7 +51,7 @@ export default function AdminBudgetPage() {
   const submitBudget = async (e) => {
     e.preventDefault();
     if (!budgetForm.financialYear.trim() || !budgetForm.schemeName.trim()) {
-      alert("Financial year and scheme name required.");
+      addToast("Financial year and scheme name are required.", "error");
       return;
     }
 
@@ -84,12 +86,15 @@ export default function AdminBudgetPage() {
         setBudgetList((prev) => editingBudgetId ? prev.map((item) => String(item._id) === String(result._id) ? result : item) : [result, ...prev]);
         resetBudgetForm();
         setMessage(editingBudgetId ? "Budget record updated." : "Budget record added.");
+        addToast(editingBudgetId ? "Budget record updated successfully." : "Budget record added successfully.", "success");
       } else {
         setMessage(result.message || "Unable to save budget record.");
+        addToast(result.message || "Unable to save budget record.", "error");
       }
     } catch (error) {
       console.error("Error:", error);
       setMessage("Unable to save budget record.");
+      addToast("Unable to save budget record.", "error");
     }
   };
 
@@ -108,13 +113,16 @@ export default function AdminBudgetPage() {
         setBudgetList((prev) => prev.filter((item) => item._id !== id));
         if (editingBudgetId === id) resetBudgetForm();
         setMessage("Budget record deleted.");
+        addToast("Budget record deleted successfully.", "success");
       } else {
         const result = await res.json();
         setMessage(result.message || "Unable to delete budget record.");
+        addToast(result.message || "Unable to delete budget record.", "error");
       }
     } catch (error) {
       console.error("Error:", error);
       setMessage("Unable to delete budget record.");
+      addToast("Unable to delete budget record.", "error");
     }
   };
 
@@ -133,6 +141,8 @@ export default function AdminBudgetPage() {
         </div>
 
         {message && <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{message}</div>}
+
+        <ToastContainer toasts={toasts} removeToast={removeToast} isDark={true} />
 
         <form onSubmit={submitBudget} className="mb-8 space-y-4 p-4 sm:p-6 border rounded-lg bg-white dark:bg-gray-800 shadow">
           <h3 className="text-lg sm:text-xl font-semibold text-emerald-700 dark:text-yellow-400">{editingBudgetId ? "Update" : "Add"} Budget Record</h3>

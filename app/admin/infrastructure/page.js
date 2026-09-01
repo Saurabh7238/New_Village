@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useToast, ToastContainer } from "@/components/Toast";
 import { INFRA_TYPES, INFRA_STATUSES } from "@/lib/infrastructureDisplay";
 
 export default function AdminInfrastructurePage() {
@@ -13,6 +14,7 @@ export default function AdminInfrastructurePage() {
   });
   const [editingInfraId, setEditingInfraId] = useState(null);
   const [infraTypeFilter, setInfraTypeFilter] = useState("all");
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     fetch("/api/infrastructure")
@@ -39,7 +41,7 @@ export default function AdminInfrastructurePage() {
   const submitInfrastructure = async (e) => {
     e.preventDefault();
     if (!infraForm.title.trim() || !infraForm.type || !infraForm.status) {
-      alert("Title, Type, and Status are required.");
+      addToast("Title, type, and status are required.", "error");
       return;
     }
 
@@ -56,9 +58,13 @@ export default function AdminInfrastructurePage() {
       if (res.ok) {
         setInfrastructureList((prev) => editingInfraId ? prev.map((item) => (String(item._id) === String(result._id) ? result : item)) : [result, ...prev]);
         resetInfraForm();
+        addToast(editingInfraId ? "Infrastructure updated successfully." : "Infrastructure added successfully.", "success");
+      } else {
+        addToast(result.message || "Unable to save infrastructure.", "error");
       }
     } catch (error) {
       console.error("Error:", error);
+      addToast("Unable to save infrastructure.", "error");
     }
   };
 
@@ -69,9 +75,13 @@ export default function AdminInfrastructurePage() {
       if (res.ok) {
         setInfrastructureList((prev) => prev.filter((item) => item._id !== id));
         if (editingInfraId === id) resetInfraForm();
+        addToast("Infrastructure deleted successfully.", "success");
+      } else {
+        addToast("Unable to delete infrastructure.", "error");
       }
     } catch (error) {
       console.error("Error:", error);
+      addToast("Unable to delete infrastructure.", "error");
     }
   };
 
@@ -87,6 +97,8 @@ export default function AdminInfrastructurePage() {
           <h1 className="text-4xl font-bold text-orange-700 dark:text-yellow-400">Manage Infrastructure</h1>
           <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Sign Out</button>
         </div>
+
+        <ToastContainer toasts={toasts} removeToast={removeToast} isDark={true} />
 
         <form onSubmit={submitInfrastructure} className="mb-8 space-y-4 p-6 border rounded-lg bg-white dark:bg-gray-800">
           <h3 className="text-xl font-semibold text-orange-700 dark:text-yellow-400">{editingInfraId ? "Update" : "Add"} Infrastructure</h3>

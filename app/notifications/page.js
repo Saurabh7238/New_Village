@@ -26,6 +26,7 @@ export default function NotificationsPage() {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [typeCounts, setTypeCounts] = useState({ message: 0, circular: 0, order: 0 });
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -83,6 +84,32 @@ export default function NotificationsPage() {
     return () => clearInterval(refreshInterval);
   }, [filters, currentPage]);
 
+  useEffect(() => {
+    const fetchTypeCounts = async () => {
+      try {
+        const response = await fetch('/api/notifications?page=1&limit=200');
+        const data = await response.json();
+
+        if (!data?.success) return;
+
+        const items = Array.isArray(data.notifications) ? data.notifications : [];
+        const counts = { message: 0, circular: 0, order: 0 };
+
+        items.forEach((item) => {
+          if (typeof item?.type === 'string' && counts[item.type] !== undefined) {
+            counts[item.type] += 1;
+          }
+        });
+
+        setTypeCounts(counts);
+      } catch (error) {
+        console.error('Failed to fetch notification counts:', error);
+      }
+    };
+
+    fetchTypeCounts();
+  }, []);
+
   const handleFilterChange = (filterName, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -121,13 +148,22 @@ export default function NotificationsPage() {
               onClick={() =>
                 handleFilterChange('type', type)
               }
-              className={`px-6 py-3 font-medium transition ${
+              className={`inline-flex items-center gap-2 px-6 py-3 font-medium transition ${
                 filters.type === type
                   ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
-              {TYPE_LABELS[type]}
+              <span>{TYPE_LABELS[type]}</span>
+              <span
+                className={`inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold ${
+                  filters.type === type
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
+                }`}
+              >
+                {typeCounts[type] ?? 0}
+              </span>
             </button>
           ))}
         </div>

@@ -1,11 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme } from "@/app/theme-provider";
 import { QUERY_CATEGORIES } from "@/lib/queryDisplay";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
+import { useToast, ToastContainer } from "@/components/Toast";
+
 export default function GrievancePage() {
   const router = useRouter();
   const { status } = useSession();
@@ -20,6 +23,7 @@ export default function GrievancePage() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [rateLimitInfo, setRateLimitInfo] = useState(null);
   const [loginRequired, setLoginRequired] = useState(false);
+  const { toasts, addToast, removeToast } = useToast();
   const bgClass = isDark ? "bg-gray-800" : "bg-white";
   const textClass = isDark ? "text-white" : "text-gray-900";
   const inputClass = isDark ? "bg-gray-700 text-white border-gray-600" : "bg-white text-gray-900 border-gray-300";
@@ -83,6 +87,7 @@ export default function GrievancePage() {
       window.sessionStorage.setItem('pendingQuery', JSON.stringify(formData));
       setLoginRequired(true);
       setMessage('Please login first to submit your query. Your filled details have been saved.');
+      addToast('Please login first to submit your query. Your filled details have been saved.', 'warning', 5000);
       return;
     }
     setLoading(true);
@@ -111,13 +116,16 @@ export default function GrievancePage() {
       if (res.ok) {
         window.sessionStorage.removeItem('pendingQuery');
         setQueryId(data.queryId);
+        addToast(`Query submitted successfully. Your query ID is ${data.queryId}.`, 'success', 5000);
         setStep("success");
       } else {
         setMessage(data.message || "Failed to submit query");
+        addToast(data.message || 'Failed to submit query', 'error', 5000);
       }
     } catch (error) {
       console.error("Submit Error:", error);
       setMessage("Error submitting query. Please try again.");
+      addToast('Error submitting query. Please try again.', 'error', 5000);
     } finally {
       setLoading(false);
     }
@@ -138,11 +146,12 @@ export default function GrievancePage() {
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Subject *</label><input type="text" name="subject" value={formData.subject} onChange={handleInputChange} maxLength="100" required className={`w-full px-4 py-2 border rounded ${inputClass}`} /><p className={`text-xs mt-1 ${labelClass}`}>{formData.subject.length}/100</p></div>
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Description *</label><textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" required className={`w-full px-4 py-2 border rounded ${inputClass}`} /></div>
               <div><label className={`block ${labelClass} mb-2 font-semibold`}>Address</label><input type="text" name="address" value={formData.address} onChange={handleInputChange} className={`w-full px-4 py-2 border rounded ${inputClass}`} /></div>
-              <div><label className={`block ${labelClass} mb-2 font-semibold`}>Photo (Optional)</label><input type="file" accept="image/*,.pdf" onChange={handlePhotoUpload} className={`w-full px-4 py-2 border rounded ${inputClass}`} />{photoPreview && <img src={photoPreview} alt="Preview" className="mt-3 w-32 h-32 object-cover rounded" />}</div>
+              <div><label className={`block ${labelClass} mb-2 font-semibold`}>Photo (Optional)</label><input type="file" accept="image/*,.pdf" onChange={handlePhotoUpload} className={`w-full px-4 py-2 border rounded ${inputClass}`} />{photoPreview && <Image src={photoPreview} alt="Preview" width={128} height={128} unoptimized className="mt-3 h-32 w-32 rounded object-cover" />}</div>
               <div className={`${isDark ? "bg-gray-700" : "bg-gray-100"} p-4 rounded`}><label className={`block ${labelClass} mb-2 font-semibold`}>Captcha: {captcha.num1} + {captcha.num2} = ?</label><div className="flex gap-2"><input type="number" value={captcha.answer} onChange={(e) => handleCaptchaChange(e.target.value)} className={`flex-1 px-3 py-2 border rounded ${captchaCorrect ? "border-green-500" : "border-red-300"}`} /><button type="button" onClick={generateCaptcha} className="px-3 py-2 bg-gray-500 text-white rounded">🔄</button></div>{captchaCorrect && <p className="text-green-600 text-sm mt-2">✓ Correct</p>}</div>
               <button type="submit" disabled={loading || !captchaCorrect} className="w-full px-4 py-3 bg-green-600 text-white rounded font-semibold disabled:opacity-50">{loading ? "Submitting..." : "Submit"}</button>
             </form>
             <LoginRequiredModal isOpen={loginRequired} onClose={() => setLoginRequired(false)} callbackUrl="/grievance" />
+            <ToastContainer toasts={toasts} removeToast={removeToast} isDark={isDark} />
           </div>
         </div>
       </div>
@@ -166,6 +175,7 @@ export default function GrievancePage() {
             </div>
           </div>
         </div>
+        <ToastContainer toasts={toasts} removeToast={removeToast} isDark={isDark} />
       </div>
     </div>
   );
