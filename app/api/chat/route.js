@@ -1,5 +1,7 @@
 import Chat from "@/models/Chat";
 import dbConnect from "@/lib/dbConnect";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const ALL_SERVICES = [
   "Birth Certificate",
@@ -80,8 +82,17 @@ function generateTicket() {
 
 export async function POST(req) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
+      return Response.json(
+        { error: "Unauthorized. Please login to chat." },
+        { status: 401 }
+      );
+    }
+
     await dbConnect();
-    const { userId, message } = await req.json();
+    const { message } = await req.json();
+    const userId = session.user.email;
 
     if (!userId || !message) {
       return Response.json(
@@ -184,17 +195,18 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
-    await dbConnect();
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
       return Response.json(
-        { error: "Missing userId" },
-        { status: 400 }
+        { error: "Unauthorized. Please login to view chat." },
+        { status: 401 }
       );
     }
 
+    await dbConnect();
+    const userId = session.user.email;
+
+    // Return only chats for the logged-in user
     const messages = await Chat.find({ userId })
       .sort({ createdAt: 1 })
       .limit(100);

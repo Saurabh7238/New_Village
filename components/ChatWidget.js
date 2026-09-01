@@ -2,33 +2,31 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Send } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function ChatWidget() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
   const [quickReplies, setQuickReplies] = useState([]);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Initialize userId from localStorage
+  // Fetch messages only if authenticated
   useEffect(() => {
-    let id = localStorage.getItem("chatUserId");
-    if (!id) {
-      id = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem("chatUserId", id);
-    }
-    setUserId(id);
-  }, []);
-
-  // Fetch messages periodically
-  useEffect(() => {
-    if (!userId) return;
+    if (status !== "authenticated") return;
 
     const fetchMessages = async () => {
       try {
-        const res = await fetch(`/api/chat?userId=${userId}`);
+        const res = await fetch(`/api/chat`);
+        if (res.status === 401) {
+          setMessages([]);
+          return;
+        }
         if (res.ok) {
           const data = await res.json();
           setMessages(data);
@@ -42,13 +40,18 @@ export default function ChatWidget() {
     fetchMessages();
     const interval = setInterval(fetchMessages, 3000);
     return () => clearInterval(interval);
-  }, [userId]);
+  }, [status]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleSend = async (directText) => {
+    if (status !== "authenticated") {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     const msg = directText || input;
     if (!msg.trim() || loading) return;
 
@@ -59,15 +62,20 @@ export default function ChatWidget() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, message: msg }),
+        body: JSON.stringify({ message: msg }),
       });
+
+      if (res.status === 401) {
+        setShowLoginPrompt(true);
+        setLoading(false);
+        return;
+      }
 
       if (res.ok) {
         const data = await res.json();
         setQuickReplies(data.quickReplies || []);
         
-        // Refresh messages
-        const messagesRes = await fetch(`/api/chat?userId=${userId}`);
+        const messagesRes = await fetch(`/api/chat`);
         if (messagesRes.ok) {
           const updatedMessages = await messagesRes.json();
           setMessages(updatedMessages);
@@ -81,11 +89,10 @@ export default function ChatWidget() {
     }
   };
 
-  if (!userId) return null;
+  if (status === "loading") return null;
 
   return (
     <div className="fixed bottom-5 right-5 z-40 font-sans">
-      {/* Chat Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -96,10 +103,36 @@ export default function ChatWidget() {
         </button>
       )}
 
-      {/* Chat Window */}
+      {showLoginPrompt && (
+        <div className="absolute bottom-20 right-0 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-amber-200 dark:border-amber-900 p-4 z-50">
+          <h3 className="font-bold text-amber-900 dark:text-amber-200 mb-2">
+            Login Jaruri Hai 🔒
+          </h3>
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+            Chat karne ke liye pehle login karein.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setShowLoginPrompt(false);
+                router.push("/signin");
+              }}
+              className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded text-sm font-semibold transition"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setShowLoginPrompt(false)}
+              className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded text-sm transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {isOpen && (
         <div className="absolute bottom-0 right-0 w-80 h-[500px] bg-slate-900 text-white rounded-xl shadow-2xl flex flex-col overflow-hidden border border-slate-700">
-          {/* Header */}
           <div className="bg-emerald-700 p-4 flex items-center justify-between rounded-t-xl">
             <h3 className="font-bold text-lg">सेवा बॉट</h3>
             <button
@@ -111,9 +144,19 @@ export default function ChatWidget() {
             </button>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-900">
-            {messages.length === 0 ? (
+            {status !== "authenticated" ? (
+              <div className="text-center text-slate-400 text-sm py-6">
+                <p className="mb-2 text-lg">🔒 Login Required</p>
+                <p>Please login to start chatting</p>
+                <button
+                  onClick={() => router.push("/signin")}
+                  className="mt-4 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded text-sm font-semibold transition"
+                >
+                  Go to Login
+                </button>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="text-center text-slate-400 text-sm py-6">
                 <p className="mb-2 text-lg">नमस्ते! 🙏</p>
                 <p>कृपया अपनी सेवा चुनें।</p>
@@ -140,7 +183,6 @@ export default function ChatWidget() {
               ))
             )}
             
-            {/* Quick Replies */}
             {quickReplies && quickReplies.length > 0 && (
               <div className="mt-4 px-2">
                 <div className="flex flex-wrap gap-2">
@@ -163,21 +205,20 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div className="border-t border-slate-700 p-3 flex gap-2 bg-slate-800">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSend()}
-              placeholder="संदेश भेजें... / Type message..."
-              disabled={loading}
-              className="flex-1 bg-slate-700 text-white px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400"
+              placeholder={status !== "authenticated" ? "Login jaruri hai..." : "संदेश भेजें... / Type message..."}
+              disabled={loading || status !== "authenticated"}
+              className="flex-1 bg-slate-700 text-white px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={() => handleSend()}
-              disabled={loading}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white p-2.5 rounded-lg transition disabled:opacity-50 flex-shrink-0"
+              disabled={loading || status !== "authenticated"}
+              className="bg-emerald-700 hover:bg-emerald-800 text-white p-2.5 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
               aria-label="Send message"
             >
               <Send size={18} />
