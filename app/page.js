@@ -28,6 +28,7 @@ export default function HomePage() {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [showLoginWarning, setShowLoginWarning] = useState(false);
+  const [activeReviewIndex, setActiveReviewIndex] = useState(0);
   const toggleModal = () => setShowModal(!showModal);
 
   const loadReviews = () => {
@@ -77,6 +78,16 @@ export default function HomePage() {
     const reviewInterval = setInterval(loadReviews, 15000);
     return () => clearInterval(reviewInterval);
   }, []);
+
+  useEffect(() => {
+    if (reviews.length <= 1) return;
+
+    const carouselInterval = setInterval(() => {
+      setActiveReviewIndex((current) => (current + 1) % reviews.length);
+    }, 4000);
+
+    return () => clearInterval(carouselInterval);
+  }, [reviews.length]);
 
   const submitReview = async (e) => {
     e.preventDefault();
@@ -390,34 +401,57 @@ export default function HomePage() {
             </p>
 
             {reviews.length > 0 ? (
-              <div className="mx-auto mb-4 grid max-w-3xl grid-cols-1 gap-2 md:grid-cols-2">
-                {reviews.map((review) => (
-                  <blockquote
-                    key={review.id}
-                    className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 text-left shadow-sm dark:border-slate-600 dark:bg-slate-700"
-                  >
-                    <p className="text-xs italic leading-5 text-slate-800 dark:text-slate-100">
-                      &ldquo;{review.message}&rdquo;
-                    </p>
-                    {review.reasons && review.reasons.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {review.reasons.map((reason) => (
-                          <span
-                            key={reason}
-                            className="inline-block rounded-full bg-emerald-200 px-2 py-0.5 text-xs font-medium text-emerald-900 dark:bg-emerald-700 dark:text-emerald-100"
-                          >
-                            {reason}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <footer className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                      <span className="mr-2 text-amber-500">{"★".repeat(review.rating || 0)}{"☆".repeat(5 - (review.rating || 0))}</span>
-                      — {review.name}
-                      {review.ward ? `, ${review.ward}` : ""}
-                    </footer>
-                  </blockquote>
-                ))}
+              <div className="mx-auto mb-4 max-w-3xl overflow-hidden">
+                <div
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${activeReviewIndex * 100}%)` }}
+                >
+                  {reviews.map((review) => (
+                    <blockquote
+                      key={review.id}
+                      className="w-full shrink-0 rounded-xl border border-emerald-100 bg-emerald-50/70 p-4 text-left shadow-sm dark:border-slate-600 dark:bg-slate-700"
+                    >
+                      <p className="text-sm italic leading-6 text-slate-800 dark:text-slate-100">
+                        &ldquo;{review.message}&rdquo;
+                      </p>
+                      {review.reasons && review.reasons.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {review.reasons.map((reason) => (
+                            <span
+                              key={reason}
+                              className="inline-block rounded-full bg-emerald-200 px-2 py-0.5 text-xs font-medium text-emerald-900 dark:bg-emerald-700 dark:text-emerald-100"
+                            >
+                              {reason}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <footer className="mt-3 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                        <span className="mr-2 text-amber-500">{"★".repeat(review.rating || 0)}{"☆".repeat(5 - (review.rating || 0))}</span>
+                        — {review.name}
+                        {review.ward ? `, ${review.ward}` : ""}
+                      </footer>
+                    </blockquote>
+                  ))}
+                </div>
+
+                {reviews.length > 1 && (
+                  <div className="mt-3 flex items-center justify-center gap-2">
+                    {reviews.map((review, index) => (
+                      <button
+                        key={`${review.id}-dot`}
+                        type="button"
+                        aria-label={`Show review ${index + 1}`}
+                        onClick={() => setActiveReviewIndex(index)}
+                        className={`h-2.5 w-2.5 rounded-full transition-all ${
+                          activeReviewIndex === index
+                            ? "bg-emerald-600 dark:bg-emerald-400"
+                            : "bg-slate-300 dark:bg-slate-600"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <p className="mb-4 text-center text-sm text-slate-500 dark:text-slate-300">

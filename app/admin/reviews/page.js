@@ -78,10 +78,10 @@ export default function AdminReviewsPage() {
         </div>
 
         <h2 className="text-2xl font-bold mb-4">Reviews ({reviews.length})</h2>
-        <div className="space-y-4">
-          {reviews.map((r) => (
-            <div key={r.id} className="border rounded p-4 flex justify-between items-start gap-4 dark:border-gray-700 bg-white dark:bg-gray-800">
-              <div>
+        <div className="overflow-x-auto pb-2">
+          <div className="flex snap-x snap-mandatory gap-4">
+            {reviews.map((r) => (
+              <div key={r.id} className="min-w-full snap-center rounded border p-4 bg-white dark:border-gray-700 dark:bg-gray-800 md:min-w-[420px]">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span className={`rounded px-2 py-1 text-xs font-semibold ${r.status === "approved" ? "bg-green-100 text-green-800" : r.status === "rejected" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>{r.status || (r.approved ? "approved" : "pending")}</span>
                   <span className="text-amber-500">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
@@ -90,14 +90,14 @@ export default function AdminReviewsPage() {
                 {r.reasons?.length > 0 && <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Reasons: {r.reasons.join(", ")}</p>}
                 {r.outcome === "not-resolved" && <p className="mt-1 text-sm font-semibold text-orange-600">Citizen marked this case as not resolved.</p>}
                 <p className="text-sm font-semibold text-purple-700 dark:text-yellow-400 mt-2">— {r.name}{r.ward ? `, ${r.ward}` : ""}</p>
+                <div className="mt-4 flex flex-wrap gap-2 text-sm">
+                  {r.status !== "approved" && <button onClick={() => moderateReview(r.id, "approved")} className="rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700">Approve</button>}
+                  {r.status !== "rejected" && <button onClick={() => moderateReview(r.id, "rejected")} className="rounded bg-orange-600 px-3 py-1 text-white hover:bg-orange-700">Reject</button>}
+                  <button onClick={() => deleteReview(r.id)} className="text-red-500 hover:text-red-700">Delete</button>
+                </div>
               </div>
-              <div className="flex shrink-0 flex-col gap-2 text-sm">
-                {r.status !== "approved" && <button onClick={() => moderateReview(r.id, "approved")} className="rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700">Approve</button>}
-                {r.status !== "rejected" && <button onClick={() => moderateReview(r.id, "rejected")} className="rounded bg-orange-600 px-3 py-1 text-white hover:bg-orange-700">Reject</button>}
-                <button onClick={() => deleteReview(r.id)} className="text-red-500 hover:text-red-700">Delete</button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

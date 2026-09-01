@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { MessageCircle, FileText, Clock, CheckCircle, AlertCircle, TrendingUp, Download, Filter } from 'lucide-react';
 import ServiceStatusTimeline from './ServiceStatusTimeline';
 import { useSocket } from '@/app/socket-provider';
+import { normalizeApplicationsResponse, getNormalizedDocumentList } from '@/lib/applicationDocumentUtils';
 
 export default function EnhancedCitizenDashboard() {
   const { data: session } = useSession();
@@ -30,30 +31,35 @@ export default function EnhancedCitizenDashboard() {
 
         if (appRes.ok) {
           const appData = await appRes.json();
-          setApplications(appData);
+          const appList = normalizeApplicationsResponse(appData);
+          setApplications(appList);
 
           // Extract document history
           const docHistory = [];
-          appData.forEach((app) => {
-            app.documents?.forEach((doc) => {
+          appList.forEach((app) => {
+            const citizenDocs = getNormalizedDocumentList(app, 'documents');
+            const adminDocs = getNormalizedDocumentList(app, 'adminDocuments');
+
+            citizenDocs.forEach((doc, index) => {
               docHistory.push({
-                id: `${app._id}-${doc.filename}`,
+                id: `${app._id || app.id || 'app'}-citizen-${index}`,
                 type: 'document',
-                applicationId: app._id,
-                filename: doc.filename,
+                applicationId: app._id || app.id,
+                filename: doc.fileName,
                 uploadedAt: doc.uploadedAt,
-                url: doc.url,
+                url: doc.fileUrl,
                 uploadedBy: 'You',
               });
             });
-            app.adminDocuments?.forEach((doc) => {
+
+            adminDocs.forEach((doc, index) => {
               docHistory.push({
-                id: `${app._id}-admin-${doc.filename}`,
+                id: `${app._id || app.id || 'app'}-admin-${index}`,
                 type: 'admin-document',
-                applicationId: app._id,
-                filename: doc.filename,
+                applicationId: app._id || app.id,
+                filename: doc.fileName,
                 uploadedAt: doc.uploadedAt,
-                url: doc.url,
+                url: doc.fileUrl,
                 uploadedBy: 'Admin',
               });
             });
@@ -102,7 +108,7 @@ export default function EnhancedCitizenDashboard() {
   };
 
   const getServiceRecommendations = () => {
-    const usedServices = new Set(applications.map((a) => a.type));
+    const usedServices = new Set(applications.map((a) => a.serviceType || a.type));
     const availableServices = [
       { type: 'birth-certificate', label: 'Birth Certificate', icon: '👶' },
       { type: 'death-certificate', label: 'Death Certificate', icon: '📋' },
@@ -215,17 +221,17 @@ export default function EnhancedCitizenDashboard() {
               <div className="space-y-3">
                 {filteredApplications.map((app) => (
                   <div
-                    key={app._id}
+                    key={app._id || app.id}
                     onClick={() => setSelectedApp(app)}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition ${
-                      selectedApp?._id === app._id
+                      (selectedApp?._id || selectedApp?.id) === (app._id || app.id)
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
                         : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="font-bold text-slate-900 dark:text-white capitalize">{app.type}</p>
+                        <p className="font-bold text-slate-900 dark:text-white capitalize">{app.serviceType || app.type}</p>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                           Submitted: {new Date(app.createdAt).toLocaleDateString()}
                         </p>
