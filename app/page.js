@@ -556,14 +556,16 @@ export default function HomePage() {
 
         <LoginRequiredModal isOpen={showLoginWarning} onClose={() => setShowLoginWarning(false)} callbackUrl="/" />
 
-        <button
-          onClick={toggleModal}
-          aria-label="Chat Support"
-          className="fixed bottom-5 right-4 z-40 flex items-center gap-2 rounded-full bg-emerald-700 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-emerald-900/25 transition hover:-translate-y-1 hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900"
-        >
-          <MessageCircle className="h-5 w-5" aria-hidden="true" />
-          <span>Chat Support</span>
-        </button>
+        {!tawkPropertyId || !tawkWidgetId ? (
+          <button
+            onClick={toggleModal}
+            aria-label="Chat Support"
+            className="fixed bottom-5 right-4 z-40 flex items-center gap-2 rounded-full bg-emerald-700 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-emerald-900/25 transition hover:-translate-y-1 hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900"
+          >
+            <MessageCircle className="h-5 w-5" aria-hidden="true" />
+            <span>Chat Support</span>
+          </button>
+        ) : null}
 
         {!tawkPropertyId || !tawkWidgetId ? (
           <AnimatePresence>{showModal && (
