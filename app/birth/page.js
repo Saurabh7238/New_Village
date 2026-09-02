@@ -20,18 +20,19 @@ export default function BirthPage() {
     },
     hi: {
       title: 'जन्म प्रमाण पत्र',
-      description: 'बच्चे की जानकारी के साथ आवेदन करें। संपर्क विवरण पहले से भरे हुए हैं और अपडेट भी किए जा सकते हैं।',
+      description: 'बच्चे की जानकारी के साथ आवेदन करें। संपर्क विवरण पहले से भरे हुए हैं और आवश्यकतानुसार अपडेट किया जा सकता है।',
       childName: 'बच्चे का नाम',
-      ageAuto: 'बच्चे की उम्र (स्वतः)',
+      ageAuto: 'बच्चे की आयु (स्वतः)',
       dateOfBirth: 'जन्म तिथि',
       placeOfBirth: 'जन्म स्थान',
-      motherName: 'माँ का नाम',
+      motherName: 'माता का नाम',
       fatherName: 'पिता का नाम',
       additionalDetails: 'अतिरिक्त विवरण',
     },
   };
 
   const t = labels[language] || labels.en;
+  const today = new Date().toISOString().split('T')[0];
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-36">
@@ -44,7 +45,7 @@ export default function BirthPage() {
           requiredDocuments={['Birth proof / hospital record']}
           fields={[
             { name: 'childName', label: t.childName, required: true },
-            { name: 'dateOfBirth', label: t.dateOfBirth, type: 'date', required: true },
+            { name: 'dateOfBirth', label: t.dateOfBirth, type: 'date', required: true, max: today },
             { name: 'applicantAge', label: t.ageAuto, type: 'number', required: false, readOnly: true },
             { name: 'placeOfBirth', label: t.placeOfBirth, required: true },
             { name: 'motherName', label: t.motherName, required: true },

@@ -1,3 +1,59 @@
 "use client";
+
 import ServiceApplicationForm from '@/components/ServiceApplicationForm';
-export default function DeathPage() { return <div className="pt-36 max-w-5xl mx-auto px-4"><h1 className="text-3xl font-bold text-green-700 mb-2">Death Certificates</h1><p className="text-gray-700 mb-6">Apply with the deceased person’s details. Contact details are prefilled and can be updated.</p><div className="bg-white rounded-lg shadow p-6"><ServiceApplicationForm serviceType="death-certificate" includeContactFields requiredDocuments={['Medical death certificate or other death proof']} fields={[{ name: 'applicantAge', label: 'Applicant Age', type: 'number', required: true }, { name: 'deceasedName', label: 'Deceased Person Name', required: true }, { name: 'dateOfDeath', label: 'Date of Death', type: 'date', required: true }, { name: 'placeOfDeath', label: 'Place of Death', required: true }, { name: 'informantName', label: 'Informant Name', required: true }, { name: 'relationship', label: 'Relationship to Deceased', required: true }, { name: 'additionalDetails', label: 'Additional Details', multiline: true, required: false }]} /></div></div>; }
+import { useLanguage } from '@/app/language-provider';
+
+export default function DeathPage() {
+  const { language } = useLanguage();
+  const today = new Date().toISOString().split('T')[0];
+
+  const labels = {
+    en: {
+      title: 'Death Certificates',
+      description: 'Apply with the deceased person’s details. Contact details are prefilled and can be updated.',
+      applicantAge: 'Applicant Age',
+      deceasedName: 'Deceased Person Name',
+      dateOfDeath: 'Date of Death',
+      placeOfDeath: 'Place of Death',
+      informantName: 'Informant Name',
+      relationship: 'Relationship to Deceased',
+      additionalDetails: 'Additional Details',
+    },
+    hi: {
+      title: 'मृत्यु प्रमाण पत्र',
+      description: 'मृत व्यक्ति की जानकारी के साथ आवेदन करें। संपर्क विवरण पहले से भरे हुए हैं और आवश्यकतानुसार अपडेट किया जा सकता है।',
+      applicantAge: 'आवेदक की आयु',
+      deceasedName: 'मृतक का नाम',
+      dateOfDeath: 'मृत्यु की तिथि',
+      placeOfDeath: 'मृत्यु स्थान',
+      informantName: 'सूचना देने वाले का नाम',
+      relationship: 'मृतक से संबंध',
+      additionalDetails: 'अतिरिक्त विवरण',
+    },
+  };
+
+  const t = labels[language] || labels.en;
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 pt-36">
+      <h1 className="mb-2 text-3xl font-bold text-green-700">{t.title}</h1>
+      <p className="mb-6 text-gray-700">{t.description}</p>
+      <div className="rounded-lg bg-white p-6 shadow">
+        <ServiceApplicationForm
+          serviceType="death-certificate"
+          includeContactFields
+          requiredDocuments={['Medical death certificate or other death proof']}
+          fields={[
+            { name: 'applicantAge', label: t.applicantAge, type: 'number', required: true },
+            { name: 'deceasedName', label: t.deceasedName, required: true },
+            { name: 'dateOfDeath', label: t.dateOfDeath, type: 'date', required: true, max: today },
+            { name: 'placeOfDeath', label: t.placeOfDeath, required: true },
+            { name: 'informantName', label: t.informantName, required: true },
+            { name: 'relationship', label: t.relationship, required: true },
+            { name: 'additionalDetails', label: t.additionalDetails, multiline: true, required: false },
+          ]}
+        />
+      </div>
+    </div>
+  );
+}

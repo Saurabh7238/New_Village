@@ -18,11 +18,11 @@ export default function AadharPage() {
     },
     hi: {
       title: 'आधार बनाएं / अपडेट करें',
-      description: 'आधार सेवाओं के लिए सहायता का अनुरोध करें। आपका नंबर पूरी तरह से नहीं दिखाया जाता है।',
-      applicantAge: 'आवेदक की उम्र',
-      requestType: 'अनुरोध प्रकार (नया / अपडेट / सुधार)',
-      preferredVisitDate: 'पसंदीदा विज़िट दिनांक',
-      requestDetails: 'अनुरोध विवरण',
+      description: 'आधार सेवाओं के लिए सहायता का अनुरोध करें। आपका मोबाइल नंबर पूर्ण रूप से सार्वजनिक नहीं किया जाता है।',
+      applicantAge: 'आवेदक की आयु',
+      requestType: 'अनुरोध का प्रकार (नया / अपडेट / सुधार)',
+      preferredVisitDate: 'पसंदीदा विज़िट तिथि',
+      requestDetails: 'अनुरोध का विवरण',
     },
   };
 
