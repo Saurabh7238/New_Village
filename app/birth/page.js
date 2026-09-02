@@ -1,3 +1,58 @@
 "use client";
+
 import ServiceApplicationForm from '@/components/ServiceApplicationForm';
-export default function BirthPage() { return <div className="pt-36 max-w-5xl mx-auto px-4"><h1 className="text-3xl font-bold text-green-700 mb-2">Birth Certificates</h1><p className="text-gray-700 mb-6">Apply with the child’s details. Contact details are prefilled and can be updated.</p><div className="bg-white rounded-lg shadow p-6"><ServiceApplicationForm serviceType="birth-certificate" includeContactFields requiredDocuments={['Birth proof / hospital record']} fields={[{ name: 'applicantAge', label: 'Applicant Age', type: 'number', required: true }, { name: 'childName', label: 'Child Name', required: true }, { name: 'dateOfBirth', label: 'Date of Birth', type: 'date', required: true }, { name: 'placeOfBirth', label: 'Place of Birth', required: true }, { name: 'motherName', label: 'Mother Name', required: true }, { name: 'fatherName', label: 'Father Name', required: false }, { name: 'additionalDetails', label: 'Additional Details', multiline: true, required: false }]} /></div></div>; }
+import { useLanguage } from '@/app/language-provider';
+
+export default function BirthPage() {
+  const { language } = useLanguage();
+
+  const labels = {
+    en: {
+      title: 'Birth Certificates',
+      description: 'Apply with the child’s details. Contact details are prefilled and can be updated.',
+      childName: 'Child Name',
+      ageAuto: 'Child Age (Auto)',
+      dateOfBirth: 'Date of Birth',
+      placeOfBirth: 'Place of Birth',
+      motherName: 'Mother Name',
+      fatherName: 'Father Name',
+      additionalDetails: 'Additional Details',
+    },
+    hi: {
+      title: 'जन्म प्रमाण पत्र',
+      description: 'बच्चे की जानकारी के साथ आवेदन करें। संपर्क विवरण पहले से भरे हुए हैं और अपडेट भी किए जा सकते हैं।',
+      childName: 'बच्चे का नाम',
+      ageAuto: 'बच्चे की उम्र (स्वतः)',
+      dateOfBirth: 'जन्म तिथि',
+      placeOfBirth: 'जन्म स्थान',
+      motherName: 'माँ का नाम',
+      fatherName: 'पिता का नाम',
+      additionalDetails: 'अतिरिक्त विवरण',
+    },
+  };
+
+  const t = labels[language] || labels.en;
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 pt-36">
+      <h1 className="mb-2 text-3xl font-bold text-green-700">{t.title}</h1>
+      <p className="mb-6 text-gray-700">{t.description}</p>
+      <div className="rounded-lg bg-white p-6 shadow">
+        <ServiceApplicationForm
+          serviceType="birth-certificate"
+          includeContactFields
+          requiredDocuments={['Birth proof / hospital record']}
+          fields={[
+            { name: 'childName', label: t.childName, required: true },
+            { name: 'dateOfBirth', label: t.dateOfBirth, type: 'date', required: true },
+            { name: 'applicantAge', label: t.ageAuto, type: 'number', required: false, readOnly: true },
+            { name: 'placeOfBirth', label: t.placeOfBirth, required: true },
+            { name: 'motherName', label: t.motherName, required: true },
+            { name: 'fatherName', label: t.fatherName, required: false },
+            { name: 'additionalDetails', label: t.additionalDetails, multiline: true, required: false },
+          ]}
+        />
+      </div>
+    </div>
+  );
+}

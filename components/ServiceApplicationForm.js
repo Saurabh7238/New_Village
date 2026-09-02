@@ -8,6 +8,24 @@ import DocumentChecklist from './DocumentChecklist';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
+function calculateAgeFromDate(dateString) {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const monthDiff = today.getMonth() - date.getMonth();
+  const dayDiff = today.getDate() - date.getDate();
+
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    age -= 1;
+  }
+
+  return age;
+}
+
 export default function ServiceApplicationForm({
   serviceType,
   fields,
@@ -21,6 +39,7 @@ export default function ServiceApplicationForm({
   const [applications, setApplications] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [showLoginWarning, setShowLoginWarning] = useState(false);
+  const todayString = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     if (!includeContactFields || status !== 'authenticated') return;
@@ -222,32 +241,53 @@ export default function ServiceApplicationForm({
           </div>
         )}
 
-        {fields.map((field) => (
-          <div key={field.name}>
-            <label className="block text-sm font-semibold text-gray-700">
-              {field.label} {field.required ? '*' : '(Optional)'}
-            </label>
-            {field.multiline ? (
-              <textarea
-                required={field.required}
-                value={values[field.name] || ''}
-                onChange={(e) => setValues({ ...values, [field.name]: e.target.value })}
-                className="mt-1 w-full rounded border p-2"
-                rows="3"
-              />
-            ) : (
-              <input
-                type={field.type || 'text'}
-                min={field.min}
-                max={field.max}
-                required={field.required}
-                value={values[field.name] || ''}
-                onChange={(e) => setValues({ ...values, [field.name]: e.target.value })}
-                className="mt-1 w-full rounded border p-2"
-              />
-            )}
-          </div>
-        ))}
+        {fields.map((field) => {
+          const isBirthDob = field.name === 'dateOfBirth' || field.name === 'dob';
+          const isBirthAge = serviceType === 'birth-certificate' && field.name === 'applicantAge';
+          const inputMax = isBirthDob ? todayString : field.max;
+
+          return (
+            <div key={field.name}>
+              <label className="block text-sm font-semibold text-gray-700">
+                {field.label} {field.required ? '*' : '(Optional)'}
+              </label>
+              {field.multiline ? (
+                <textarea
+                  required={field.required}
+                  value={values[field.name] || ''}
+                  onChange={(e) => setValues({ ...values, [field.name]: e.target.value })}
+                  className="mt-1 w-full rounded border p-2"
+                  rows="3"
+                />
+              ) : (
+                <input
+                  type={field.type || 'text'}
+                  min={field.min}
+                  max={inputMax}
+                  required={field.required}
+                  readOnly={field.readOnly || isBirthAge}
+                  value={values[field.name] || ''}
+                  onChange={(e) => {
+                    const nextValue = e.target.value;
+                    setValues((current) => {
+                      const nextData = { ...current, [field.name]: nextValue };
+
+                      if (isBirthDob) {
+                        const computedAge = calculateAgeFromDate(nextValue);
+                        if (computedAge !== '') {
+                          nextData.applicantAge = computedAge;
+                        }
+                      }
+
+                      return nextData;
+                    });
+                  }}
+                  className="mt-1 w-full rounded border p-2"
+                />
+              )}
+            </div>
+          );
+        })}
 
         <div>
           <label className="block text-sm font-semibold text-gray-700">

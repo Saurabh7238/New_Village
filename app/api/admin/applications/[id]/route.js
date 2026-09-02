@@ -16,11 +16,15 @@ export async function GET(_request, { params }) {
     .lean();
   if (!application) return NextResponse.json({ message: 'Application not found.' }, { status: 404 });
 
-  const documentMetadata = (documents = [], kind) => documents.map((document, index) => ({
-    fileName: document.fileName,
-    mimeType: document.mimeType,
-    viewUrl: `/api/admin/applications/${application._id}/documents?kind=${kind}&index=${index}`,
-  }));
+  const documentMetadata = (documents = [], kind) => documents.map((document, index) => {
+    const fileUrl = `/api/admin/applications/${application._id}/documents?kind=${kind}&index=${index}`;
+    return {
+      fileName: document.fileName,
+      mimeType: document.mimeType,
+      fileUrl,
+      viewUrl: fileUrl,
+    };
+  });
 
   return NextResponse.json({
     application: {

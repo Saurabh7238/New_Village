@@ -233,7 +233,7 @@ function AdminApplicationsContent() {
                     {selectedApplication.documents.map((document, index) => (
                       <a
                         key={`citizen-${index}`}
-                        href={document.fileUrl}
+                        href={document.fileUrl || document.viewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 break-all hover:underline"
@@ -254,7 +254,7 @@ function AdminApplicationsContent() {
                     {selectedApplication.adminDocuments.map((document, index) => (
                       <a
                         key={`admin-${index}`}
-                        href={document.fileUrl}
+                        href={document.fileUrl || document.viewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs sm:text-sm text-green-600 dark:text-green-400 break-all hover:underline"
