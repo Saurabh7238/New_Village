@@ -15,9 +15,9 @@ export async function POST(req) {
 
     const phone = normalizePhone(rawPhone);
 
-    if (!name?.trim() || !phone || !password || !ward || !aadhaarNumber) {
+    if (!name?.trim() || !fatherName?.trim() || !email || !phone || !password || !ward || !aadhaarNumber) {
       return NextResponse.json(
-        { error: "Name, mobile number, ward number, Aadhaar number, and password are required" },
+        { error: "Name, father's name, email, mobile number, ward number, Aadhaar number, and password are required" },
         { status: 400 }
       );
     }

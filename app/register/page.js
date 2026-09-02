@@ -36,7 +36,11 @@ export default function RegisterPage() {
       setError("Name is required");
       return;
     }
-    if (formData.email && !formData.email.includes("@")) {
+    if (!formData.fatherName.trim()) {
+      setError("Father's name is required");
+      return;
+    }
+    if (!formData.email || !formData.email.includes("@")) {
       setError("Enter a valid email address");
       return;
     }
@@ -122,12 +126,12 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Father&apos;s Name</label>
-            <input type="text" name="fatherName" value={formData.fatherName} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200" placeholder="Enter father&apos;s name" />
+            <input type="text" name="fatherName" value={formData.fatherName} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200" placeholder="Enter father&apos;s name" required />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email (Optional)
+              Email
             </label>
             <input
               type="email"
@@ -136,6 +140,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               placeholder="Enter your email"
+              required
             />
           </div>
 

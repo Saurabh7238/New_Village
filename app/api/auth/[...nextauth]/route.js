@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
+import { normalizePhone } from "@/lib/phoneValidation";
 
 // --- NextAuth Configuration ---
 export const authOptions = {
@@ -11,12 +12,16 @@ export const authOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        email: { label: "Mobile or Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         try {
-          console.log(`[Auth] Attempting login for email: ${credentials.email}`);
+          const identifier = String(credentials.email || '').trim();
+          const normalizedIdentifier = identifier.includes('@')
+            ? identifier.toLowerCase()
+            : normalizePhone(identifier);
+          console.log(`[Auth] Attempting login for mobile/email: ${identifier}`);
           
           // Ensure database connection is ready
           try {
@@ -27,11 +32,13 @@ export const authOptions = {
             return null; 
           }
 
-          // Find user by email
-          const userFound = await User.findOne({ email: String(credentials.email || '').trim().toLowerCase() }).select('+password');
+          // Find the account by either registered email or mobile number.
+          const userFound = await User.findOne({
+            $or: [{ email: normalizedIdentifier }, { phone: normalizedIdentifier }],
+          }).select('+password');
 
           if (!userFound) {
-            console.log(`[Auth] User not found for email: ${credentials.email}`);
+            console.log(`[Auth] User not found for mobile/email: ${identifier}`);
             throw new Error("InvalidEmailOrPassword");
           }
 

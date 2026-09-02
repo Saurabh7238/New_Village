@@ -9,7 +9,7 @@ const getFriendlyAuthError = (authError) => {
   switch (authError) {
     case "CredentialsSignin":
     case "InvalidEmailOrPassword":
-      return "Incorrect email or password.";
+      return "Incorrect mobile/email or password.";
     case "Configuration":
       return "Authentication is currently unavailable. Please try again later.";
     default:
@@ -18,7 +18,7 @@ const getFriendlyAuthError = (authError) => {
 };
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -38,27 +38,22 @@ export default function LoginPage() {
     setError(null);
 
     // Validate inputs
-    if (!email || !password) {
-      setError("Please enter both email and password");
-      return;
-    }
-
-    if (!email.includes("@")) {
-      setError("Please enter a valid email");
+    if (!identifier || !password) {
+      setError("Please enter your mobile/email and password");
       return;
     }
 
     setLoading(true);
 
-    const trimmedEmail = email.trim();
+    const trimmedIdentifier = identifier.trim();
     const trimmedPassword = password.trim();
 
-    console.log("📧 Attempting login with:", { email: trimmedEmail, password: "***" });
+    console.log("Attempting login with mobile/email:", { identifier: trimmedIdentifier, password: "***" });
 
     try {
       const result = await signIn("credentials", {
         redirect: false,
-        email: trimmedEmail,
+        email: trimmedIdentifier,
         password: trimmedPassword,
       });
 
@@ -100,16 +95,16 @@ export default function LoginPage() {
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700">Mobile number or email</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               required
               disabled={loading}
-              placeholder="your-email@example.com"
-              autoComplete="email"
+              placeholder="Mobile number or email"
+              autoComplete="username"
             />
           </div>
           <div>
