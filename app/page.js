@@ -571,7 +571,7 @@ export default function HomePage() {
                 <p className="text-center text-xs text-emerald-700 dark:text-emerald-300">
                   {reviewFeedback}
                 </p>
-              )}If you want, I can apply that exact polishing pass now.
+              )}
             </form>
           </section>
         </div>
