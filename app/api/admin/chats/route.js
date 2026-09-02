@@ -19,7 +19,7 @@ function normalizeUserDetail(user) {
   };
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user?.role !== "admin") {
@@ -30,6 +30,9 @@ export async function GET() {
     }
 
     await dbConnect();
+
+    const { searchParams } = new URL(req.url);
+    const search = (searchParams.get("search") || "").trim().toLowerCase();
 
     const chats = await Chat.aggregate([
       { $sort: { createdAt: -1 } },
@@ -68,10 +71,58 @@ export async function GET() {
       };
     });
 
-    return Response.json(enrichedChats);
+    const filteredChats = !search
+      ? enrichedChats
+      : enrichedChats.filter((chat) => {
+          const userName = (chat.userName || "").toLowerCase();
+          const userPhone = (chat.userPhone || "").toLowerCase();
+          const userEmail = String(chat._id || "").toLowerCase();
+          return (
+            userName.includes(search) ||
+            userPhone.includes(search) ||
+            userEmail.includes(search)
+          );
+        });
+
+    return Response.json(filteredChats);
   } catch (error) {
     console.error("Failed to fetch chats:", error);
     return Response.json({ error: "Failed to fetch chats" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.role !== "admin") {
+      return Response.json(
+        { error: "Unauthorized. Admin access only." },
+        { status: 403 }
+      );
+    }
+
+    await dbConnect();
+    const { userId } = await req.json();
+
+    if (!userId) {
+      return Response.json(
+        { error: "Missing userId" },
+        { status: 400 }
+      );
+    }
+
+    const result = await Chat.deleteMany({ userId });
+
+    return Response.json({
+      success: true,
+      deletedCount: result.deletedCount || 0,
+    });
+  } catch (error) {
+    console.error("Failed to delete chat:", error);
+    return Response.json(
+      { error: "Failed to delete chat" },
+      { status: 500 }
+    );
   }
 }
 

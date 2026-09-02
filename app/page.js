@@ -19,6 +19,17 @@ export default function HomePage() {
   const { status: authStatus } = useSession();
   const [visitCount, setVisitCount] = useState(null);
   const [showBanner, setShowBanner] = useState(true);
+  const [homeSettings, setHomeSettings] = useState({
+    popupEnabled: true,
+    popupTitle: "Important Update",
+    popupMessage: "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
+    popupLink: "",
+    slides: [
+      { title: "Village Services", imageUrl: "/slide.png", alt: "Village services banner", href: "/grievance" },
+      { title: "Voter Services", imageUrl: "/voter.png", alt: "Voter services banner", href: "/voter" },
+      { title: "Panchayat Campus", imageUrl: "/panchayat.jpg", alt: "Panchayat campus banner", href: "/about" },
+    ],
+  });
   const [reviews, setReviews] = useState([]);
   const [reviewMessage, setReviewMessage] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
@@ -68,6 +79,32 @@ export default function HomePage() {
     }, 30000);
 
     return () => clearInterval(visitInterval);
+  }, []);
+
+  useEffect(() => {
+    const loadHomeSettings = async () => {
+      try {
+        const res = await fetch("/api/admin/home-settings");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.settings) {
+          setHomeSettings({
+            popupEnabled: Boolean(data.settings.popupEnabled),
+            popupTitle: data.settings.popupTitle || "Important Update",
+            popupMessage: data.settings.popupMessage || "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
+            popupLink: data.settings.popupLink || "",
+            slides: Array.isArray(data.settings.slides) && data.settings.slides.length
+              ? data.settings.slides
+              : homeSettings.slides,
+          });
+          setShowBanner(Boolean(data.settings.popupEnabled));
+        }
+      } catch (error) {
+        console.error("Failed to load home settings:", error);
+      }
+    };
+
+    loadHomeSettings();
   }, []);
 
   // Reviews: load on mount and refresh every 15s for real-time updates
@@ -212,16 +249,31 @@ export default function HomePage() {
     { title: "Rivers, Roads & Lights", hindi: "नदियां, सड़कें और लाइटें", href: "/infrastructure" },
   ];
 
-  const images = ["/slide.png", "/voter.png", "/panchayat.jpg"];
+  const images = homeSettings.slides.map((slide) => ({
+    ...slide,
+    imageUrl: slide.imageUrl || "/slide.png",
+    alt: slide.alt || slide.title || "Village highlight",
+    href: slide.href || "/",
+  }));
 
   return (
     <div className="relative isolate overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[38rem] bg-[radial-gradient(circle_at_8%_12%,rgba(167,243,208,.55),transparent_30%),radial-gradient(circle_at_92%_18%,rgba(186,230,253,.5),transparent_30%),linear-gradient(135deg,#f0fdf4,#f8fafc_48%,#ecfeff)] dark:bg-[radial-gradient(circle_at_8%_12%,rgba(6,78,59,.6),transparent_30%),radial-gradient(circle_at_92%_18%,rgba(12,74,110,.5),transparent_30%)]" />
       <div className="relative min-h-screen text-black dark:text-white">
         {/* Notification Banner */}
-        {showBanner && (
+        {showBanner && homeSettings.popupEnabled && (
           <div role="status" className="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 shadow-lg shadow-amber-950/5 backdrop-blur dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100 sm:items-center sm:px-5">
-            <span className="flex items-center gap-2 leading-5"><BellRing className="h-4 w-4 shrink-0" aria-hidden="true" />{t.bannerMessage}</span>
+            <span className="flex items-center gap-2 leading-5">
+              <BellRing className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {homeSettings.popupLink ? (
+                <Link href={homeSettings.popupLink} className="font-medium underline underline-offset-2">
+                  {homeSettings.popupTitle || t.bannerMessage}
+                </Link>
+              ) : (
+                <span>{homeSettings.popupTitle || t.bannerMessage}</span>
+              )}
+              <span className="text-amber-700 dark:text-amber-200">{homeSettings.popupMessage || t.bannerMessage}</span>
+            </span>
             <button
               onClick={() => setShowBanner(false)}
               className="shrink-0 rounded-lg bg-amber-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-800 dark:bg-amber-200 dark:text-amber-950 dark:hover:bg-amber-100"
@@ -267,15 +319,16 @@ export default function HomePage() {
                 animate={{ x: ["0%", "-100%"] }}
                 transition={{ ease: "linear", duration: 20, repeat: Infinity }}
               >
-                {[...images, ...images].map((src, idx) => (
-                  <Image
-                    key={idx}
-                    src={src}
-                    alt={`Chiutahara village highlight ${idx + 1}`}
-                    width={448}
-                    height={288}
-                    className="h-32 w-52 shrink-0 rounded-2xl object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] sm:h-40 sm:w-64"
-                  />
+                {[...images, ...images].map((slide, idx) => (
+                  <Link key={`${slide.imageUrl}-${idx}`} href={slide.href || "/" }>
+                    <Image
+                      src={slide.imageUrl}
+                      alt={slide.alt || `Chiutahara village highlight ${idx + 1}`}
+                      width={448}
+                      height={288}
+                      className="h-32 w-52 shrink-0 rounded-2xl object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] sm:h-40 sm:w-64"
+                    />
+                  </Link>
                 ))}
               </motion.div>
             </div>

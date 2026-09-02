@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MessageCircle, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -13,14 +13,19 @@ export default function AdminChats() {
   const [selectedUserInfo, setSelectedUserInfo] = useState(null);
   const [msgs, setMsgs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
 
-  // Fetch list of chats
-  useEffect(() => {
-    if (status !== "authenticated" || session?.user?.role !== "admin") return;
+  const fetchList = useCallback(
+    async (currentSearch = searchTerm) => {
+      const params = new URLSearchParams();
+      const trimmedSearch = currentSearch.trim();
+      if (trimmedSearch) params.set("search", trimmedSearch);
 
-    const fetchList = async () => {
+      const url = params.toString() ? `/api/admin/chats?${params.toString()}` : "/api/admin/chats";
+
       try {
-        const res = await fetch("/api/admin/chats");
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           setList(data);
@@ -28,12 +33,18 @@ export default function AdminChats() {
       } catch (error) {
         console.error("Failed to fetch chats:", error);
       }
-    };
+    },
+    [searchTerm]
+  );
 
-    fetchList();
-    const interval = setInterval(fetchList, 3000);
+  // Fetch list of chats
+  useEffect(() => {
+    if (status !== "authenticated" || session?.user?.role !== "admin") return;
+
+    fetchList(searchTerm);
+    const interval = setInterval(() => fetchList(searchTerm), 3000);
     return () => clearInterval(interval);
-  }, [status, session?.user?.role]);
+  }, [status, session?.user?.role, searchTerm, fetchList]);
 
   // Auth check
   if (status === "loading") {
@@ -81,6 +92,42 @@ export default function AdminChats() {
     return ticketMsg?.ticket || "No Ticket";
   };
 
+  const handleDeleteChat = async (userId, userName) => {
+    if (!userId) return;
+
+    const confirmed = window.confirm(
+      `Delete the chat history for ${userName || "this user"}?`
+    );
+
+    if (!confirmed) return;
+
+    setDeletingId(userId);
+    try {
+      const res = await fetch("/api/admin/chats", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Delete failed");
+      }
+
+      setList((prev) => prev.filter((chat) => chat._id !== userId));
+      if (selectedUser === userId) {
+        setSelectedUser(null);
+        setSelectedUserInfo(null);
+        setMsgs([]);
+      }
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+      alert("Unable to delete this chat. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -98,7 +145,14 @@ export default function AdminChats() {
           {/* LEFT: Chat List */}
           <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
             <div className="sticky top-0 p-4 bg-green-700 text-white font-bold">
-              User Queries ({list.length})
+              <div className="mb-3">User Queries ({list.length})</div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name or mobile"
+                className="w-full rounded-md border border-green-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400"
+              />
             </div>
 
             {list.length === 0 ? (
@@ -116,13 +170,21 @@ export default function AdminChats() {
                       : "hover:bg-gray-50 dark:hover:bg-gray-700"
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-start gap-2 mb-2">
                     <span className="font-bold text-sm text-gray-900 dark:text-white">
                       {chat.userName || (chat.ward ? `Ward ${chat.ward}` : "New User")}
                     </span>
-                    <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">
-                      {chat.ticket || "Pending"}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteChat(chat._id, chat.userName);
+                      }}
+                      disabled={deletingId === chat._id}
+                      className="rounded bg-red-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                    >
+                      {deletingId === chat._id ? "Deleting..." : "Delete"}
+                    </button>
                   </div>
                   <div className="text-[11px] text-gray-700 dark:text-gray-300 mb-1">
                     <div>{chat.userPhone || "Phone N/A"}</div>
@@ -162,15 +224,25 @@ export default function AdminChats() {
                       {getWardInfo()} • Ticket: {getTicketInfo()}
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      setSelectedUser(null);
-                      setSelectedUserInfo(null);
-                    }}
-                    className="p-1 hover:bg-slate-800 rounded"
-                  >
-                    <X size={20} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteChat(selectedUser, selectedUserInfo?.name || selectedUser)}
+                      disabled={deletingId === selectedUser}
+                      className="rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                    >
+                      {deletingId === selectedUser ? "Deleting..." : "Delete Chat"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedUser(null);
+                        setSelectedUserInfo(null);
+                      }}
+                      className="p-1 hover:bg-slate-800 rounded"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Messages */}

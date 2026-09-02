@@ -91,6 +91,9 @@ export default function AdminPanel() {
             <Link href="/admin/chats" className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               💬 Live Chats
             </Link>
+            <Link href="/admin/home" className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              🏠 Home Settings
+            </Link>
             <Link href="/admin/reviews" className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               ⭐ Reviews
             </Link>
