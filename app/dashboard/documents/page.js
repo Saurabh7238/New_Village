@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 export default function MyDocumentsPage() {
   const [user, setUser] = useState(null);
   const [documents, setDocuments] = useState([]);
+  const [documentType, setDocumentType] = useState('Personal document');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     Promise.all([fetch('/api/me'), fetch('/api/my-documents')])
@@ -18,6 +20,29 @@ export default function MyDocumentsPage() {
       .catch(() => {});
   }, []);
 
+  const uploadDocuments = async (event) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length || files.length > 5 || files.some((file) => !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+      setMessage('Choose up to five PDF, JPG, or PNG files under 5 MB each.');
+      return;
+    }
+    const encoded = await Promise.all(files.map((file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ fileName: file.name, fileUrl: reader.result, mimeType: file.type });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    })));
+    const response = await fetch('/api/my-documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ documentType, documents: encoded }) });
+    const data = await response.json();
+    setMessage(data.message || 'Unable to upload documents.');
+    if (response.ok) {
+      const refreshed = await fetch('/api/my-documents');
+      const refreshedData = refreshed.ok ? await refreshed.json() : {};
+      setDocuments(refreshedData.documents || []);
+      event.target.value = '';
+    }
+  };
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <Link href="/dashboard" className="text-sm font-semibold text-green-700 hover:underline">Back to Dashboard</Link>
@@ -26,6 +51,15 @@ export default function MyDocumentsPage() {
         <h1 className="mt-1 text-2xl font-bold">My Documents</h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Unique ID: {user?.uniqueId || 'Loading...'}</p>
         <p className="text-sm text-gray-600 dark:text-gray-300">Name: {user?.name || '-'} | Mobile: {user?.phone || '-'} | Aadhaar: {user?.aadhaarLast4 ? `XXXX-XXXX-${user.aadhaarLast4}` : 'Not available'}</p>
+      </section>
+      <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-900 dark:bg-amber-950/20">
+        <h2 className="text-lg font-bold">Upload Your Document</h2>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Only you can upload and view documents in this section. The Panchayat manages official documents separately.</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <input value={documentType} onChange={(event) => setDocumentType(event.target.value)} placeholder="Document type, e.g. Address proof" className="rounded border p-2" />
+          <input type="file" multiple accept="application/pdf,image/jpeg,image/png" onChange={uploadDocuments} className="rounded border bg-white p-2" />
+        </div>
+        {message && <p role="status" className="mt-2 text-sm text-amber-800">{message}</p>}
       </section>
       <section className="mt-6 space-y-3">
         {documents.length ? documents.map((document) => (
