@@ -320,13 +320,18 @@ export default function HomePage() {
                 transition={{ ease: "linear", duration: 20, repeat: Infinity }}
               >
                 {[...images, ...images].map((slide, idx) => (
-                  <Link key={`${slide.imageUrl}-${idx}`} href={slide.href || "/" }>
+                  <Link
+                    key={`${slide.imageUrl}-${idx}`}
+                    href={slide.href || "/"}
+                    className="relative block h-32 w-52 shrink-0 overflow-hidden rounded-2xl shadow-md transition-transform duration-300 hover:scale-[1.02] sm:h-40 sm:w-64"
+                  >
                     <Image
                       src={slide.imageUrl}
                       alt={slide.alt || `Chiutahara village highlight ${idx + 1}`}
                       width={448}
                       height={288}
-                      className="h-32 w-52 shrink-0 rounded-2xl object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] sm:h-40 sm:w-64"
+                      className="h-full w-full object-cover object-center"
+                      sizes="(max-width: 640px) 52vw, 16rem"
                     />
                   </Link>
                 ))}
