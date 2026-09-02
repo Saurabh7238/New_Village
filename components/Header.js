@@ -24,6 +24,8 @@ export default function Header() {
   const [darkMode, setDarkMode] = useState(false);
   const [largeText, setLargeText] = useState(false);
   const notificationRef = useRef(null);
+  const menuButtonRef = useRef(null);
+  const menuPanelRef = useRef(null);
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -40,6 +42,21 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const closeMenuOutside = (event) => {
+      const clickedInsideMenu = menuButtonRef.current?.contains(event.target) || menuPanelRef.current?.contains(event.target);
+      if (!clickedInsideMenu) {
+        setOpen(false);
+        setOpenSubmenu(null);
+      }
+    };
+
+    document.addEventListener("mousedown", closeMenuOutside);
+    return () => document.removeEventListener("mousedown", closeMenuOutside);
+  }, [open]);
 
   useEffect(() => {
     if (status !== "authenticated" || session?.user?.role !== "admin") {
@@ -338,6 +355,7 @@ export default function Header() {
             )}
           </div>
           <button
+            ref={menuButtonRef}
             onClick={() => {
               setShowNotifications(false);
               setOpen(!open);
@@ -353,6 +371,7 @@ export default function Header() {
           <AnimatePresence>
             {open && (
               <motion.div
+                ref={menuPanelRef}
                 id="main-menu"
                 initial={{ opacity: 0, y: -10, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
