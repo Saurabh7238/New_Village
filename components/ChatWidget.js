@@ -15,6 +15,38 @@ export default function ChatWidget() {
   const [quickReplies, setQuickReplies] = useState([]);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const messagesEndRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const lastMessageSignatureRef = useRef("");
+
+  const playChatTone = (type = "incoming") => {
+    if (typeof window === "undefined") return;
+
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor) return;
+
+    const audioContext = audioContextRef.current ?? new AudioCtor();
+    audioContextRef.current = audioContext;
+
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = type === "sent" ? "triangle" : "sine";
+    oscillator.frequency.value = type === "sent" ? 720 : 520;
+
+    gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.05, audioContext.currentTime + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.14);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.15);
+  };
 
   // Fetch messages only if authenticated
   useEffect(() => {
@@ -25,11 +57,21 @@ export default function ChatWidget() {
         const res = await fetch(`/api/chat`);
         if (res.status === 401) {
           setMessages([]);
+          lastMessageSignatureRef.current = "";
           return;
         }
         if (res.ok) {
           const data = await res.json();
+          const signature = JSON.stringify(data);
+          const hasNewMessage = signature !== lastMessageSignatureRef.current && Array.isArray(data) && data.length > 0;
+
           setMessages(data);
+          lastMessageSignatureRef.current = signature;
+
+          if (hasNewMessage) {
+            playChatTone(data[data.length - 1]?.sender === "user" ? "sent" : "incoming");
+          }
+
           scrollToBottom();
         }
       } catch (error) {
@@ -74,11 +116,13 @@ export default function ChatWidget() {
       if (res.ok) {
         const data = await res.json();
         setQuickReplies(data.quickReplies || []);
-        
+        playChatTone("sent");
+
         const messagesRes = await fetch(`/api/chat`);
         if (messagesRes.ok) {
           const updatedMessages = await messagesRes.json();
           setMessages(updatedMessages);
+          lastMessageSignatureRef.current = JSON.stringify(updatedMessages);
           scrollToBottom();
         }
       }
