@@ -85,6 +85,19 @@ export default function InfrastructureCategoryPage({ type, title, description })
   const labels = language === "hi"
     ? { search: "नाम या स्थान खोजें", all: "सभी स्थिति", noResults: "कोई रिकॉर्ड नहीं मिला।", map: "मानचित्र पर देखें", progress: "प्रगति", budget: "स्वीकृत बजट", spent: "खर्च", maintenance: "अगली देखभाल" }
     : { search: "Search by name or location", all: "All statuses", noResults: "No matching records found.", map: "View on map", progress: "Progress", budget: "Approved budget", spent: "Spent", maintenance: "Next maintenance" };
+  const grievanceCategory = type === "Road"
+    ? "Road"
+    : type === "Street Light"
+      ? "Street Light"
+      : ["Water Pump", "Water Tank", "Irrigation Project", "River Monitoring"].includes(type)
+        ? "Water"
+        : type === "Primary Health Center"
+          ? "Health/PHC"
+          : type === "Primary School"
+            ? "School"
+            : type === "Sanitation Unit"
+              ? "Drainage"
+              : "Others";
 
   return (
     <div className="pt-36 max-w-6xl mx-auto px-4">
@@ -105,7 +118,7 @@ export default function InfrastructureCategoryPage({ type, title, description })
         <p className="text-sm text-amber-900">
           {language === "hi" ? "कोई सुविधा खराब है? पंचायत को सूचित करें।" : "Is something broken? Report it to the Panchayat."}
         </p>
-        <Link href={`/grievance?category=Infrastructure&subject=${encodeURIComponent(title)}`} className="rounded bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800">
+        <Link href={`/grievance?category=${encodeURIComponent(grievanceCategory)}&subject=${encodeURIComponent(title)}`} className="rounded bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800">
           {language === "hi" ? "समस्या की रिपोर्ट करें" : "Report a problem"}
         </Link>
       </div>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme } from "@/app/theme-provider";
 import { QUERY_CATEGORIES } from "@/lib/queryDisplay";
@@ -11,6 +11,7 @@ import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function GrievancePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { status } = useSession();
   const { isDark } = useTheme();
   const [step, setStep] = useState("form");
@@ -31,6 +32,8 @@ export default function GrievancePage() {
 
   useEffect(() => {
     generateCaptcha();
+    const category = searchParams.get('category');
+    const subject = searchParams.get('subject');
     const saved = window.sessionStorage.getItem('pendingQuery');
     if (saved) {
       try {
@@ -39,7 +42,10 @@ export default function GrievancePage() {
         if (parsed.photo) setPhotoPreview(parsed.photo);
       } catch { window.sessionStorage.removeItem('pendingQuery'); }
     }
-  }, []);
+    if (category && QUERY_CATEGORIES.includes(category)) {
+      setFormData((current) => ({ ...current, category, ...(subject ? { subject } : {}) }));
+    }
+  }, [searchParams]);
   useEffect(() => {
     if (status === 'authenticated') {
       fetch('/api/me').then((res) => res.json()).then((data) => {
