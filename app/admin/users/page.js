@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const formatDate = (value) => value ? new Date(value).toLocaleDateString() : '-';
 
@@ -10,6 +10,17 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      setLoading(true);
+      const response = await fetch('/api/admin/users');
+      const data = response.ok ? await response.json() : {};
+      setUsers(data.users || []);
+      setLoading(false);
+    };
+    loadUsers();
+  }, []);
 
   const searchUsers = async (event) => {
     event?.preventDefault();

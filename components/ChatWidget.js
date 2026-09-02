@@ -17,6 +17,7 @@ export default function ChatWidget() {
   const messagesEndRef = useRef(null);
   const audioContextRef = useRef(null);
   const lastMessageSignatureRef = useRef("");
+  const chatWidgetRef = useRef(null);
 
   const playChatTone = (type = "incoming") => {
     if (typeof window === "undefined") return;
@@ -84,6 +85,20 @@ export default function ChatWidget() {
     return () => clearInterval(interval);
   }, [status]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOutsideClick = (event) => {
+      if (!chatWidgetRef.current?.contains(event.target)) {
+        setIsOpen(false);
+        setShowLoginPrompt(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [isOpen]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -136,7 +151,7 @@ export default function ChatWidget() {
   if (status === "loading") return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 font-sans">
+    <div ref={chatWidgetRef} className="fixed bottom-5 right-5 z-40 font-sans">
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
