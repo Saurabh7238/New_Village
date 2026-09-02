@@ -3,6 +3,7 @@ import connectDB from '@/lib/dbConnect';
 import Application from '@/models/Application';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
+import CitizenDocument from '@/models/CitizenDocument';
 
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
 const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
@@ -62,6 +63,15 @@ export async function POST(request, { params }) {
       },
       { new: true }
     ).lean();
+    await CitizenDocument.insertMany(safeDocuments.map((document) => ({
+      userId: session.user.id,
+      applicationId: application._id,
+      documentType: `${application.serviceType.replace(/-/g, ' ')} supporting document`,
+      fileName: document.fileName,
+      fileUrl: document.fileUrl,
+      mimeType: document.mimeType,
+      uploadedBy: 'citizen',
+    })));
 
     await writeAuditLog({
       session,

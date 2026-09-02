@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  fatherName: { type: String, trim: true, default: '' },
   email: { type: String, trim: true, lowercase: true, unique: true, sparse: true },
   phone: { type: String, required: true, unique: true },
   password: { type: String, select: false }, // Optional for OTP-based registration

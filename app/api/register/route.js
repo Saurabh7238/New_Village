@@ -10,7 +10,7 @@ export async function POST(req) {
   await dbConnect();
 
   try {
-    const { name, email: rawEmail, phone: rawPhone, password, ward, aadhaarNumber, profilePhoto } = await req.json();
+    const { name, fatherName, email: rawEmail, phone: rawPhone, password, ward, aadhaarNumber, profilePhoto } = await req.json();
     const email = rawEmail?.trim().toLowerCase() || null;
 
     const phone = normalizePhone(rawPhone);
@@ -66,6 +66,7 @@ export async function POST(req) {
 
     const user = await User.create({
       name: name.trim(),
+      fatherName: typeof fatherName === 'string' ? fatherName.trim() : '',
       email,
       phone,
       password: hashedPassword,

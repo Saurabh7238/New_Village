@@ -112,6 +112,9 @@ export default function AdminPanel() {
             <Link href="/admin/infrastructure" className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               🏗️ Infrastructure
             </Link>
+            <Link href="/admin/documents" className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+              📁 Citizen Documents
+            </Link>
             <Link href="/admin/voters" className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
               🗳️ Voters
             </Link>

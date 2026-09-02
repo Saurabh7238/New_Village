@@ -12,6 +12,7 @@ export default function DeathPage() {
       title: 'Death Certificates',
       description: 'Apply with the deceased person’s details. Contact details are prefilled and can be updated.',
       applicantAge: 'Applicant Age',
+      gender: 'Gender',
       deceasedName: 'Deceased Person Name',
       dateOfDeath: 'Date of Death',
       placeOfDeath: 'Place of Death',
@@ -23,6 +24,7 @@ export default function DeathPage() {
       title: 'मृत्यु प्रमाण पत्र',
       description: 'मृत व्यक्ति की जानकारी के साथ आवेदन करें। संपर्क विवरण पहले से भरे हुए हैं और आवश्यकतानुसार अपडेट किया जा सकता है।',
       applicantAge: 'आवेदक की आयु',
+      gender: 'लिंग',
       deceasedName: 'मृतक का नाम',
       dateOfDeath: 'मृत्यु की तिथि',
       placeOfDeath: 'मृत्यु स्थान',
@@ -45,6 +47,7 @@ export default function DeathPage() {
           requiredDocuments={['Medical death certificate or other death proof']}
           fields={[
             { name: 'applicantAge', label: t.applicantAge, type: 'number', required: true },
+            { name: 'gender', label: t.gender, type: 'select', required: true, options: [{ value: 'male', label: language === 'hi' ? 'पुरुष' : 'Male' }, { value: 'female', label: language === 'hi' ? 'महिला' : 'Female' }, { value: 'other', label: language === 'hi' ? 'अन्य' : 'Other' }] },
             { name: 'deceasedName', label: t.deceasedName, required: true },
             { name: 'dateOfDeath', label: t.dateOfDeath, type: 'date', required: true, max: today },
             { name: 'placeOfDeath', label: t.placeOfDeath, required: true },

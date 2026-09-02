@@ -18,7 +18,9 @@ export async function POST(request) {
         const { 
             id, // only present for PUT requests
             title, description, type, status, location, cost, 
-            installationDate, image, details // 'details' is the object with specific data
+            installationDate, expectedCompletionDate, lastMaintenanceDate, nextMaintenanceDate,
+            completionPercentage, fundingScheme, approvedBudget, amountSpent, implementingAgency,
+            image, beforeImage, afterImage, details // 'details' is the object with specific data
         } = data;
 
         if (id && !mongoose.Types.ObjectId.isValid(id)) {
@@ -28,7 +30,9 @@ export async function POST(request) {
         // Common payload structure
         const payload = {
             title, description, type, status, location, cost, 
-            installationDate, image, details
+            installationDate, expectedCompletionDate, lastMaintenanceDate, nextMaintenanceDate,
+            completionPercentage, fundingScheme, approvedBudget, amountSpent, implementingAgency,
+            image, beforeImage, afterImage, details
         };
 
         let savedItem;

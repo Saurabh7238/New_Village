@@ -4,7 +4,7 @@ import User from '@/models/User';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import { isValidIndianMobile, normalizePhone } from '@/lib/phoneValidation';
 
-const PROFILE_FIELDS = 'name phone email village ward address profilePhoto uniqueId role status aadhaarLast4 createdAt';
+const PROFILE_FIELDS = 'name fatherName phone email village ward address profilePhoto uniqueId role status aadhaarLast4 createdAt';
 
 export async function GET() {
   try {
@@ -30,6 +30,7 @@ export async function PATCH(request) {
     const body = await request.json();
     const update = {};
     if (typeof body.name === 'string' && body.name.trim()) update.name = body.name.trim();
+    if (typeof body.fatherName === 'string') update.fatherName = body.fatherName.trim();
     if (typeof body.village === 'string') update.village = body.village.trim();
     if (typeof body.address === 'string') update.address = body.address.trim();
     if (typeof body.profilePhoto === 'string') update.profilePhoto = body.profilePhoto.trim().slice(0, 2000) || null;

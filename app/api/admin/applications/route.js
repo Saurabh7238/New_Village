@@ -6,6 +6,7 @@ import ServiceNotification from '@/models/ServiceNotification';
 import { requireAdminSession } from '@/lib/adminAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 import { emitApplicationUpdated, emitDocumentRequested } from '@/lib/socketEmitter';
+import CitizenDocument from '@/models/CitizenDocument';
 
 const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Updated', 'Approved', 'Rejected', 'Completed'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -61,6 +62,22 @@ export async function PUT(request) {
     application.requestedDocuments = nextRequestedDocuments;
     application.reviewedBy = session.user.id;
     await application.save();
+    if (documentsChanged && nextAdminDocuments.length) {
+      const existingVaultDocuments = await CitizenDocument.find({ applicationId: application._id, uploadedBy: 'admin' }).select('fileUrl').lean();
+      const existingUrls = new Set(existingVaultDocuments.map((document) => document.fileUrl));
+      const newVaultDocuments = nextAdminDocuments
+        .filter((document) => !existingUrls.has(document.fileUrl))
+        .map((document) => ({
+          userId: application.userId,
+          applicationId: application._id,
+          documentType: `${application.serviceType.replace(/-/g, ' ')} official document`,
+          fileName: document.fileName,
+          fileUrl: document.fileUrl,
+          mimeType: document.mimeType,
+          uploadedBy: 'admin',
+        }));
+      if (newVaultDocuments.length) await CitizenDocument.insertMany(newVaultDocuments);
+    }
     await writeAuditLog({ session, action: 'Application updated', details: { applicationId: application._id.toString(), applicationNumber: application.applicationNumber, status, requestedDocuments: nextRequestedDocuments } });
 
     if (statusChanged || remarksChanged || documentsChanged || requestedDocumentsChanged) {

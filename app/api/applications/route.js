@@ -7,6 +7,7 @@ import AdminNotification from '@/models/AdminNotification';
 import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
+import CitizenDocument from '@/models/CitizenDocument';
 
 const SERVICE_TYPES = ['birth-certificate', 'death-certificate', 'aadhaar-request', 'voter-request', 'other'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -71,6 +72,17 @@ export async function POST(request) {
       formData: { ...formData, applicant: { name: user.name, email: user.email || '', phone: user.phone, aadhaarLast4: user.aadhaarLast4 || null } },
       documents: safeDocuments,
     });
+    if (safeDocuments.length) {
+      await CitizenDocument.insertMany(safeDocuments.map((document) => ({
+        userId: user._id,
+        applicationId: application._id,
+        documentType: serviceType.replace(/-/g, ' '),
+        fileName: document.fileName,
+        fileUrl: document.fileUrl,
+        mimeType: document.mimeType,
+        uploadedBy: 'citizen',
+      })));
+    }
     
     await writeAuditLog({ session, action: 'Service application submitted', details: { applicationId: application._id.toString(), applicationNumber, serviceType } });
 

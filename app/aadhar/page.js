@@ -12,6 +12,7 @@ export default function AadharPage() {
       title: 'Aadhaar Create / Update',
       description: 'Request assistance for Aadhaar services. Your number is never displayed in full.',
       applicantAge: 'Applicant Age',
+      gender: 'Gender',
       requestType: 'Request Type (new / update / correction)',
       preferredVisitDate: 'Preferred Visit Date',
       requestDetails: 'Request Details',
@@ -20,6 +21,7 @@ export default function AadharPage() {
       title: 'आधार बनाएं / अपडेट करें',
       description: 'आधार सेवाओं के लिए सहायता का अनुरोध करें। आपका मोबाइल नंबर पूर्ण रूप से सार्वजनिक नहीं किया जाता है।',
       applicantAge: 'आवेदक की आयु',
+      gender: 'लिंग',
       requestType: 'अनुरोध का प्रकार (नया / अपडेट / सुधार)',
       preferredVisitDate: 'पसंदीदा विज़िट तिथि',
       requestDetails: 'अनुरोध का विवरण',
@@ -39,6 +41,7 @@ export default function AadharPage() {
           requiredDocuments={['Identity or address proof']}
           fields={[
             { name: 'applicantAge', label: t.applicantAge, type: 'number', required: true },
+            { name: 'gender', label: t.gender, type: 'select', required: true, options: [{ value: 'male', label: language === 'hi' ? 'पुरुष' : 'Male' }, { value: 'female', label: language === 'hi' ? 'महिला' : 'Female' }, { value: 'other', label: language === 'hi' ? 'अन्य' : 'Other' }] },
             { name: 'requestType', label: t.requestType, required: true },
             { name: 'preferredVisitDate', label: t.preferredVisitDate, type: 'date', required: false, max: today },
             { name: 'details', label: t.requestDetails, multiline: true, required: true },

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useToast, ToastContainer } from './Toast';
 import LoginRequiredModal from './LoginRequiredModal';
 import DocumentChecklist from './DocumentChecklist';
+import { useLanguage } from '@/app/language-provider';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -33,8 +34,10 @@ export default function ServiceApplicationForm({
   includeContactFields = false,
 }) {
   const { status } = useSession();
+  const { language } = useLanguage();
   const { toasts, addToast, removeToast } = useToast();
   const [values, setValues] = useState({});
+  const [dateErrors, setDateErrors] = useState({});
   const [documents, setDocuments] = useState([]);
   const [applications, setApplications] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -245,6 +248,8 @@ export default function ServiceApplicationForm({
           const isBirthDob = field.name === 'dateOfBirth' || field.name === 'dob';
           const isBirthAge = serviceType === 'birth-certificate' && field.name === 'applicantAge';
           const inputMax = isBirthDob ? todayString : field.max;
+          const isFutureDateRestricted = field.type === 'date' && Boolean(inputMax);
+          const dateError = dateErrors[field.name];
 
           return (
             <div key={field.name}>
@@ -259,8 +264,23 @@ export default function ServiceApplicationForm({
                   className="mt-1 w-full rounded border p-2"
                   rows="3"
                 />
+              ) : field.type === 'select' ? (
+                <select
+                  required={field.required}
+                  value={values[field.name] || ''}
+                  onChange={(e) => setValues({ ...values, [field.name]: e.target.value })}
+                  className="mt-1 w-full rounded border bg-white p-2"
+                >
+                  <option value="">{field.placeholder || 'Select'}</option>
+                  {(field.options || []).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <input
+                  aria-describedby={dateError ? `${field.name}-error` : undefined}
                   type={field.type || 'text'}
                   min={field.min}
                   max={inputMax}
@@ -269,6 +289,22 @@ export default function ServiceApplicationForm({
                   value={values[field.name] || ''}
                   onChange={(e) => {
                     const nextValue = e.target.value;
+                    if (isFutureDateRestricted && nextValue > inputMax) {
+                      setDateErrors((current) => ({
+                        ...current,
+                        [field.name]: language === 'hi'
+                          ? 'भविष्य की तिथि चुनना संभव नहीं है। कृपया आज या उससे पहले की तिथि चुनें।'
+                          : 'Future date cannot be selected. Please choose today or an earlier date.',
+                      }));
+                      return;
+                    }
+
+                    setDateErrors((current) => {
+                      if (!current[field.name]) return current;
+                      const nextErrors = { ...current };
+                      delete nextErrors[field.name];
+                      return nextErrors;
+                    });
                     setValues((current) => {
                       const nextData = { ...current, [field.name]: nextValue };
 
@@ -284,6 +320,11 @@ export default function ServiceApplicationForm({
                   }}
                   className="mt-1 w-full rounded border p-2"
                 />
+              )}
+              {dateError && (
+                <p id={`${field.name}-error`} role="alert" className="mt-1 text-sm text-red-600">
+                  {dateError}
+                </p>
               )}
             </div>
           );
