@@ -71,6 +71,29 @@ export default function AdminAppointmentsPage() {
     }
   };
 
+  const deleteAppointment = async (appointment) => {
+    const confirmed = window.confirm(`Archive appointment ${appointment.appointmentNumber}? It will be hidden from active appointments but kept in history.`);
+    if (!confirmed) return;
+
+    setSavingId(appointment.id);
+    setMessage('');
+    try {
+      const response = await fetch('/api/admin/appointments', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: appointment.id }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      setMessage(`Appointment ${appointment.appointmentNumber} archived successfully.`);
+      fetchAppointments();
+    } catch (error) {
+      setMessage(error.message || 'Unable to delete appointment.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   if (authStatus === 'loading') return <div className="p-8 text-center">Loading…</div>;
   if (authStatus === 'unauthenticated' || session?.user?.role !== 'admin') {
     return <div className="min-h-screen p-8 text-center text-red-600">Access denied.</div>;
@@ -211,13 +234,22 @@ export default function AdminAppointmentsPage() {
                       />
                     </td>
                     <td className="p-3 text-center">
-                      <button
-                        onClick={() => saveAppointment(appointment)}
-                        disabled={savingId === appointment.id}
-                        className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50 whitespace-nowrap"
-                      >
-                        {savingId === appointment.id ? 'Saving...' : 'Save'}
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => saveAppointment(appointment)}
+                          disabled={savingId === appointment.id}
+                          className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {savingId === appointment.id ? 'Saving...' : 'Save'}
+                        </button>
+                        <button
+                          onClick={() => deleteAppointment(appointment)}
+                          disabled={savingId === appointment.id}
+                          className="rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -314,14 +346,22 @@ export default function AdminAppointmentsPage() {
                     />
                   </div>
 
-                  {/* Save Button */}
-                  <button
-                    onClick={() => saveAppointment(appointment)}
-                    disabled={savingId === appointment.id}
-                    className="w-full rounded bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700 disabled:opacity-50 font-medium"
-                  >
-                    {savingId === appointment.id ? 'Saving...' : 'Save Changes'}
-                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => saveAppointment(appointment)}
+                      disabled={savingId === appointment.id}
+                      className="w-full rounded bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700 disabled:opacity-50 font-medium"
+                    >
+                      {savingId === appointment.id ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => deleteAppointment(appointment)}
+                      disabled={savingId === appointment.id}
+                      className="w-full rounded bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50 font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))

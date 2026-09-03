@@ -13,5 +13,15 @@ export async function GET(request) {
   const limit = Math.min(200, Math.max(1, Number(searchParams.get('limit')) || 100));
   const filter = action ? { action: { $regex: action, $options: 'i' } } : {};
   const logs = await AuditLog.find(filter).sort({ timestamp: -1 }).limit(limit).lean();
-  return NextResponse.json({ logs: logs.map((log) => ({ ...log, id: log._id.toString() })) });
+
+  return NextResponse.json({
+    logs: logs.map((log) => ({
+      ...log,
+      id: log._id.toString(),
+      userId: log.userId ? log.userId.toString() : null,
+      userName: log.userName || 'System',
+      uniqueId: log.uniqueId || 'system',
+      details: log.details || {},
+    }))
+  });
 }

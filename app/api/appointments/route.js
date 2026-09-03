@@ -11,7 +11,7 @@ export async function GET() {
   const session = await requireAuthenticatedSession();
   if (!session) return NextResponse.json({ message: 'Please sign in to view appointments.' }, { status: 401 });
   await connectDB();
-  const appointments = await Appointment.find({ userId: session.user.id }).sort({ appointmentDate: -1 }).lean();
+  const appointments = await Appointment.find({ userId: session.user.id, archivedAt: null }).sort({ appointmentDate: -1 }).lean();
   return NextResponse.json({ appointments: appointments.map((item) => ({ ...item, id: item._id.toString() })) });
 }
 
@@ -25,7 +25,7 @@ export async function POST(request) {
     const user = await User.findById(session.user.id).select('status').lean();
     // Older accounts predate the status field; they are active unless explicitly disabled.
     if (!user || (user.status && user.status !== 'active')) return NextResponse.json({ message: 'Your account is unavailable.' }, { status: 403 });
-    const previousBooking = await Appointment.findOne({ userId: user._id, createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }).select('_id').lean();
+    const previousBooking = await Appointment.findOne({ userId: user._id, archivedAt: null, createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }).select('_id').lean();
     if (previousBooking) return NextResponse.json({ message: 'You can book your next appointment 24 hours after your previous booking.' }, { status: 429 });
     const appointmentNumber = `APT-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const appointment = await Appointment.create({ appointmentNumber, userId: user._id, service: 'General Panchayat Appointment', appointmentDate: new Date(), appointmentTime: 'Pending scheduling', purpose: purpose.trim() });

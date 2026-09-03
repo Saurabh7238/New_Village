@@ -2,12 +2,15 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { ToastContainer, useToast } from '@/components/Toast';
 
 export default function MyDocumentsPage() {
+  const { toasts, addToast, removeToast } = useToast();
   const [user, setUser] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [documentType, setDocumentType] = useState('Personal document');
   const [message, setMessage] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     Promise.all([fetch('/api/me'), fetch('/api/my-documents')])
@@ -43,8 +46,36 @@ export default function MyDocumentsPage() {
     }
   };
 
+  const deleteDocument = async (documentId) => {
+    const confirmed = window.confirm('Delete this uploaded document?');
+    if (!confirmed) return;
+
+    setDeletingId(documentId);
+    setMessage('');
+
+    try {
+      const response = await fetch(`/api/my-documents/${documentId}`, { method: 'DELETE' });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to delete document.');
+      }
+
+      setDocuments((current) => current.filter((document) => document.id !== documentId));
+      setMessage(data.message || 'Document deleted successfully.');
+      addToast(data.message || 'Document deleted successfully.', 'success');
+    } catch (error) {
+      setMessage(error.message || 'Unable to delete document.');
+      addToast(error.message || 'Unable to delete document.', 'error');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} isDark={false} />
+      <main className="mx-auto max-w-5xl px-4 py-8">
       <Link href="/dashboard" className="text-sm font-semibold text-green-700 hover:underline">Back to Dashboard</Link>
       <section className="mt-4 rounded-xl border border-green-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <p className="text-sm font-semibold text-green-700">Citizen Document Vault</p>
@@ -65,10 +96,24 @@ export default function MyDocumentsPage() {
         {documents.length ? documents.map((document) => (
           <article key={document.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div><p className="font-semibold">{document.documentType}</p><p className="text-sm text-gray-500">{document.fileName} | {document.uploadedBy === 'admin' ? 'Panchayat office' : 'Uploaded by you'}</p></div>
-            <a href={document.viewUrl} target="_blank" rel="noreferrer" className="rounded bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-800">View / Download</a>
+            <div className="flex flex-wrap items-center gap-2">
+              <a href={document.viewUrl} target="_blank" rel="noreferrer" className="rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">View</a>
+              <a href={document.viewUrl} download={document.fileName || 'document'} className="rounded bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-800">Download</a>
+              {document.uploadedBy === 'citizen' && (
+                <button
+                  type="button"
+                  onClick={() => deleteDocument(document.id)}
+                  disabled={deletingId === document.id}
+                  className="rounded bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                >
+                  {deletingId === document.id ? 'Deleting...' : 'Delete'}
+                </button>
+              )}
+            </div>
           </article>
         )) : <p className="rounded border border-dashed p-5 text-sm text-gray-600">No documents are stored in your vault yet.</p>}
       </section>
-    </main>
+      </main>
+    </>
   );
 }

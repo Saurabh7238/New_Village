@@ -7,12 +7,13 @@ import { v4 as uuidv4 } from "uuid";
 import { isValidIndianMobile, normalizePhone } from "@/lib/phoneValidation";
 import Member from "@/models/Member";
 import { createHash } from "crypto";
+import { findMemberMatch } from "@/lib/memberRegistrationMatch";
 
 export async function POST(req) {
   await dbConnect();
 
   try {
-    const { name, fatherName, uniqueId: requestedUniqueId, email: rawEmail, phone: rawPhone, password, ward, aadhaarNumber, profilePhoto } = await req.json();
+    const { name, fatherName, email: rawEmail, phone: rawPhone, password, ward, aadhaarNumber, profilePhoto } = await req.json();
     const email = rawEmail?.trim().toLowerCase() || null;
 
     const phone = normalizePhone(rawPhone);
@@ -79,21 +80,20 @@ export async function POST(req) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const aadhaarHash = normalizedAadhaar ? await bcrypt.hash(normalizedAadhaar, 10) : null;
-    const normalizedUniqueId = String(requestedUniqueId || '').trim().toUpperCase();
-    const linkedMember = normalizedUniqueId ? await Member.findOne({ uniqueId: normalizedUniqueId }).select('+aadhaarFingerprint') : null;
-    if (normalizedUniqueId && !linkedMember) {
-      return NextResponse.json({ error: "Member ID was not found." }, { status: 400 });
+    const members = await Member.find({}).select('+aadhaarFingerprint');
+    const matchedMember = findMemberMatch({
+      name,
+      fatherName,
+      phone,
+      aadhaarFingerprint,
+      members,
+    });
+
+    if (matchedMember?.userId) {
+      return NextResponse.json({ error: "This Panchayat member is already registered as a user." }, { status: 400 });
     }
-    if (linkedMember) {
-      const sameIdentity = linkedMember.fullName.trim().toLowerCase() === name.trim().toLowerCase()
-        && String(linkedMember.fatherHusbandName || '').trim().toLowerCase() === fatherName.trim().toLowerCase()
-        && normalizePhone(linkedMember.mobileNumber) === phone;
-      if (!sameIdentity || (linkedMember.aadhaarFingerprint && linkedMember.aadhaarFingerprint !== aadhaarFingerprint)) {
-        return NextResponse.json({ error: "Member ID details do not match the submitted identity." }, { status: 400 });
-      }
-      if (linkedMember.userId) return NextResponse.json({ error: "This member ID is already linked to a user account." }, { status: 400 });
-    }
-    const uniqueId = linkedMember?.uniqueId || `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
+
+    const uniqueId = matchedMember?.uniqueId || `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
 
     const user = await User.create({
       name: name.trim(),
@@ -112,8 +112,8 @@ export async function POST(req) {
       uniqueId,
     });
 
-    if (linkedMember) {
-      await Member.findByIdAndUpdate(linkedMember._id, { userId: user._id, uniqueId: user.uniqueId });
+    if (matchedMember) {
+      await Member.findByIdAndUpdate(matchedMember._id, { userId: user._id, uniqueId: user.uniqueId });
     }
 
     await AuditLog.create({

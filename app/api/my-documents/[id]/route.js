@@ -24,3 +24,26 @@ export async function GET(_request, { params }) {
     },
   });
 }
+
+export async function DELETE(_request, { params }) {
+  const session = await requireAuthenticatedSession();
+  if (!session) return NextResponse.json({ message: 'Please sign in.' }, { status: 401 });
+
+  const { id } = await params;
+  if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ message: 'Invalid document ID.' }, { status: 400 });
+
+  await connectDB();
+  const document = await CitizenDocument.findOne({ _id: id, userId: session.user.id }).lean();
+
+  if (!document) {
+    return NextResponse.json({ message: 'Document not found or you cannot delete it.' }, { status: 404 });
+  }
+
+  if (document.uploadedBy !== 'citizen') {
+    return NextResponse.json({ message: 'Only documents uploaded by you can be deleted.' }, { status: 403 });
+  }
+
+  await CitizenDocument.deleteOne({ _id: id, userId: session.user.id });
+
+  return NextResponse.json({ message: 'Document deleted successfully.' });
+}

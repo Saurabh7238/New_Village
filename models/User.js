@@ -17,6 +17,7 @@ const UserSchema = new mongoose.Schema({
   aadhaarHash: { type: String, select: false, default: null },
   aadhaarFingerprint: { type: String, select: false, unique: true, sparse: true, default: null },
   aadhaarLast4: { type: String, default: null },
+  dateOfBirth: { type: Date, default: null },
   profilePhoto: { type: String, default: null },
   status: { type: String, enum: ["active", "inactive", "suspended"], default: "active", index: true },
 }, { timestamps: true });

@@ -8,7 +8,6 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
     fatherName: "",
-    uniqueId: "",
     email: "",
     phone: "",
     password: "",
@@ -75,7 +74,6 @@ export default function RegisterPage() {
         body: JSON.stringify({
           name: formData.name,
           fatherName: formData.fatherName,
-          uniqueId: formData.uniqueId,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
@@ -124,11 +122,6 @@ export default function RegisterPage() {
               placeholder="Enter your full name"
               required
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Member ID (if provided)</label>
-            <input type="text" name="uniqueId" value={formData.uniqueId} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200" placeholder="Example: GP-12AB34CD" />
           </div>
 
           <div>

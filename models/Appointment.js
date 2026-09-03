@@ -11,6 +11,8 @@ const AppointmentSchema = new mongoose.Schema({
   purpose: { type: String, trim: true, maxlength: 1000, required: true },
   status: { type: String, enum: ['Pending', 'Approved', 'Rejected', 'Rescheduled', 'Cancelled', 'Completed'], default: 'Pending', index: true },
   adminRemarks: { type: String, default: '' },
+  archivedAt: { type: Date, default: null, index: true },
+  archivedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   statusHistory: [{
     status: String,
