@@ -9,33 +9,15 @@ export function PWAProvider({ children }) {
   const [installed, setInstalled] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [swRegistration, setSwRegistration] = useState(null);
 
   useEffect(() => {
-    // Register service worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js', { scope: '/' })
-        .then((registration) => {
-          setSwRegistration(registration);
-          console.log('Service Worker registered');
-
-          // Check for updates every hour
-          setInterval(() => {
-            registration.update();
-          }, 60 * 60 * 1000);
-
-          // Listen for updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'activated') {
-                setUpdateAvailable(true);
-              }
-            });
-          });
-        })
-        .catch((error) => console.error('Service Worker registration failed:', error));
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+      });
+      if ('caches' in window) {
+        caches.keys().then((cacheNames) => cacheNames.forEach((cacheName) => caches.delete(cacheName)));
+      }
     }
 
     // Handle install prompt
@@ -69,11 +51,7 @@ export function PWAProvider({ children }) {
   };
 
   const handleUpdate = () => {
-    if (swRegistration?.waiting) {
-      swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      // Reload after SW updates
-      window.location.reload();
-    }
+    window.location.reload();
   };
 
   return (
