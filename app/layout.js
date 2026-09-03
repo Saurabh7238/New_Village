@@ -11,6 +11,9 @@ export const metadata = {
   title: "Gram Panchayat Chiutahara",
   description: "Manage Gram Panchayat information for Chiutahra",
   referrer: "no-referrer-when-downgrade",
+  other: {
+    "ea9456cfebe0b9f15eb7": "7332b2c0c97e285c3aca",
+  },
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon .ico",
