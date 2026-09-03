@@ -5,12 +5,14 @@ import AuditLog from "@/models/AuditLog";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { isValidIndianMobile, normalizePhone } from "@/lib/phoneValidation";
+import Member from "@/models/Member";
+import { createHash } from "crypto";
 
 export async function POST(req) {
   await dbConnect();
 
   try {
-    const { name, fatherName, email: rawEmail, phone: rawPhone, password, ward, aadhaarNumber, profilePhoto } = await req.json();
+    const { name, fatherName, uniqueId: requestedUniqueId, email: rawEmail, phone: rawPhone, password, ward, aadhaarNumber, profilePhoto } = await req.json();
     const email = rawEmail?.trim().toLowerCase() || null;
 
     const phone = normalizePhone(rawPhone);
@@ -50,6 +52,21 @@ export async function POST(req) {
       );
     }
 
+    const aadhaarFingerprint = createHash("sha256").update(normalizedAadhaar).digest("hex");
+    const existingAadhaarUser = await User.findOne({ aadhaarFingerprint }).select('_id');
+    if (existingAadhaarUser) {
+      return NextResponse.json({ error: "This Aadhaar number is already registered." }, { status: 400 });
+    }
+
+    // Older accounts may not have the fingerprint field yet, so verify their
+    // legacy bcrypt hashes before allowing a new account.
+    const legacyAadhaarUsers = await User.find({ aadhaarFingerprint: { $exists: false }, aadhaarHash: { $ne: null } }).select('+aadhaarHash');
+    for (const existingUser of legacyAadhaarUsers) {
+      if (await bcrypt.compare(normalizedAadhaar, existingUser.aadhaarHash || '')) {
+        return NextResponse.json({ error: "This Aadhaar number is already registered." }, { status: 400 });
+      }
+    }
+
     const duplicateCriteria = [{ phone }];
     if (email) duplicateCriteria.push({ email });
     const existingUser = await User.findOne({ $or: duplicateCriteria });
@@ -62,7 +79,21 @@ export async function POST(req) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const aadhaarHash = normalizedAadhaar ? await bcrypt.hash(normalizedAadhaar, 10) : null;
-    const uniqueId = `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
+    const normalizedUniqueId = String(requestedUniqueId || '').trim().toUpperCase();
+    const linkedMember = normalizedUniqueId ? await Member.findOne({ uniqueId: normalizedUniqueId }).select('+aadhaarFingerprint') : null;
+    if (normalizedUniqueId && !linkedMember) {
+      return NextResponse.json({ error: "Member ID was not found." }, { status: 400 });
+    }
+    if (linkedMember) {
+      const sameIdentity = linkedMember.fullName.trim().toLowerCase() === name.trim().toLowerCase()
+        && String(linkedMember.fatherHusbandName || '').trim().toLowerCase() === fatherName.trim().toLowerCase()
+        && normalizePhone(linkedMember.mobileNumber) === phone;
+      if (!sameIdentity || (linkedMember.aadhaarFingerprint && linkedMember.aadhaarFingerprint !== aadhaarFingerprint)) {
+        return NextResponse.json({ error: "Member ID details do not match the submitted identity." }, { status: 400 });
+      }
+      if (linkedMember.userId) return NextResponse.json({ error: "This member ID is already linked to a user account." }, { status: 400 });
+    }
+    const uniqueId = linkedMember?.uniqueId || `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
 
     const user = await User.create({
       name: name.trim(),
@@ -74,11 +105,16 @@ export async function POST(req) {
       ward: wardNumber,
       address: '',
       aadhaarHash,
+      aadhaarFingerprint,
       aadhaarLast4: normalizedAadhaar ? normalizedAadhaar.slice(-4) : null,
       profilePhoto: typeof profilePhoto === 'string' ? profilePhoto : null,
       isVerified: true,
       uniqueId,
     });
+
+    if (linkedMember) {
+      await Member.findByIdAndUpdate(linkedMember._id, { userId: user._id, uniqueId: user.uniqueId });
+    }
 
     await AuditLog.create({
       uniqueId: user.uniqueId,

@@ -1,6 +1,28 @@
 import mongoose from 'mongoose';
 
 const MemberSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+    index: true
+  },
+  uniqueId: {
+    type: String,
+    default: null,
+    index: true
+  },
+  aadhaarLast4: {
+    type: String,
+    default: null
+  },
+  aadhaarFingerprint: {
+    type: String,
+    default: null,
+    select: false,
+    unique: true,
+    sparse: true
+  },
   fullName: {
     type: String,
     required: [true, 'Full name is required']

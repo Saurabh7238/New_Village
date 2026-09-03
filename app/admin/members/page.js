@@ -16,6 +16,7 @@ function MemberForm({ member, onSubmit, onCancel, addToast }) {
     designation: 'Ward Member',
     wardNo: '',
     mobileNumber: '',
+    aadhaarNumber: '',
     whatsappNumber: '',
     emailId: '',
     tenureStart: '',
@@ -32,6 +33,19 @@ function MemberForm({ member, onSubmit, onCancel, addToast }) {
     photo: ''
   });
   const [photoPreview, setPhotoPreview] = useState(member?.photo || null);
+
+  useEffect(() => {
+    if (!member) return;
+    setFormData({
+      ...member,
+      aadhaarNumber: '',
+      committees: Array.isArray(member.committees) ? member.committees.join(', ') : member.committees || '',
+      tenureStart: member.tenureStart ? String(member.tenureStart).slice(0, 10) : '',
+      tenureEnd: member.tenureEnd ? String(member.tenureEnd).slice(0, 10) : '',
+      joiningDate: member.joiningDate ? String(member.joiningDate).slice(0, 10) : '',
+    });
+    setPhotoPreview(member.photo || null);
+  }, [member]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -108,6 +122,20 @@ function MemberForm({ member, onSubmit, onCancel, addToast }) {
             onChange={handleChange}
             required
             placeholder="10-digit number"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Aadhaar Number</label>
+          <input
+            type="password"
+            name="aadhaarNumber"
+            value={formData.aadhaarNumber || ''}
+            onChange={handleChange}
+            inputMode="numeric"
+            maxLength="12"
+            placeholder="Used only to link the registered user"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500"
           />
         </div>
@@ -312,7 +340,7 @@ function MemberForm({ member, onSubmit, onCancel, addToast }) {
           type="submit"
           className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-medium"
         >
-          {member?.id ? 'Update Member' : 'Add Member'}
+            {member?._id || member?.id ? 'Update Member' : 'Add Member'}
         </button>
         <button
           type="button"
@@ -353,19 +381,21 @@ export default function AdminMembersPage() {
   }
 
   async function handleSubmit(formData) {
+    const isEditing = Boolean(editingMember?._id || editingMember?.id);
     try {
       const response = await fetch('/api/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingMember ? { ...formData, id: editingMember._id } : formData)
+        body: JSON.stringify(isEditing ? { ...formData, id: editingMember._id || editingMember.id } : formData)
       });
 
       if (!response.ok) throw new Error('Failed to save member');
 
-      setShowForm(false);
-      setEditingMember(null);
+      const savedMember = await response.json();
+      setEditingMember(isEditing ? savedMember : null);
+      setShowForm(true);
       await fetchMembers();
-      addToast(editingMember ? 'Member updated successfully.' : 'Member added successfully.', 'success');
+      addToast(isEditing ? 'Member updated successfully.' : 'Member added successfully.', 'success');
     } catch (err) {
       addToast('Error: ' + err.message, 'error');
     }
@@ -456,7 +486,7 @@ export default function AdminMembersPage() {
             ) : (
               filteredMembers.map(member => (
                 <tr key={member._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-3 text-sm text-gray-900 dark:text-gray-100">{member.fullName}</td>
+                  <td className="px-6 py-3 text-sm text-gray-900 dark:text-gray-100"><div>{member.fullName}</div><div className="text-xs text-gray-500">{member.uniqueId || 'Not linked'}</div></td>
                   <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{member.designation}</td>
                   <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{member.wardNo || '—'}</td>
                   <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{member.mobileNumber}</td>
@@ -507,7 +537,7 @@ export default function AdminMembersPage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1">
-                    <p className="font-bold text-green-700 dark:text-green-400">{member.fullName}</p>
+                    <p className="font-bold text-green-700 dark:text-green-400">{member.fullName}</p><p className="text-xs text-gray-500">{member.uniqueId || 'Not linked'}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">{member.designation}</p>
                   </div>
                   <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${

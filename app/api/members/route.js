@@ -3,6 +3,11 @@ import Member from '@/models/Member';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
 import { requireAdminSession } from '@/lib/adminAuth';
+import User from '@/models/User';
+import bcrypt from 'bcryptjs';
+import { normalizePhone } from '@/lib/phoneValidation';
+import { createHash } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request) {
   await connectDB();
@@ -16,6 +21,8 @@ export async function POST(request) {
     const data = await request.json();
     const {
       id,
+      userId,
+      aadhaarNumber,
       fullName,
       designation,
       wardNo,
@@ -47,12 +54,37 @@ export async function POST(request) {
       );
     }
 
+    const normalizedAadhaar = String(aadhaarNumber || '').replace(/\s|-/g, '');
+    if (normalizedAadhaar && !/^\d{12}$/.test(normalizedAadhaar)) {
+      return NextResponse.json({ message: 'Aadhaar number must contain 12 digits.' }, { status: 400 });
+    }
+
+    let linkedUser = null;
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+      linkedUser = await User.findById(userId).select('_id uniqueId');
+    } else {
+      const normalizedMobile = normalizePhone(mobileNumber);
+      const candidates = await User.find({
+        name: new RegExp(`^${fullName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
+        fatherName: new RegExp(`^${String(fatherHusbandName || '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
+        phone: normalizedMobile,
+      }).select('+aadhaarHash _id uniqueId').limit(10);
+      if (candidates.length === 1 && aadhaarNumber) {
+        const matchesAadhaar = await bcrypt.compare(normalizedAadhaar, candidates[0].aadhaarHash || '');
+        if (matchesAadhaar) linkedUser = candidates[0];
+      }
+    }
+
     const payload = {
+      userId: linkedUser?._id || null,
+      uniqueId: linkedUser?.uniqueId || (id ? undefined : `GP-${uuidv4().slice(0, 8).toUpperCase()}`),
+      aadhaarLast4: normalizedAadhaar ? normalizedAadhaar.slice(-4) : null,
+      aadhaarFingerprint: normalizedAadhaar ? createHash('sha256').update(normalizedAadhaar).digest('hex') : null,
       fullName,
       designation,
       wardNo: wardNo || null,
       photo: photo || null,
-      mobileNumber,
+      mobileNumber: normalizePhone(mobileNumber),
       whatsappNumber: whatsappNumber || null,
       emailId: emailId || null,
       tenureStart,
@@ -91,6 +123,13 @@ export async function GET() {
   await connectDB();
 
   try {
+    const membersWithoutIds = await Member.find({ $or: [{ uniqueId: null }, { uniqueId: { $exists: false } }] });
+    if (membersWithoutIds.length) {
+      await Promise.all(membersWithoutIds.map((member) => {
+        member.uniqueId = `GP-${uuidv4().slice(0, 8).toUpperCase()}`;
+        return member.save();
+      }));
+    }
     const members = await Member.find({}).sort({ displayOrder: 1, createdAt: -1 });
     return NextResponse.json(members, { status: 200 });
   } catch (error) {

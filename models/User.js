@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema({
   address: { type: String, trim: true, default: "" },
   // Aadhaar is never stored in plain text. Only a hash and the final four digits are retained.
   aadhaarHash: { type: String, select: false, default: null },
+  aadhaarFingerprint: { type: String, select: false, unique: true, sparse: true, default: null },
   aadhaarLast4: { type: String, default: null },
   profilePhoto: { type: String, default: null },
   status: { type: String, enum: ["active", "inactive", "suspended"], default: "active", index: true },
