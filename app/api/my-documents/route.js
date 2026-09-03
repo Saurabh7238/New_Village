@@ -2,25 +2,36 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/dbConnect';
 import CitizenDocument from '@/models/CitizenDocument';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
+import { writeAuditLog } from '@/lib/writeAuditLog';
+import { dataUrlByteLength, hasDocumentQuota, MAX_USER_DOCUMENT_BYTES } from '@/lib/documentQuota';
 
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
 const MAX_DOCUMENT_LENGTH = 5 * 1024 * 1024 * 1.37;
 
-export async function GET() {
+export async function GET(request) {
   const session = await requireAuthenticatedSession();
   if (!session) return NextResponse.json({ message: 'Please sign in.' }, { status: 401 });
 
   await connectDB();
-  const documents = await CitizenDocument.find({ userId: session.user.id })
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit')) || 10));
+  const filter = { userId: session.user.id };
+  const [documents, total] = await Promise.all([
+    CitizenDocument.find(filter)
     .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
     .select('documentType fileName mimeType uploadedBy source applicationId createdAt')
-    .lean();
+    .lean(),
+    CitizenDocument.countDocuments(filter),
+  ]);
 
   return NextResponse.json({ documents: documents.map((document) => ({
     ...document,
     id: document._id.toString(),
     viewUrl: `/api/my-documents/${document._id}`,
-  })) });
+  })), pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
 }
 
 export async function POST(request) {
@@ -43,6 +54,11 @@ export async function POST(request) {
     if (!validDocuments) return NextResponse.json({ message: 'Only PDF, JPG, and PNG files under 5 MB are allowed.' }, { status: 400 });
 
     await connectDB();
+    const existing = await CitizenDocument.find({ userId: session.user.id }).select('fileUrl').lean();
+    const existingBytes = existing.reduce((total, document) => total + dataUrlByteLength(document.fileUrl), 0);
+    if (!hasDocumentQuota(existingBytes, documents)) {
+      return NextResponse.json({ message: `Your document vault cannot exceed ${MAX_USER_DOCUMENT_BYTES / (1024 * 1024)} MB.` }, { status: 400 });
+    }
     const saved = await CitizenDocument.insertMany(documents.map((document) => ({
       userId: session.user.id,
       documentType: String(documentType).trim().slice(0, 100) || 'Personal document',
@@ -52,6 +68,7 @@ export async function POST(request) {
       uploadedBy: 'citizen',
       source: 'citizen-vault',
     })));
+    await writeAuditLog({ session, action: 'Citizen documents uploaded', details: { count: saved.length, source: 'citizen-vault' } });
 
     return NextResponse.json({ message: `${saved.length} document(s) uploaded successfully.`, count: saved.length }, { status: 201 });
   } catch (error) {

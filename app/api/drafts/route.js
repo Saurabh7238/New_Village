@@ -11,9 +11,11 @@ export async function GET(req) {
 
     await dbConnect();
 
+    const serviceType = req.nextUrl.searchParams.get('serviceType');
     const drafts = await Draft.find({
       userId: session.user.id,
       isDraft: true,
+      ...(serviceType ? { serviceType } : {}),
     }).sort({ lastSavedAt: -1 });
 
     return Response.json(drafts);
@@ -32,6 +34,9 @@ export async function POST(req) {
     await dbConnect();
 
     const { serviceType, title, data } = await req.json();
+    if (!serviceType || !data || typeof data !== 'object' || Array.isArray(data) || JSON.stringify(data).length > 20000) {
+      return Response.json({ error: 'Valid application draft data is required.' }, { status: 400 });
+    }
 
     // Update existing draft or create new one
     const draft = await Draft.findOneAndUpdate(
@@ -59,7 +64,7 @@ export async function DELETE(req) {
 
     await dbConnect();
 
-    const { id } = req.nextUrl.searchParams;
+    const id = req.nextUrl.searchParams.get('id');
 
     if (!id) {
       return Response.json({ error: 'Draft ID required' }, { status: 400 });

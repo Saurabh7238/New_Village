@@ -7,12 +7,19 @@ import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 
-export async function GET() {
+export async function GET(request) {
   const session = await requireAuthenticatedSession();
   if (!session) return NextResponse.json({ message: 'Please sign in to view appointments.' }, { status: 401 });
   await connectDB();
-  const appointments = await Appointment.find({ userId: session.user.id, archivedAt: null }).sort({ appointmentDate: -1 }).lean();
-  return NextResponse.json({ appointments: appointments.map((item) => ({ ...item, id: item._id.toString() })) });
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit')) || 10));
+  const filter = { userId: session.user.id, archivedAt: null };
+  const [appointments, total] = await Promise.all([
+    Appointment.find(filter).sort({ appointmentDate: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+    Appointment.countDocuments(filter),
+  ]);
+  return NextResponse.json({ appointments: appointments.map((item) => ({ ...item, id: item._id.toString() })), pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
 }
 
 export async function POST(request) {

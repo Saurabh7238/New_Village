@@ -7,6 +7,7 @@ import { requireAdminSession } from '@/lib/adminAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 import { emitApplicationUpdated, emitDocumentRequested } from '@/lib/socketEmitter';
 import CitizenDocument from '@/models/CitizenDocument';
+import { dataUrlByteLength, hasDocumentQuota, MAX_USER_DOCUMENT_BYTES } from '@/lib/documentQuota';
 
 const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Updated', 'Approved', 'Rejected', 'Completed'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -76,6 +77,9 @@ export async function PUT(request) {
           mimeType: document.mimeType,
           uploadedBy: 'admin',
         }));
+      const existingCitizenDocuments = await CitizenDocument.find({ userId: application.userId }).select('fileUrl').lean();
+      const existingBytes = existingCitizenDocuments.reduce((total, document) => total + dataUrlByteLength(document.fileUrl), 0);
+      if (!hasDocumentQuota(existingBytes, newVaultDocuments)) return NextResponse.json({ message: `This citizen's document vault cannot exceed ${MAX_USER_DOCUMENT_BYTES / (1024 * 1024)} MB.` }, { status: 400 });
       if (newVaultDocuments.length) await CitizenDocument.insertMany(newVaultDocuments);
     }
     await writeAuditLog({ session, action: 'Application updated', details: { applicationId: application._id.toString(), applicationNumber: application.applicationNumber, status, requestedDocuments: nextRequestedDocuments } });

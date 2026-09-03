@@ -4,6 +4,7 @@ import Application from '@/models/Application';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 import CitizenDocument from '@/models/CitizenDocument';
+import { dataUrlByteLength, hasDocumentQuota, MAX_USER_DOCUMENT_BYTES } from '@/lib/documentQuota';
 
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
 const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
@@ -51,6 +52,9 @@ export async function POST(request, { params }) {
 
     const existingDocuments = Array.isArray(application.documents) ? application.documents : [];
     const mergedDocuments = [...existingDocuments, ...safeDocuments];
+    const vaultDocuments = await CitizenDocument.find({ userId: session.user.id }).select('fileUrl').lean();
+    const existingVaultBytes = vaultDocuments.reduce((total, document) => total + dataUrlByteLength(document.fileUrl), 0);
+    if (!hasDocumentQuota(existingVaultBytes, safeDocuments)) return NextResponse.json({ message: `Your document vault cannot exceed ${MAX_USER_DOCUMENT_BYTES / (1024 * 1024)} MB.` }, { status: 400 });
     const updatedApplication = await Application.findByIdAndUpdate(
       params.id,
       {

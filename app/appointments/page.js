@@ -1,14 +1,14 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';import LoginRequiredModal from '@/components/LoginRequiredModal';import LoadingSpinner from '@/components/LoadingSpinner';export default function AppointmentsPage() {
-  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]); const [updates, setUpdates] = useState({}); const [showLoginWarning, setShowLoginWarning] = useState(false);
+  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]); const [updates, setUpdates] = useState({}); const [showLoginWarning, setShowLoginWarning] = useState(false); const [page, setPage] = useState(1); const [pagination, setPagination] = useState({ pages: 1 });
+  const loadAppointments = useCallback(() => fetch(`/api/appointments?page=${page}&limit=10`).then((res) => res.ok ? res.json() : null).then((data) => { setAppointments(data?.appointments || []); setPagination(data?.pagination || { pages: 1 }); }), [page]);
   useEffect(() => {
     if (status !== 'authenticated') return;
-    fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
+    loadAppointments();
     fetch('/api/service-notifications').then((res) => res.ok ? res.json() : null).then((data) => setUpdates(Object.fromEntries((data?.notifications || []).filter((note) => note.relatedType === 'appointment').map((note) => [note.relatedId, note]))));
-  }, [status]);
-  const loadAppointments = () => fetch('/api/appointments').then((res) => res.ok ? res.json() : null).then((data) => setAppointments(data?.appointments || []));
+  }, [loadAppointments, status]);
   const viewUpdate = async (appointment) => { const notification = updates[appointment.id]; if (!notification) return; await fetch('/api/service-notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notification.id }) }); setUpdates((current) => { const next = { ...current }; delete next[appointment.id]; return next; }); };
   async function submit(e) { e.preventDefault(); if (status !== 'authenticated') { setShowLoginWarning(true); return; } setLoading(true); const res = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const data = await res.json(); setLoading(false); if (res.ok) { setMessage(`Appointment requested. Reference: ${data.appointmentNumber}. The Panchayat office will set your date and time.`); setForm({ purpose: '' }); loadAppointments(); } else setMessage(data.message || 'Unable to book appointment.'); }
   if (status === 'loading') return <LoadingSpinner message="Loading Appointments..." />;

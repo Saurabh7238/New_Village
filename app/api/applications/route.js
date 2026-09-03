@@ -8,6 +8,8 @@ import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 import CitizenDocument from '@/models/CitizenDocument';
+import { validateApplicationForm } from '@/lib/applicationValidation';
+import { dataUrlByteLength, hasDocumentQuota, MAX_USER_DOCUMENT_BYTES } from '@/lib/documentQuota';
 
 const SERVICE_TYPES = ['birth-certificate', 'death-certificate', 'aadhaar-request', 'voter-request', 'other'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -45,6 +47,8 @@ export async function POST(request) {
   try {
     const { serviceType, formData = {}, documents = [] } = await request.json();
     if (!SERVICE_TYPES.includes(serviceType)) return NextResponse.json({ message: 'Invalid service type.' }, { status: 400 });
+    const validationError = validateApplicationForm(serviceType, formData);
+    if (validationError) return NextResponse.json({ message: validationError }, { status: 400 });
     await connectDB();
     const user = await User.findById(session.user.id).select('name email phone aadhaarLast4 status').lean();
     if (!user || (user.status && user.status !== 'active')) return NextResponse.json({ message: 'Your account is unavailable.' }, { status: 403 });
@@ -63,6 +67,9 @@ export async function POST(request) {
     }
     
     const safeDocuments = validateDocuments(documents);
+    const existingDocuments = await CitizenDocument.find({ userId: user._id }).select('fileUrl').lean();
+    const existingBytes = existingDocuments.reduce((total, document) => total + dataUrlByteLength(document.fileUrl), 0);
+    if (!hasDocumentQuota(existingBytes, safeDocuments)) return NextResponse.json({ message: `Your document vault cannot exceed ${MAX_USER_DOCUMENT_BYTES / (1024 * 1024)} MB.` }, { status: 400 });
     const applicationNumber = `APP-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const application = await Application.create({
       applicationNumber,

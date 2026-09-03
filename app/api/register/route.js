@@ -8,8 +8,12 @@ import { isValidIndianMobile, normalizePhone } from "@/lib/phoneValidation";
 import Member from "@/models/Member";
 import { createHash } from "crypto";
 import { findMemberMatch } from "@/lib/memberRegistrationMatch";
+import { isDateOnlyNotInFuture, parseDateOnly } from "@/lib/dateOnly";
+import { checkRequestRateLimit } from "@/lib/requestRateLimit";
 
 export async function POST(req) {
+  const rateLimit = checkRequestRateLimit(`register:${req.headers.get('x-forwarded-for') || 'local'}`, { limit: 5, windowMs: 15 * 60 * 1000 });
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Too many registration attempts. Please try again later." }, { status: 429 });
   await dbConnect();
 
   try {
@@ -25,8 +29,8 @@ export async function POST(req) {
       );
     }
 
-    const parsedDateOfBirth = new Date(dateOfBirth);
-    if (Number.isNaN(parsedDateOfBirth.getTime()) || parsedDateOfBirth > new Date()) {
+    const parsedDateOfBirth = parseDateOnly(dateOfBirth);
+    if (!parsedDateOfBirth || !isDateOnlyNotInFuture(dateOfBirth)) {
       return NextResponse.json({ error: "Enter a valid date of birth" }, { status: 400 });
     }
 

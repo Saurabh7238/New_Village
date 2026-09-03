@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
 import CitizenDocument from '@/models/CitizenDocument';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
+import { writeAuditLog } from '@/lib/writeAuditLog';
 
 export async function GET(_request, { params }) {
   const session = await requireAuthenticatedSession();
@@ -44,6 +45,7 @@ export async function DELETE(_request, { params }) {
   }
 
   await CitizenDocument.deleteOne({ _id: id, userId: session.user.id });
+  await writeAuditLog({ session, action: 'Citizen document deleted', details: { documentId: id, fileName: document.fileName, source: document.source } });
 
   return NextResponse.json({ message: 'Document deleted successfully.' });
 }

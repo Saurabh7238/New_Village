@@ -15,13 +15,17 @@ export default function AdminAppointmentsPage() {
   const [appointments, setAppointments] = useState([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ pages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [savingId, setSavingId] = useState(null);
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ limit: '50' });
+    const params = new URLSearchParams({ limit: '50', page: String(page) });
+    if (showArchived) params.set('archived', 'true');
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
     try {
@@ -29,12 +33,13 @@ export default function AdminAppointmentsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
       setAppointments(data.appointments || []);
+      setPagination(data.pagination || { pages: 1, total: 0 });
     } catch (error) {
       setMessage(error.message || 'Unable to load appointments.');
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter]);
+  }, [page, search, showArchived, statusFilter]);
 
   useEffect(() => {
     if (authStatus === 'authenticated' && session?.user?.role === 'admin') fetchAppointments();
@@ -89,6 +94,22 @@ export default function AdminAppointmentsPage() {
       fetchAppointments();
     } catch (error) {
       setMessage(error.message || 'Unable to delete appointment.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const restoreAppointment = async (appointment) => {
+    setSavingId(appointment.id);
+    setMessage('');
+    try {
+      const response = await fetch('/api/admin/appointments', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: appointment.id }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      setMessage(`Appointment ${appointment.appointmentNumber} restored successfully.`);
+      fetchAppointments();
+    } catch (error) {
+      setMessage(error.message || 'Unable to restore appointment.');
     } finally {
       setSavingId(null);
     }
@@ -149,6 +170,10 @@ export default function AdminAppointmentsPage() {
           >
             Search
           </button>
+          <label className="flex items-center gap-2 text-sm sm:col-span-3">
+            <input type="checkbox" checked={showArchived} onChange={(event) => { setShowArchived(event.target.checked); setPage(1); }} />
+            Show archived appointments
+          </label>
         </div>
 
         {/* Desktop Table View */}
@@ -235,6 +260,7 @@ export default function AdminAppointmentsPage() {
                     </td>
                     <td className="p-3 text-center">
                       <div className="flex flex-col gap-2">
+                        {showArchived ? <button onClick={() => restoreAppointment(appointment)} disabled={savingId === appointment.id} className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap">Restore</button> : <>
                         <button
                           onClick={() => saveAppointment(appointment)}
                           disabled={savingId === appointment.id}
@@ -249,6 +275,7 @@ export default function AdminAppointmentsPage() {
                         >
                           Delete
                         </button>
+                        </>}
                       </div>
                     </td>
                   </tr>
@@ -347,6 +374,7 @@ export default function AdminAppointmentsPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
+                    {showArchived ? <button onClick={() => restoreAppointment(appointment)} disabled={savingId === appointment.id} className="col-span-2 w-full rounded bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 font-medium">Restore</button> : <>
                     <button
                       onClick={() => saveAppointment(appointment)}
                       disabled={savingId === appointment.id}
@@ -361,12 +389,20 @@ export default function AdminAppointmentsPage() {
                     >
                       Delete
                     </button>
+                    </>}
                   </div>
                 </div>
               </div>
             ))
           )}
         </div>
+        {pagination.pages > 1 && (
+          <div className="mt-4 flex items-center justify-between rounded-lg bg-white p-3 text-sm shadow dark:bg-gray-800">
+            <button onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded border px-3 py-1 disabled:opacity-50">Previous</button>
+            <span>Page {page} of {pagination.pages}</span>
+            <button onClick={() => setPage((current) => Math.min(pagination.pages, current + 1))} disabled={page >= pagination.pages} className="rounded border px-3 py-1 disabled:opacity-50">Next</button>
+          </div>
+        )}
       </div>
     </div>
   );

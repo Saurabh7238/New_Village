@@ -15,16 +15,24 @@ function formatLogValue(value) {
 export default function AdminActivityLogPage() {
   const [logs, setLogs] = useState([]);
   const [action, setAction] = useState('');
+  const [entityType, setEntityType] = useState('');
+  const [user, setUser] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ pages: 1 });
   const [loading, setLoading] = useState(true);
 
   const loadLogs = useCallback(async () => {
     setLoading(true);
-    const params = action ? `?action=${encodeURIComponent(action)}` : '';
-    const response = await fetch(`/api/admin/activity-log${params}`);
+    const params = new URLSearchParams({ page: String(page), limit: '25' });
+    if (action) params.set('action', action);
+    if (entityType) params.set('entityType', entityType);
+    if (user) params.set('user', user);
+    const response = await fetch(`/api/admin/activity-log?${params}`);
     const data = response.ok ? await response.json() : { logs: [] };
     setLogs(data.logs || []);
+    setPagination(data.pagination || { pages: 1 });
     setLoading(false);
-  }, [action]);
+  }, [action, entityType, page, user]);
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
@@ -39,12 +47,11 @@ export default function AdminActivityLogPage() {
           <Link href="/admin" className="rounded bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">Admin Panel</Link>
         </div>
 
-        <input
-          value={action}
-          onChange={(event) => setAction(event.target.value)}
-          placeholder="Filter by action"
-          className="mb-5 w-full max-w-sm rounded border bg-white p-2 dark:border-gray-600 dark:bg-gray-800"
-        />
+        <div className="mb-5 grid gap-3 sm:grid-cols-3">
+          <input value={action} onChange={(event) => { setAction(event.target.value); setPage(1); }} placeholder="Filter by action" className="rounded border bg-white p-2 dark:border-gray-600 dark:bg-gray-800" />
+          <input value={user} onChange={(event) => { setUser(event.target.value); setPage(1); }} placeholder="Filter by user or unique ID" className="rounded border bg-white p-2 dark:border-gray-600 dark:bg-gray-800" />
+          <input value={entityType} onChange={(event) => { setEntityType(event.target.value); setPage(1); }} placeholder="Filter by entity type" className="rounded border bg-white p-2 dark:border-gray-600 dark:bg-gray-800" />
+        </div>
 
         <div className="overflow-x-auto rounded-lg bg-white shadow dark:bg-gray-800">
           <table className="w-full text-left text-sm">
@@ -93,6 +100,7 @@ export default function AdminActivityLogPage() {
 
           {!loading && logs.length === 0 && <p className="p-8 text-center text-gray-500">No activity recorded.</p>}
         </div>
+        {pagination.pages > 1 && <div className="mt-4 flex items-center justify-between rounded-lg bg-white p-3 text-sm shadow dark:bg-gray-800"><button onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded border px-3 py-1 disabled:opacity-50">Previous</button><span>Page {page} of {pagination.pages}</span><button onClick={() => setPage((current) => Math.min(pagination.pages, current + 1))} disabled={page >= pagination.pages} className="rounded border px-3 py-1 disabled:opacity-50">Next</button></div>}
       </div>
     </main>
   );

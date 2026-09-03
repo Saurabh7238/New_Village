@@ -41,6 +41,8 @@ export default function ServiceApplicationForm({
   const [documents, setDocuments] = useState([]);
   const [applications, setApplications] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [draftId, setDraftId] = useState(null);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [showLoginWarning, setShowLoginWarning] = useState(false);
   const todayString = new Date().toISOString().split('T')[0];
 
@@ -66,6 +68,20 @@ export default function ServiceApplicationForm({
       .then((data) => setApplications(data?.applications || []))
       .catch(() => setApplications([]));
   }, [status]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    fetch(`/api/drafts?serviceType=${encodeURIComponent(serviceType)}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((drafts) => {
+        const draft = drafts?.[0];
+        if (draft) {
+          setDraftId(draft._id);
+          setValues(draft.data || {});
+        }
+      })
+      .catch(() => {});
+  }, [serviceType, status]);
 
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -137,6 +153,7 @@ export default function ServiceApplicationForm({
 
     setValues({});
     setDocuments([]);
+    if (draftId) fetch(`/api/drafts?id=${encodeURIComponent(draftId)}`, { method: 'DELETE' }).catch(() => {});
 
     fetch('/api/applications')
       .then((res) => (res.ok ? res.json() : null))
@@ -144,6 +161,24 @@ export default function ServiceApplicationForm({
       .catch(() => setApplications([]));
 
     addToast(`Submitted successfully. Your reference number is ${data.applicationNumber}.`, 'success', 5000);
+  }
+
+  async function saveDraft() {
+    if (status !== 'authenticated') {
+      setShowLoginWarning(true);
+      return;
+    }
+    setSavingDraft(true);
+    const response = await fetch('/api/drafts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serviceType, title: `${serviceType.replace(/-/g, ' ')} application`, data: values }),
+    });
+    const data = await response.json();
+    setSavingDraft(false);
+    if (!response.ok) return addToast(data.error || 'Unable to save draft.', 'error');
+    setDraftId(data._id);
+    addToast('Draft saved successfully.', 'success');
   }
 
   async function uploadMoreDocuments(applicationId, files) {
@@ -351,13 +386,23 @@ export default function ServiceApplicationForm({
           )}
         </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="min-h-12 w-full rounded bg-green-700 px-4 py-2 font-semibold text-white hover:bg-green-800 disabled:opacity-60 sm:w-auto"
-        >
-          {submitting ? 'Submitting…' : 'Submit application'}
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={saveDraft}
+            disabled={savingDraft || submitting}
+            className="min-h-12 rounded border border-green-700 px-4 py-2 font-semibold text-green-700 hover:bg-green-50 disabled:opacity-60"
+          >
+            {savingDraft ? 'Saving draft…' : 'Save draft'}
+          </button>
+          <button
+            type="submit"
+            disabled={submitting || savingDraft}
+            className="min-h-12 rounded bg-green-700 px-4 py-2 font-semibold text-white hover:bg-green-800 disabled:opacity-60"
+          >
+            {submitting ? 'Submitting…' : 'Submit application'}
+          </button>
+        </div>
       </form>
 
       <ToastContainer toasts={toasts} removeToast={removeToast} isDark={false} />

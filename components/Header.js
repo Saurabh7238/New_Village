@@ -476,7 +476,7 @@ export default function Header() {
                           signOut({ callbackUrl: "/?logout=true" });
                           setOpen(false);
                         }}
-                        className={`${menuItemBaseClass} ${menuItemInactiveClass}`}
+                        className={`${menuItemBaseClass} text-red-700 hover:bg-red-50 hover:text-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200`}
                       >
                         Logout
                       </button>

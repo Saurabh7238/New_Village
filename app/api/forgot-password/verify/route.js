@@ -3,8 +3,13 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { createHash } from "crypto";
+import { isDateOnlyNotInFuture, parseDateOnly, dateOnlyString } from "@/lib/dateOnly";
+import { checkRequestRateLimit } from "@/lib/requestRateLimit";
+import { writeAuditLog } from "@/lib/writeAuditLog";
 
 export async function POST(req) {
+  const rateLimit = checkRequestRateLimit(`password-reset:${req.headers.get('x-forwarded-for') || 'local'}`, { limit: 5, windowMs: 15 * 60 * 1000 });
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Too many password reset attempts. Please try again later." }, { status: 429 });
   await dbConnect();
 
   try {
@@ -25,8 +30,8 @@ export async function POST(req) {
       );
     }
 
-    const parsedDob = new Date(dateOfBirth);
-    if (Number.isNaN(parsedDob.getTime())) {
+    const parsedDob = parseDateOnly(dateOfBirth);
+    if (!parsedDob || !isDateOnlyNotInFuture(dateOfBirth)) {
       return NextResponse.json(
         { error: "Enter a valid date of birth" },
         { status: 400 }
@@ -65,7 +70,7 @@ export async function POST(req) {
 
     if (user.dateOfBirth) {
       const storedDob = new Date(user.dateOfBirth);
-      if (storedDob.toISOString().slice(0, 10) !== parsedDob.toISOString().slice(0, 10)) {
+      if (dateOnlyString(storedDob) !== dateOnlyString(parsedDob)) {
         return NextResponse.json(
           { error: "Aadhaar number and date of birth do not match any account." },
           { status: 404 }
@@ -77,6 +82,7 @@ export async function POST(req) {
 
     user.password = await bcrypt.hash(password, 10);
     await user.save();
+    await writeAuditLog({ action: "Password reset", details: { userId: user._id.toString(), method: "AADHAAR_DOB" } });
 
     return NextResponse.json({
       success: true,

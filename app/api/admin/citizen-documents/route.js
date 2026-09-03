@@ -3,6 +3,8 @@ import connectDB from '@/lib/dbConnect';
 import User from '@/models/User';
 import CitizenDocument from '@/models/CitizenDocument';
 import { requireAdminSession } from '@/lib/adminAuth';
+import { writeAuditLog } from '@/lib/writeAuditLog';
+import { dataUrlByteLength, hasDocumentQuota, MAX_USER_DOCUMENT_BYTES } from '@/lib/documentQuota';
 
 const ALLOWED = new Set(['application/pdf', 'image/jpeg', 'image/png']);
 const MAX_LENGTH = 5 * 1024 * 1024 * 1.37;
@@ -39,7 +41,11 @@ export async function POST(request) {
     await connectDB();
     const user = await User.findById(userId).select('_id');
     if (!user) return NextResponse.json({ message: 'Citizen not found.' }, { status: 404 });
+    const existing = await CitizenDocument.find({ userId }).select('fileUrl').lean();
+    const existingBytes = existing.reduce((total, document) => total + dataUrlByteLength(document.fileUrl), 0);
+    if (!hasDocumentQuota(existingBytes, documents)) return NextResponse.json({ message: `This citizen's document vault cannot exceed ${MAX_USER_DOCUMENT_BYTES / (1024 * 1024)} MB.` }, { status: 400 });
     const saved = await CitizenDocument.insertMany(documents.map((document) => ({ userId, documentType: String(documentType || 'Official document').slice(0, 100), fileName: document.fileName.slice(0, 150), fileUrl: document.fileUrl, mimeType: document.mimeType, uploadedBy: 'admin', source: 'admin-vault' })));
+    await writeAuditLog({ session, action: 'Admin documents uploaded', details: { userId: userId.toString(), count: saved.length, source: 'admin-vault' } });
     return NextResponse.json({ message: 'Document(s) added to citizen vault.', count: saved.length });
   } catch (error) {
     console.error('Citizen document upload error:', error);
