@@ -64,7 +64,6 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
-        <script async src="https://sorrowfulpsychology.com/b.3NVh0-PJ3zpIvgbPmlVjJ7Z/DTop3m/MBzagGw/NeDIcszRLHT/c-zUOzDcA/0RNa2wcD"></script>
       </head>
       <body className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-yellow-50 text-gray-900 font-sans relative dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 dark:text-gray-100 transition-colors">
         <Providers>
