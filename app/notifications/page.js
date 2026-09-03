@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   NOTIFICATION_TYPES,
   NOTIFICATION_LEVELS,
@@ -265,9 +266,14 @@ export default function NotificationsPage() {
                           </span>
                         )}
                       </div>
-                      <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-2">
-                        {notification.title}
-                      </h2>
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                        <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                          {notification.title}
+                        </h2>
+                        <Link href={`/notifications/${notification.id}`} className="rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                          View
+                        </Link>
+                      </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         <span className="font-medium">Issued:</span> {formatDate(notification.issueDate)}
                         {notification.validTill && (

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const formatDate = (value) => value ? new Date(value).toLocaleDateString() : '-';
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -32,11 +34,7 @@ export default function AdminUsersPage() {
     setLoading(false);
   };
 
-  const viewUser = async (id) => {
-    const response = await fetch(`/api/admin/users/${id}`);
-    const data = response.ok ? await response.json() : {};
-    setSelected(data.user ? data : null);
-  };
+  const viewUser = (id) => router.push(`/admin/users/${id}`);
 
   const RecordList = ({ title, records, render }) => (
     <section className="rounded-lg border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">

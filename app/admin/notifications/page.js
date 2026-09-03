@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import {
   NOTIFICATION_TYPES,
@@ -695,6 +696,9 @@ export default function AdminNotificationsPage() {
                         </td>
                         <td className="p-3 text-sm">{formatDate(notif.issueDate)}</td>
                         <td className="p-3 space-x-2">
+                          <Link href={`/notifications/${notif.id}`} className="text-green-600 hover:text-green-800 text-sm font-medium">
+                            View
+                          </Link>
                           <button
                             onClick={() => handleEdit(notif)}
                             className="text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -740,6 +744,12 @@ export default function AdminNotificationsPage() {
                         </div>
                       </div>
                       <div className="flex gap-2 pt-2">
+                        <Link
+                          href={`/notifications/${notif.id}`}
+                          className="flex-1 rounded bg-green-600 dark:bg-green-700 px-2 py-2 text-center text-white hover:bg-green-700 dark:hover:bg-green-600 font-medium"
+                        >
+                          View
+                        </Link>
                         <button
                           onClick={() => handleEdit(notif)}
                           className="flex-1 rounded bg-blue-600 dark:bg-blue-700 px-2 py-2 text-white hover:bg-blue-700 dark:hover:bg-blue-600 font-medium"

@@ -75,6 +75,7 @@ export async function GET(request) {
     const skip = (page - 1) * limit;
 
     const notifications = await NotificationBoard.find(filter)
+      .select('-viewedBy')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

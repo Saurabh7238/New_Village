@@ -14,21 +14,24 @@ import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { useLanguage } from "@/app/language-provider";
 import { sanitizePublicReviews } from "@/lib/reviewVisibility";
 
+const DEFAULT_SLIDES = [
+  { title: "Village Services", imageUrl: "/slide.png", alt: "Village services banner", href: "/grievance" },
+  { title: "Voter Services", imageUrl: "/voter.png", alt: "Voter services banner", href: "/voter" },
+  { title: "Panchayat Campus", imageUrl: "/panchayat.jpg", alt: "Panchayat campus banner", href: "/about" },
+];
+
 export default function HomePage() {
   const { language } = useLanguage();
   const { status: authStatus } = useSession();
   const [visitCount, setVisitCount] = useState(null);
-  const [showBanner, setShowBanner] = useState(true);
+  const [showBanner, setShowBanner] = useState(false);
+  const [homeSettingsLoaded, setHomeSettingsLoaded] = useState(false);
   const [homeSettings, setHomeSettings] = useState({
     popupEnabled: true,
     popupTitle: "Important Update",
     popupMessage: "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
     popupLink: "",
-    slides: [
-      { title: "Village Services", imageUrl: "/slide.png", alt: "Village services banner", href: "/grievance" },
-      { title: "Voter Services", imageUrl: "/voter.png", alt: "Voter services banner", href: "/voter" },
-      { title: "Panchayat Campus", imageUrl: "/panchayat.jpg", alt: "Panchayat campus banner", href: "/about" },
-    ],
+    slides: DEFAULT_SLIDES,
   });
   const [reviews, setReviews] = useState([]);
   const [reviewMessage, setReviewMessage] = useState("");
@@ -95,12 +98,14 @@ export default function HomePage() {
             popupLink: data.settings.popupLink || "",
             slides: Array.isArray(data.settings.slides) && data.settings.slides.length
               ? data.settings.slides
-              : homeSettings.slides,
+              : DEFAULT_SLIDES,
           });
           setShowBanner(Boolean(data.settings.popupEnabled));
         }
       } catch (error) {
         console.error("Failed to load home settings:", error);
+      } finally {
+        setHomeSettingsLoaded(true);
       }
     };
 
@@ -203,6 +208,10 @@ export default function HomePage() {
       overview: "Gram Panchayat Overview", state: "State", district: "District", block: "Block", gramPanchayat: "Gram Panchayat", villagesServed: "Villages Served", sarpanch: "Sarpanch",
       localGovernance: "Local Governance", assembly: "Assembly", parliament: "Parliament", subDistrict: "Sub-District", politicalRepresentatives: "Political Representatives", mla: "MLA", mp: "MP",
       villageDescription: "Part of the Panchayati Raj system, working at grassroots level for local administrative matters and village-level planning.",
+      famousFor: "Famous For", culturalHeritage: "Cultural Heritage", postalLocation: "Postal & Location Info", beliefsCustoms: "Beliefs & Customs",
+      templeDescription: "Sacred temple dedicated to Lord Hanuman (God of Strength). People from nearby and far-off villages visit regularly to worship and offer prayers, especially on special occasions.",
+      traditionalDress: "Traditional Dress", traditionalFood: "Traditional Food", traditionalOrnaments: "Traditional Ornaments", pincode: "Pincode", postalAreaCode: "Postal Area Code",
+      beliefsDescription: "The community believes that Lord Hanuman protects the village and its people from all harm. Worship at Hanuman Mandir is a regular practice, strengthening the cultural and spiritual fabric of the village.",
     },
     hi: {
       welcome: "ग्राम पंचायत पोर्टल में आपका स्वागत है",
@@ -235,12 +244,16 @@ export default function HomePage() {
       reviewError: "समीक्षा भेज नहीं सकी। कृपया पुनः प्रयास करें।",
       noReviews: "अभी कोई समीक्षा नहीं। पहले अपना अनुभव साझा करें!",
       village: "हमारा गांव",
-      villageAbout: "छितौहरा गांव के बारे में",
+      villageAbout: "चिउटहरा गांव के बारे में",
       population: "जनसंख्या (2011 जनगणना)", households: "परिवार", schools: "विद्यालय", wardMembers: "वार्ड सदस्य",
       male: "पुरुष", female: "महिला", educationPriority: "शिक्षा प्राथमिकता", electedRepresentatives: "निर्वाचित प्रतिनिधि",
       overview: "ग्राम पंचायत का परिचय", state: "राज्य", district: "जिला", block: "ब्लॉक", gramPanchayat: "ग्राम पंचायत", villagesServed: "सेवा प्राप्त गांव", sarpanch: "सरपंच",
       localGovernance: "स्थानीय शासन", assembly: "विधानसभा", parliament: "संसद", subDistrict: "तहसील", politicalRepresentatives: "राजनीतिक प्रतिनिधि", mla: "विधायक", mp: "सांसद",
       villageDescription: "पंचायती राज व्यवस्था का हिस्सा, जो स्थानीय प्रशासनिक मामलों और गांव-स्तरीय योजना के लिए जमीनी स्तर पर कार्य करती है।",
+      famousFor: "प्रसिद्धि", culturalHeritage: "सांस्कृतिक विरासत", postalLocation: "डाक और स्थान की जानकारी", beliefsCustoms: "विश्वास और परंपराएं",
+      templeDescription: "भगवान हनुमान (शक्ति के देवता) को समर्पित पवित्र मंदिर। आसपास और दूर-दराज के गांवों के लोग नियमित रूप से पूजा और प्रार्थना करने आते हैं, विशेषकर शुभ अवसरों पर।",
+      traditionalDress: "पारंपरिक पोशाक", traditionalFood: "पारंपरिक भोजन", traditionalOrnaments: "पारंपरिक आभूषण", pincode: "पिनकोड", postalAreaCode: "डाक क्षेत्र कोड",
+      beliefsDescription: "समुदाय का विश्वास है कि भगवान हनुमान गांव और उसके लोगों को सभी संकटों से बचाते हैं। हनुमान मंदिर में पूजा नियमित परंपरा है, जो गांव की सांस्कृतिक और आध्यात्मिक एकता को मजबूत करती है।",
     },
   };
 
@@ -275,7 +288,7 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[38rem] bg-[radial-gradient(circle_at_8%_12%,rgba(167,243,208,.55),transparent_30%),radial-gradient(circle_at_92%_18%,rgba(186,230,253,.5),transparent_30%),linear-gradient(135deg,#f0fdf4,#f8fafc_48%,#ecfeff)] dark:bg-[radial-gradient(circle_at_8%_12%,rgba(6,78,59,.6),transparent_30%),radial-gradient(circle_at_92%_18%,rgba(12,74,110,.5),transparent_30%)]" />
       <div className="relative min-h-screen text-black dark:text-white">
         {/* Notification Banner */}
-        {showBanner && homeSettings.popupEnabled && (
+        {homeSettingsLoaded && showBanner && homeSettings.popupEnabled && (
           <div role="status" className="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 shadow-lg shadow-amber-950/5 backdrop-blur dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100 sm:items-center sm:px-5">
             <span className="flex items-center gap-2 leading-5">
               <BellRing className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -441,24 +454,24 @@ export default function HomePage() {
             {/* Cultural Heritage & Famous For */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙏 Famous For</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Hanuman Mandir</strong> - Sacred temple dedicated to Lord Hanuman (God of Strength). People from nearby and far-off villages visit regularly to worship and offer prayers, especially on special occasions.</p>
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙏 {t.famousFor}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Hanuman Mandir</strong> - {t.templeDescription}</p>
               </div>
               <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🎨 Cultural Heritage</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Traditional Dress:</strong> Dhoti Kurta<br/><strong>Traditional Food:</strong> Dal Chawal<br/><strong>Traditional Ornaments:</strong> Bichhiya</p>
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🎨 {t.culturalHeritage}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>{t.traditionalDress}:</strong> Dhoti Kurta<br/><strong>{t.traditionalFood}:</strong> Dal Chawal<br/><strong>{t.traditionalOrnaments}:</strong> Bichhiya</p>
               </div>
               <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">📮 Postal & Location Info</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Pincode:</strong> 276203</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Postal Area Code:</strong> 276123</p>
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">📮 {t.postalLocation}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>{t.pincode}:</strong> 276203</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>{t.postalAreaCode}:</strong> 276123</p>
               </div>
             </div>
 
             {/* Beliefs & Customs */}
             <div className="border-t border-sky-200/80 pt-5 dark:border-slate-700">
-              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙌 Beliefs & Customs</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">The community believes that Lord Hanuman protects the village and its people from all harm. Worship at Hanuman Mandir is a regular practice, strengthening the cultural and spiritual fabric of the village.</p>
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙌 {t.beliefsCustoms}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">{t.beliefsDescription}</p>
             </div>
           </section>
 
