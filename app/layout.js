@@ -5,7 +5,6 @@ import ScrollToTopButton from "../components/ScrollToTopButton";
 import WelcomeToast from "../components/WelcomeToast";
 import ChatWidget from "../components/ChatWidget";
 import { LanguageProvider } from "./language-provider";
-import { PWAProvider } from "./pwa-provider";
 
 export const metadata = {
   title: "Gram Panchayat Chiutahara",
@@ -14,7 +13,6 @@ export const metadata = {
   other: {
     "ea9456cfebe0b9f15eb7": "7332b2c0c97e285c3aca",
   },
-  manifest: "/manifest.json",
   icons: {
     icon: "/favicon .ico",
     shortcut: "/favicon .ico",
@@ -70,8 +68,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-yellow-50 text-gray-900 font-sans relative dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 dark:text-gray-100 transition-colors">
         <Providers>
-          <PWAProvider>
-            <LanguageProvider>
+          <LanguageProvider>
             <noscript>
               <div className="bg-red-100 text-red-700 text-center p-2 text-sm">
                 This site works best with JavaScript enabled.
@@ -89,7 +86,8 @@ export default function RootLayout({ children }) {
                 © {new Date().getFullYear()} Gram Panchayat Chiutahara
               </div>
             </footer>
-          </LanguageProvider>          </PWAProvider>        </Providers>
+          </LanguageProvider>
+        </Providers>
       </body>
     </html>
   );
