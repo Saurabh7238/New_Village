@@ -13,16 +13,21 @@ export async function POST(req) {
   await dbConnect();
 
   try {
-    const { name, fatherName, email: rawEmail, phone: rawPhone, password, ward, aadhaarNumber, profilePhoto } = await req.json();
+    const { name, fatherName, email: rawEmail, phone: rawPhone, dateOfBirth, password, ward, aadhaarNumber, profilePhoto } = await req.json();
     const email = rawEmail?.trim().toLowerCase() || null;
 
     const phone = normalizePhone(rawPhone);
 
-    if (!name?.trim() || !fatherName?.trim() || !email || !phone || !password || !ward || !aadhaarNumber) {
+    if (!name?.trim() || !fatherName?.trim() || !email || !phone || !dateOfBirth || !password || !ward || !aadhaarNumber) {
       return NextResponse.json(
-        { error: "Name, father's name, email, mobile number, ward number, Aadhaar number, and password are required" },
+        { error: "Name, father's name, email, mobile number, date of birth, ward number, Aadhaar number, and password are required" },
         { status: 400 }
       );
+    }
+
+    const parsedDateOfBirth = new Date(dateOfBirth);
+    if (Number.isNaN(parsedDateOfBirth.getTime()) || parsedDateOfBirth > new Date()) {
+      return NextResponse.json({ error: "Enter a valid date of birth" }, { status: 400 });
     }
 
     if (!isValidIndianMobile(rawPhone)) {
@@ -107,6 +112,7 @@ export async function POST(req) {
       aadhaarHash,
       aadhaarFingerprint,
       aadhaarLast4: normalizedAadhaar ? normalizedAadhaar.slice(-4) : null,
+      dateOfBirth: parsedDateOfBirth,
       profilePhoto: typeof profilePhoto === 'string' ? profilePhoto : null,
       isVerified: true,
       uniqueId,

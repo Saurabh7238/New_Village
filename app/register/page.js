@@ -10,6 +10,7 @@ export default function RegisterPage() {
     fatherName: "",
     email: "",
     phone: "",
+    dateOfBirth: "",
     password: "",
     confirmPassword: "",
     ward: "",
@@ -48,6 +49,10 @@ export default function RegisterPage() {
       setError("Valid 10-digit mobile number is required");
       return;
     }
+    if (!formData.dateOfBirth) {
+      setError("Date of birth is required");
+      return;
+    }
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
@@ -76,6 +81,7 @@ export default function RegisterPage() {
           fatherName: formData.fatherName,
           email: formData.email,
           phone: formData.phone,
+          dateOfBirth: formData.dateOfBirth,
           password: formData.password,
           ward: formData.ward,
           aadhaarNumber: formData.aadhaarNumber,
@@ -160,6 +166,19 @@ export default function RegisterPage() {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               placeholder="10-digit mobile number"
               maxLength={10}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
+              onChange={handleChange}
+              max={new Date().toISOString().slice(0, 10)}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               required
             />
           </div>
