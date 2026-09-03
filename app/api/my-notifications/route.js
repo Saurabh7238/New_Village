@@ -17,6 +17,7 @@ export async function GET() {
   const notifications = await ServiceNotification.find({ userId: session.user.id })
     .sort({ updatedAt: -1 })
     .limit(100)
+    .select('serviceType relatedType relatedId isRead adminResponded updatedAt')
     .lean();
 
   return NextResponse.json({

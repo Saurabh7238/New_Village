@@ -15,6 +15,7 @@ const ServiceNotificationSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 ServiceNotificationSchema.index({ relatedType: 1, relatedId: 1 }, { unique: true });
+ServiceNotificationSchema.index({ userId: 1, updatedAt: -1 });
 ServiceNotificationSchema.index({ userId: 1, isRead: 1, adminResponded: 1 });
 ServiceNotificationSchema.index({ adminIsRead: 1, serviceType: 1, queryRaised: -1 });
 ServiceNotificationSchema.index({ adminIsRead: 1, adminResponded: 1, queryRaised: -1 });

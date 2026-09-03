@@ -10,6 +10,7 @@ import { PWAProvider } from "./pwa-provider";
 export const metadata = {
   title: "Gram Panchayat Chiutahara",
   description: "Manage Gram Panchayat information for Chiutahra",
+  referrer: "no-referrer-when-downgrade",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon .ico",

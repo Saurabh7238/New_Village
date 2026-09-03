@@ -26,7 +26,7 @@ export default function EnhancedCitizenDashboard() {
       try {
         const [appRes, queryRes] = await Promise.all([
           fetch('/api/applications'),
-          fetch('/api/queries'),
+          fetch('/api/my-queries'),
         ]);
 
         if (appRes.ok) {
@@ -69,11 +69,12 @@ export default function EnhancedCitizenDashboard() {
 
         if (queryRes.ok) {
           const queryData = await queryRes.json();
-          setQueries(queryData);
+          const queryList = Array.isArray(queryData) ? queryData : queryData?.queries || [];
+          setQueries(queryList);
 
           // Extract communication history
           const commHistory = [];
-          queryData.forEach((query) => {
+          queryList.forEach((query) => {
             query.messages?.forEach((msg) => {
               commHistory.push({
                 id: msg._id,
