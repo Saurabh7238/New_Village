@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLanguage } from "@/app/language-provider";
 
 const getFriendlyAuthError = (authError) => {
   switch (authError) {
@@ -18,6 +19,7 @@ const getFriendlyAuthError = (authError) => {
 };
 
 export default function LoginPage() {
+  const { labels } = useLanguage();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -90,12 +92,12 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 px-4 py-12">
       <div className="w-full max-w-sm rounded-xl border border-green-200 bg-white p-8 shadow-xl shadow-green-100">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-green-800">Login</h1>
-          <p className="mt-2 text-sm text-green-700/80">Access your Chiutahara Portal account</p>
+          <h1 className="text-2xl font-bold text-green-800">{labels.login}</h1>
+          <p className="mt-2 text-sm text-green-700/80">{labels.registerAccount}</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Mobile number or email</label>
+            <label className="block text-sm font-medium text-gray-700">{labels.mobileOrEmail}</label>
             <input
               type="text"
               value={identifier}
@@ -103,12 +105,12 @@ export default function LoginPage() {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               required
               disabled={loading}
-              placeholder="Mobile number or email"
+              placeholder={labels.mobileOrEmail}
               autoComplete="username"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-gray-700">{labels.password}</label>
             <input
               type="password"
               value={password}
@@ -116,7 +118,7 @@ export default function LoginPage() {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               required
               disabled={loading}
-              placeholder="Enter your password"
+              placeholder={labels.password}
               autoComplete="current-password"
             />
           </div>
@@ -136,12 +138,12 @@ export default function LoginPage() {
         <div className="mt-4 text-center text-sm text-gray-600">
           <div className="mb-2">
             <Link href="/forgot-password" className="font-semibold text-green-700 hover:underline">
-              Forgot password?
+              {labels.forgotPassword}?
             </Link>
           </div>
-          Don&apos;t have an account?{" "}
+          {labels.registerAccount}?{" "}
           <Link href="/register" className="font-semibold text-green-700 hover:underline">
-            Register here
+            {labels.register}
           </Link>
         </div>
       </div>

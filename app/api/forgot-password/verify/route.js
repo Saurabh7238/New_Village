@@ -46,9 +46,17 @@ export async function POST(req) {
     }
 
     const aadhaarFingerprint = createHash("sha256").update(normalizedAadhaar).digest("hex");
-    const user = await User.findOne({
-      $or: [{ aadhaarFingerprint }, { aadhaarHash: { $ne: null } }],
-    }).select("+aadhaarHash +password");
+    let user = await User.findOne({ aadhaarFingerprint }).select("+aadhaarFingerprint +aadhaarHash +password");
+
+    if (!user) {
+      const legacyUsers = await User.find({ aadhaarFingerprint: { $exists: false }, aadhaarHash: { $ne: null } }).select("+aadhaarHash +password");
+      for (const candidate of legacyUsers) {
+        if (await bcrypt.compare(normalizedAadhaar, candidate.aadhaarHash || "")) {
+          user = candidate;
+          break;
+        }
+      }
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -57,9 +65,7 @@ export async function POST(req) {
       );
     }
 
-    const aadhaarMatches =
-      user.aadhaarFingerprint === aadhaarFingerprint ||
-      (user.aadhaarHash && (await bcrypt.compare(normalizedAadhaar, user.aadhaarHash)));
+    const aadhaarMatches = user.aadhaarFingerprint === aadhaarFingerprint || Boolean(user.aadhaarHash);
 
     if (!aadhaarMatches) {
       return NextResponse.json(

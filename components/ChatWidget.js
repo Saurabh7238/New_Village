@@ -51,7 +51,7 @@ export default function ChatWidget() {
 
   // Fetch messages only if authenticated
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated" || !isOpen) return;
 
     const fetchMessages = async () => {
       try {
@@ -83,7 +83,7 @@ export default function ChatWidget() {
     fetchMessages();
     const interval = setInterval(fetchMessages, 3000);
     return () => clearInterval(interval);
-  }, [status]);
+  }, [isOpen, status]);
 
   useEffect(() => {
     if (!isOpen) return;

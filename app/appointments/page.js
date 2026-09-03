@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/app/language-provider';
 import { useSession } from 'next-auth/react';import LoginRequiredModal from '@/components/LoginRequiredModal';import LoadingSpinner from '@/components/LoadingSpinner';export default function AppointmentsPage() {
-  const { status } = useSession(); const router = useRouter(); const [form, setForm] = useState({ purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]); const [updates, setUpdates] = useState({}); const [showLoginWarning, setShowLoginWarning] = useState(false); const [page, setPage] = useState(1); const [pagination, setPagination] = useState({ pages: 1 });
+  const { status } = useSession(); const router = useRouter(); const { labels } = useLanguage(); const [form, setForm] = useState({ purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]); const [updates, setUpdates] = useState({}); const [showLoginWarning, setShowLoginWarning] = useState(false); const [page, setPage] = useState(1); const [pagination, setPagination] = useState({ pages: 1 });
   const loadAppointments = useCallback(() => fetch(`/api/appointments?page=${page}&limit=10`).then((res) => res.ok ? res.json() : null).then((data) => { setAppointments(data?.appointments || []); setPagination(data?.pagination || { pages: 1 }); }), [page]);
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -15,7 +16,7 @@ import { useSession } from 'next-auth/react';import LoginRequiredModal from '@/c
   return (
     <div className="pt-36 max-w-5xl mx-auto px-4">
       <h1 className="text-3xl font-bold text-green-700 mb-6">
-        Appointments
+        {labels.appointmentsTitle}
       </h1>
       <p className="text-gray-700 mb-6">
         Book appointments for Gram Panchayat services.
@@ -24,13 +25,13 @@ import { useSession } from 'next-auth/react';import LoginRequiredModal from '@/c
       <div className="bg-white rounded-lg shadow p-6">
         <form className="space-y-4" onSubmit={submit}>
           <p className="rounded bg-gray-50 p-3 text-sm text-gray-600">After you submit, the Panchayat office will review your request, add remarks, and set the appointment date and time. You can make one booking every 24 hours.</p>
-          <div><label className="block text-sm font-semibold text-gray-700">Purpose</label><textarea required value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} className="mt-1 w-full border rounded p-2" /></div>
+          <div><label className="block text-sm font-semibold text-gray-700">{labels.purpose}</label><textarea required value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} className="mt-1 w-full border rounded p-2" /></div>
           {message && <p className={message.startsWith('Appointment requested') ? 'text-green-700' : 'text-red-700'}>{message}</p>}
-          <button
+            <button
             type="submit"
             className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
           >
-            {loading ? 'Booking…' : 'Book Appointment'}
+            {loading ? 'Booking…' : labels.bookAppointment}
           </button>
         </form>
       </div>

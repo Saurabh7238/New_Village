@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLanguage } from "@/app/language-provider";
 
 export default function RegisterPage() {
+  const { labels } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
     fatherName: "",
@@ -111,8 +113,8 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 py-12 px-4">
       <div className="w-full max-w-sm rounded-xl border border-green-200 bg-white p-8 shadow-xl shadow-green-100">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-green-800">Register</h1>
-          <p className="mt-2 text-sm text-green-700/80">Create your account</p>
+          <h1 className="text-2xl font-bold text-green-800">{labels.register}</h1>
+          <p className="mt-2 text-sm text-green-700/80">{labels.registerAccount}</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -171,7 +173,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+            <label className="block text-sm font-medium text-gray-700">{labels.dateOfBirth}</label>
             <input
               type="date"
               name="dateOfBirth"
@@ -184,14 +186,14 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Aadhaar Number</label>
+            <label className="block text-sm font-medium text-gray-700">{labels.aadhaarNumber}</label>
             <input type="password" inputMode="numeric" name="aadhaarNumber" value={formData.aadhaarNumber} onChange={(e) => setFormData({ ...formData, aadhaarNumber: e.target.value.replace(/\D/g, "").slice(0, 12) })} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200" placeholder="12-digit Aadhaar number" maxLength={12} required />
             <p className="mt-1 text-xs text-gray-500">Stored securely; it will never be displayed in full.</p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Password
+              {labels.password}
             </label>
             <input
               type="password"
@@ -206,7 +208,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Confirm Password
+              {labels.confirmPassword}
             </label>
             <input
               type="password"
@@ -243,7 +245,7 @@ export default function RegisterPage() {
         <div className="text-center mt-4 text-sm">
           Already have an account?{" "}
           <Link href="/signin" className="font-semibold text-green-700 hover:underline">
-            Sign in here
+            {labels.signIn}
           </Link>
         </div>
       </div>

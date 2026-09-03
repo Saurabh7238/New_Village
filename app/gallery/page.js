@@ -3,8 +3,12 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useLanguage } from '@/app/language-provider';
+import { TRANSLATIONS } from '@/app/translations';
 
 const GalleryPage = () => {
+    const { language } = useLanguage();
+    const t = TRANSLATIONS.gallery[language];
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -37,16 +41,16 @@ const GalleryPage = () => {
     }, []);
 
     if (loading) {
-        return <LoadingSpinner message="Loading Gallery..." />;
+        return <LoadingSpinner message={t.loading} />;
     }
 
     if (images.length === 0) {
-        return <div className="p-8 text-center">No images found in the gallery.</div>;
+        return <div className="p-8 text-center">{t.noImages}</div>;
     }
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
-            <h1 className="text-4xl font-bold text-center mb-10 text-blue-700 dark:text-blue-400">Village Gallery</h1>
+            <h1 className="text-4xl font-bold text-center mb-10 text-blue-700 dark:text-blue-400">{t.title}</h1>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
                 {images.map((img, index) => {
                     const altText = img.title || `Gallery ${index + 1}`;
@@ -110,7 +114,7 @@ const LazyImageCard = ({ image, altText }) => {
                 </>
             ) : (
                 <div className="w-full h-48 bg-gray-300 flex items-center justify-center">
-                    <p className="text-gray-500 text-sm">Failed to load image</p>
+                    <p className="text-gray-500 text-sm">{t.failedLoad}</p>
                 </div>
             )}
         </div>

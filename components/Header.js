@@ -23,6 +23,7 @@ export default function Header() {
   const [serviceUnreadCount, setServiceUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
   const [largeText, setLargeText] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const notificationRef = useRef(null);
   const menuButtonRef = useRef(null);
   const menuPanelRef = useRef(null);
@@ -36,6 +37,14 @@ export default function Header() {
     session?.user?.email?.split("@")[0] ||
     session?.user?.role ||
     null;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -184,7 +193,7 @@ export default function Header() {
 
   const baseClass = "fixed inset-x-0 top-0 z-[100] w-full transition-all duration-300";
   const scrolledClass = scrolled
-    ? "bg-green-700/90 dark:bg-green-900/90 backdrop-blur shadow-lg"
+    ? "bg-green-700/90 dark:bg-green-900/90 md:backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
   const menuItemBaseClass =
     "flex w-full items-center rounded-lg bg-slate-100 px-2.5 py-2.5 text-left text-xs sm:text-sm font-semibold transition-colors dark:bg-slate-700";
@@ -234,7 +243,7 @@ export default function Header() {
       <div className="bg-green-600 dark:bg-green-800 overflow-hidden">
         <motion.div
           className="py-2 sm:py-3 text-sm font-semibold tracking-wide whitespace-nowrap text-white"
-          animate={{ x: ["100%", "-100%"] }}
+          animate={isMobileViewport ? { x: 0 } : { x: ["100%", "-100%"] }}
           transition={{
             ease: "linear",
             duration: 15,

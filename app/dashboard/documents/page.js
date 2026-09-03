@@ -4,8 +4,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { ToastContainer, useToast } from '@/components/Toast';
+import { useLanguage } from '@/app/language-provider';
 
 export default function MyDocumentsPage() {
+  const { labels } = useLanguage();
   const { toasts, addToast, removeToast } = useToast();
   const [user, setUser] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -85,7 +87,7 @@ export default function MyDocumentsPage() {
       <Link href="/dashboard" className="text-sm font-semibold text-green-700 hover:underline">Back to Dashboard</Link>
       <section className="mt-4 rounded-xl border border-green-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <p className="text-sm font-semibold text-green-700">Citizen Document Vault</p>
-        <h1 className="mt-1 text-2xl font-bold">My Documents</h1>
+        <h1 className="mt-1 text-2xl font-bold">{labels.documents}</h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Unique ID: {user?.uniqueId || 'Loading...'}</p>
         <p className="text-sm text-gray-600 dark:text-gray-300">Name: {user?.name || '-'} | Mobile: {user?.phone || '-'} | Aadhaar: {user?.aadhaarLast4 ? `XXXX-XXXX-${user.aadhaarLast4}` : 'Not available'}</p>
       </section>
@@ -103,8 +105,8 @@ export default function MyDocumentsPage() {
           <article key={document.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div><p className="font-semibold">{document.documentType}</p><p className="text-sm text-gray-500">{document.fileName} | {document.uploadedBy === 'admin' ? 'Panchayat office' : 'Uploaded by you'}</p></div>
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => setPreviewDocument(document)} className="rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">View</button>
-              <a href={document.viewUrl} download={document.fileName || 'document'} className="rounded bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-800">Download</a>
+              <button type="button" onClick={() => setPreviewDocument(document)} className="rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">{labels.view}</button>
+              <a href={document.viewUrl} download={document.fileName || 'document'} className="rounded bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-800">{labels.download}</a>
               {document.uploadedBy === 'citizen' && (
                 <button
                   type="button"
@@ -112,7 +114,7 @@ export default function MyDocumentsPage() {
                   disabled={deletingId === document.id}
                   className="rounded bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
                 >
-                  {deletingId === document.id ? 'Deleting...' : 'Delete'}
+                  {deletingId === document.id ? 'Deleting...' : labels.delete}
                 </button>
               )}
             </div>
@@ -129,7 +131,7 @@ export default function MyDocumentsPage() {
       {previewDocument && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label={`Preview ${previewDocument.fileName}`}>
           <div className="max-h-[90vh] w-full max-w-4xl rounded-lg bg-white p-4 dark:bg-gray-800">
-            <div className="mb-3 flex items-center justify-between gap-3"><h2 className="font-semibold">{previewDocument.fileName}</h2><button type="button" onClick={() => setPreviewDocument(null)} className="rounded border px-3 py-1 text-sm">Close</button></div>
+            <div className="mb-3 flex items-center justify-between gap-3"><h2 className="font-semibold">{previewDocument.fileName}</h2><button type="button" onClick={() => setPreviewDocument(null)} className="rounded border px-3 py-1 text-sm">{labels.close}</button></div>
             {previewDocument.mimeType === 'application/pdf' ? <iframe title={previewDocument.fileName} src={previewDocument.viewUrl} className="h-[70vh] w-full" /> : <Image src={previewDocument.viewUrl} alt={previewDocument.fileName} width={1200} height={800} unoptimized className="mx-auto max-h-[70vh] w-auto max-w-full object-contain" />}
           </div>
         </div>

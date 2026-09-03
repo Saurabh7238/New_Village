@@ -196,6 +196,13 @@ export default function HomePage() {
       reviewSuccess: "Thank you. Your review is waiting for admin approval.",
       reviewError: "Could not submit review. Please try again.",
       noReviews: "No reviews yet. Be the first to share!",
+      village: "Our village",
+      villageAbout: "About Chiutahara Village",
+      population: "Population (2011 Census)", households: "Households", schools: "Schools", wardMembers: "Ward Members",
+      male: "Male", female: "Female", educationPriority: "Education Priority", electedRepresentatives: "Elected Representatives",
+      overview: "Gram Panchayat Overview", state: "State", district: "District", block: "Block", gramPanchayat: "Gram Panchayat", villagesServed: "Villages Served", sarpanch: "Sarpanch",
+      localGovernance: "Local Governance", assembly: "Assembly", parliament: "Parliament", subDistrict: "Sub-District", politicalRepresentatives: "Political Representatives", mla: "MLA", mp: "MP",
+      villageDescription: "Part of the Panchayati Raj system, working at grassroots level for local administrative matters and village-level planning.",
     },
     hi: {
       welcome: "ग्राम पंचायत पोर्टल में आपका स्वागत है",
@@ -227,6 +234,13 @@ export default function HomePage() {
       reviewSuccess: "धन्यवाद! आपकी समीक्षा व्यवस्थापक की स्वीकृति की प्रतीक्षा कर रही है।",
       reviewError: "समीक्षा भेज नहीं सकी। कृपया पुनः प्रयास करें।",
       noReviews: "अभी कोई समीक्षा नहीं। पहले अपना अनुभव साझा करें!",
+      village: "हमारा गांव",
+      villageAbout: "छितौहरा गांव के बारे में",
+      population: "जनसंख्या (2011 जनगणना)", households: "परिवार", schools: "विद्यालय", wardMembers: "वार्ड सदस्य",
+      male: "पुरुष", female: "महिला", educationPriority: "शिक्षा प्राथमिकता", electedRepresentatives: "निर्वाचित प्रतिनिधि",
+      overview: "ग्राम पंचायत का परिचय", state: "राज्य", district: "जिला", block: "ब्लॉक", gramPanchayat: "ग्राम पंचायत", villagesServed: "सेवा प्राप्त गांव", sarpanch: "सरपंच",
+      localGovernance: "स्थानीय शासन", assembly: "विधानसभा", parliament: "संसद", subDistrict: "तहसील", politicalRepresentatives: "राजनीतिक प्रतिनिधि", mla: "विधायक", mp: "सांसद",
+      villageDescription: "पंचायती राज व्यवस्था का हिस्सा, जो स्थानीय प्रशासनिक मामलों और गांव-स्तरीय योजना के लिए जमीनी स्तर पर कार्य करती है।",
     },
   };
 
@@ -362,65 +376,65 @@ export default function HomePage() {
           </section>
 
           <section className="rounded-[2rem] border border-sky-100/80 bg-gradient-to-br from-sky-50/90 via-white/80 to-emerald-50/90 px-5 py-8 shadow-xl shadow-sky-950/5 dark:border-slate-700 dark:from-slate-800 dark:via-slate-900 dark:to-emerald-950/40 sm:px-8 sm:py-10">
-            <p className="text-xs font-bold uppercase tracking-[.18em] text-sky-700 dark:text-sky-300">Our village</p><h2 className="mb-6 mt-2 text-2xl font-bold tracking-tight text-emerald-950 dark:text-emerald-300 sm:text-3xl">
-              📍 About Chiutahara Village
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-sky-700 dark:text-sky-300">{t.village}</p><h2 className="mb-6 mt-2 text-2xl font-bold tracking-tight text-emerald-950 dark:text-emerald-300 sm:text-3xl">
+              📍 {t.villageAbout}
             </h2>
 
             {/* Key Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <div className="p-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Population (2011 Census)</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">{t.population}</p>
                 <p className="text-2xl font-bold text-blue-600">1,768</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Male: 795 | Female: 973</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t.male}: 795 | {t.female}: 973</p>
               </div>
               <div className="p-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Households</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">{t.households}</p>
                 <p className="text-2xl font-bold text-green-600">269</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Code: 195584</p>
               </div>
               <div className="p-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Schools</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">{t.schools}</p>
                 <p className="text-2xl font-bold text-purple-600">3</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Education Priority</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t.educationPriority}</p>
               </div>
               <div className="p-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">Ward Members</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">{t.wardMembers}</p>
                 <p className="text-2xl font-bold text-orange-600">12</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Elected Representatives</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t.electedRepresentatives}</p>
               </div>
             </div>
 
             {/* Gram Panchayat Overview */}
             <div className="mb-4 border-y border-sky-200/80 py-5 dark:border-slate-700">
-              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏘️ Gram Panchayat Overview</p>
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏘️ {t.overview}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>State:</strong> Uttar Pradesh</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>District:</strong> Azamgarh</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Block:</strong> Lalganj</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.state}:</strong> Uttar Pradesh</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.district}:</strong> Azamgarh</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.block}:</strong> Lalganj</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Gram Panchayat:</strong> Chiutahara</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Villages Served:</strong> 3</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.gramPanchayat}:</strong> Chiutahara</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.villagesServed}:</strong> 3</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Chiutahara, Lauhara, Malikan</p>
                 </div>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><strong>Sarpanch:</strong> Chhotelal Yadav</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400"><em>Part of Panchayati Raj system, working at grassroots level for local administrative matters and village-level planning.</em></p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><strong>{t.sarpanch}:</strong> Chhotelal Yadav</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400"><em>{t.villageDescription}</em></p>
             </div>
 
             {/* Governance & Admin */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏛️ Local Governance</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">Assembly:</span> Lalganj Constituency</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">Parliament:</span> Lalganj Constituency</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">Sub-District:</span> Lalganj</p>
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏛️ {t.localGovernance}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">{t.assembly}:</span> Lalganj Constituency</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">{t.parliament}:</span> Lalganj Constituency</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">{t.subDistrict}:</span> Lalganj</p>
               </div>
               <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🗳️ Political Representatives</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">MLA:</span> Shri Bechai Saroj (Samajwadi Party)</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">MP:</span> Daroga Prasad Saroj (Samajwadi Party)</p>
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🗳️ {t.politicalRepresentatives}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">{t.mla}:</span> Shri Bechai Saroj (Samajwadi Party)</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">{t.mp}:</span> Daroga Prasad Saroj (Samajwadi Party)</p>
               </div>
             </div>
 

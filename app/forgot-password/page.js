@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/app/language-provider";
 
 export default function ForgotPasswordPage() {
+  const { labels } = useLanguage();
   const [aadhaarNumber, setAadhaarNumber] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -69,7 +71,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 px-4 py-12">
       <div className="w-full max-w-md rounded-xl border border-green-200 bg-white p-8 shadow-xl shadow-green-100">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-green-800">Forgot Password</h1>
+          <h1 className="text-2xl font-bold text-green-800">{labels.forgotPassword}</h1>
           <p className="mt-2 text-sm text-green-700/80">
             Verify with Aadhaar and date of birth to reset your password
           </p>
@@ -77,7 +79,7 @@ export default function ForgotPasswordPage() {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Aadhaar Number</label>
+            <label className="block text-sm font-medium text-gray-700">{labels.aadhaarNumber}</label>
             <input
               type="text"
               value={aadhaarNumber}
@@ -89,7 +91,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+            <label className="block text-sm font-medium text-gray-700">{labels.dateOfBirth}</label>
             <input
               type="date"
               value={dateOfBirth}
@@ -100,7 +102,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">New Password</label>
+            <label className="block text-sm font-medium text-gray-700">{labels.newPassword}</label>
             <input
               type="password"
               value={newPassword}
@@ -112,7 +114,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-700">{labels.confirmPassword}</label>
             <input
               type="password"
               value={confirmPassword}
@@ -129,7 +131,7 @@ export default function ForgotPasswordPage() {
             disabled={loading}
             className="w-full rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Resetting..." : "Reset Password"}
+            {loading ? "Resetting..." : labels.resetPassword}
           </button>
 
           {error && (
@@ -147,7 +149,7 @@ export default function ForgotPasswordPage() {
 
         <div className="mt-4 text-center text-sm text-gray-600">
           <Link href="/signin" className="font-semibold text-green-700 hover:underline">
-            Back to Sign in
+            {labels.backToSignIn}
           </Link>
         </div>
       </div>

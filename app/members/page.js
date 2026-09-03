@@ -4,8 +4,12 @@ import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { sortMembersByHierarchy, groupWardMembersByWard, formatTenure, getStatusColor, DESIGNATION_HIERARCHY } from '@/lib/memberDisplay';
 import Image from 'next/image';
+import { useLanguage } from '@/app/language-provider';
+import { TRANSLATIONS } from '@/app/translations';
 
 function MemberCard({ member }) {
+  const { language } = useLanguage();
+  const t = TRANSLATIONS.members[language];
   const [expanded, setExpanded] = useState(false);
   const statusColor = getStatusColor(member.status);
   const statusColors = {
@@ -73,7 +77,7 @@ function MemberCard({ member }) {
               onClick={() => setExpanded(!expanded)}
               className="mt-2 text-sm text-green-700 hover:text-green-900 font-medium"
             >
-              {expanded ? 'Hide Details' : 'View Details'}
+              {expanded ? t.hideDetails : t.viewDetails}
             </button>
           )}
         </div>
@@ -109,6 +113,8 @@ function MemberCard({ member }) {
 }
 
 export default function MembersPage() {
+  const { language } = useLanguage();
+  const t = TRANSLATIONS.members[language];
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -131,13 +137,13 @@ export default function MembersPage() {
   }, []);
 
   if (loading) {
-    return <LoadingSpinner message="Loading Members..." />;
+    return <LoadingSpinner message={t.loading} />;
   }
 
   if (error) {
     return (
       <div className="pt-36 max-w-5xl mx-auto px-4">
-        <p className="text-red-600">Error: {error}</p>
+        <p className="text-red-600">{t.error} {error}</p>
       </div>
     );
   }
@@ -149,14 +155,12 @@ export default function MembersPage() {
 
   return (
     <div className="pt-36 max-w-6xl mx-auto px-4 pb-12">
-      <h1 className="text-4xl font-bold text-green-700 mb-2">Panchayat Members</h1>
-      <p className="text-gray-700 mb-8">
-        Meet the elected members and officials of your Gram Panchayat. Below are the representatives serving the community.
-      </p>
+      <h1 className="text-4xl font-bold text-green-700 mb-2">{t.title}</h1>
+      <p className="text-gray-700 mb-8">{t.description}</p>
 
       {leadership.length > 0 && (
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-green-700 mb-6">Leadership</h2>
+          <h2 className="text-2xl font-bold text-green-700 mb-6">{t.leadership}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {leadership.map(member => (
               <MemberCard key={member._id} member={member} />
@@ -167,7 +171,7 @@ export default function MembersPage() {
 
       {wardMembers.length > 0 && (
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-green-700 mb-6">Ward Members</h2>
+          <h2 className="text-2xl font-bold text-green-700 mb-6">{t.wardMembers}</h2>
           {Object.entries(groupWardMembersByWard(wardMembers))
             .sort((a, b) => {
               const aWard = a[0] === 'Unassigned' ? Infinity : parseInt(a[0]);
@@ -189,7 +193,7 @@ export default function MembersPage() {
 
       {staff.length > 0 && (
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-green-700 mb-6">Administrative Staff</h2>
+          <h2 className="text-2xl font-bold text-green-700 mb-6">{t.administrativeStaff}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {staff.map(member => (
               <MemberCard key={member._id} member={member} />
@@ -200,7 +204,7 @@ export default function MembersPage() {
 
       {members.length === 0 && (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-600">No members added yet.</p>
+          <p className="text-gray-600">{t.noMembers}</p>
         </div>
       )}
     </div>

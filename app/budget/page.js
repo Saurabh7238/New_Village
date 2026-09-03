@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useLanguage } from "@/app/language-provider";
+import { TRANSLATIONS } from "@/app/translations";
 import {
   formatBudgetAmount,
   formatBudgetDate,
@@ -10,6 +12,8 @@ import {
 } from "@/lib/budgetDisplay";
 
 export default function BudgetPage() {
+  const { language } = useLanguage();
+  const t = TRANSLATIONS.budget[language];
   const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,41 +65,40 @@ export default function BudgetPage() {
   );
 
   if (loading) {
-    return <LoadingSpinner message="Loading Budget Information..." />;
+    return <LoadingSpinner message={t.loading} />;
   }
 
   return (
     <div className="pt-36 max-w-7xl mx-auto px-4 pb-12">
       <h1 className="text-3xl font-bold text-green-700 mb-2">
-        Gram Panchayat Budget
+        {t.title}
       </h1>
       <p className="text-gray-700 dark:text-gray-300 mb-6">
-        View budget allocations, fund receipts, work status, and related documents
-        for each scheme.
+        {t.description}
       </p>
 
       {budgets.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-green-600">
-            <p className="text-sm text-gray-500">Total Allocation</p>
+            <p className="text-sm text-gray-500">{t.totalAllocation}</p>
             <p className="text-xl font-bold text-green-700">
               {formatBudgetAmount(totals.allocation)}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-blue-600">
-            <p className="text-sm text-gray-500">Amount Received</p>
+            <p className="text-sm text-gray-500">{t.amountReceived}</p>
             <p className="text-xl font-bold text-blue-700">
               {formatBudgetAmount(totals.received)}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-orange-600">
-            <p className="text-sm text-gray-500">Total Balance</p>
+            <p className="text-sm text-gray-500">{t.totalBalance}</p>
             <p className="text-xl font-bold text-orange-700">
               {formatBudgetAmount(totals.balance)}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-purple-600">
-            <p className="text-sm text-gray-500">Total Beneficiaries</p>
+            <p className="text-sm text-gray-500">{t.totalBeneficiaries}</p>
             <p className="text-xl font-bold text-purple-700">
               {totals.beneficiaries.toLocaleString("en-IN")}
             </p>
@@ -113,7 +116,7 @@ export default function BudgetPage() {
 
       {!loading && !error && budgets.length === 0 && (
         <p className="text-gray-500 text-center py-8 bg-white rounded-lg shadow">
-          No budget records published yet.
+          {t.noRecords}
         </p>
       )}
 
@@ -181,7 +184,7 @@ export default function BudgetPage() {
                         disabled={downloadingId === item._id}
                         className="text-green-700 hover:underline disabled:opacity-50"
                       >
-                        {downloadingId === item._id ? "Loading..." : "Download PDF"}
+                        {downloadingId === item._id ? t.loading : t.downloadPDF}
                       </button>
                     ) : (
                       "—"
