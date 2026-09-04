@@ -55,8 +55,7 @@ export default function RootLayout({ children }) {
             __html: `
               try {
                 const theme = localStorage.getItem('theme');
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const isDark = theme ? theme === 'dark' : prefersDark;
+                const isDark = theme === 'dark';
                 if (isDark) document.documentElement.classList.add('dark');
                 if (localStorage.getItem('text-size-large') === 'true') document.documentElement.classList.add('text-size-large');
                 if (localStorage.getItem('high-contrast') === 'true') document.documentElement.classList.add('high-contrast');
