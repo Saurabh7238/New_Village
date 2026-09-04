@@ -212,15 +212,6 @@ export default function HomePage() {
       templeDescription: "Sacred temple dedicated to Lord Hanuman (God of Strength). People from nearby and far-off villages visit regularly to worship and offer prayers, especially on special occasions.",
       traditionalDress: "Traditional Dress", traditionalFood: "Traditional Food", traditionalOrnaments: "Traditional Ornaments", pincode: "Pincode", postalAreaCode: "Postal Area Code",
       beliefsDescription: "The community believes that Lord Hanuman protects the village and its people from all harm. Worship at Hanuman Mandir is a regular practice, strengthening the cultural and spiritual fabric of the village.",
-      publicInfoTitle: "Free Public Information",
-      publicInfoSubtitle: "Helpful resources for every citizen, without any charge.",
-      publicInfoBadge: "Free for everyone",
-      publicInfoCards: [
-        { title: "Public Notices", text: "Latest updates, festival alerts and village announcements.", tag: "Latest", href: "/notices" },
-        { title: "Download Forms", text: "Certificates, grievance forms and common application documents.", tag: "Quick access", href: "/downloads" },
-        { title: "Emergency Contacts", text: "Panchayat, police, fire and support numbers in one place.", tag: "Need help", href: "/emergency" },
-        { title: "Status & Support", text: "Track requests and find the right assistance quickly.", tag: "Support", href: "/track" },
-      ],
     },
     hi: {
       welcome: "ग्राम पंचायत पोर्टल में आपका स्वागत है",
@@ -263,15 +254,6 @@ export default function HomePage() {
       templeDescription: "भगवान हनुमान (शक्ति के देवता) को समर्पित पवित्र मंदिर। आसपास और दूर-दराज के गांवों के लोग नियमित रूप से पूजा और प्रार्थना करने आते हैं, विशेषकर शुभ अवसरों पर।",
       traditionalDress: "पारंपरिक पोशाक", traditionalFood: "पारंपरिक भोजन", traditionalOrnaments: "पारंपरिक आभूषण", pincode: "पिनकोड", postalAreaCode: "डाक क्षेत्र कोड",
       beliefsDescription: "समुदाय का विश्वास है कि भगवान हनुमान गांव और उसके लोगों को सभी संकटों से बचाते हैं। हनुमान मंदिर में पूजा नियमित परंपरा है, जो गांव की सांस्कृतिक और आध्यात्मिक एकता को मजबूत करती है।",
-      publicInfoTitle: "मुफ्त सार्वजनिक जानकारी",
-      publicInfoSubtitle: "हर नागरिक के लिए उपयोगी जानकारी, बिना कोई शुल्क लिए।",
-      publicInfoBadge: "हर नागरिक के लिए मुफ्त",
-      publicInfoCards: [
-        { title: "सार्वजनिक नोटिस", text: "नवीनतम अपडेट, त्योहार की सूचना और गांव की घोषणा।", tag: "ताज़ा", href: "/notices" },
-        { title: "फॉर्म डाउनलोड", text: "प्रमाणपत्र, शिकायत फॉर्म और सामान्य आवेदन दस्तावेज।", tag: "तुरंत एक्सेस", href: "/downloads" },
-        { title: "आपातकालीन संपर्क", text: "पंचायत, पुलिस, अग्निशमन और सहायता नंबर एक ही जगह।", tag: "सहायता", href: "/emergency" },
-        { title: "स्थिति और सहायता", text: "अनुरोध ट्रैक करें और तुरंत सही सलाह प्राप्त करें।", tag: "सपोर्ट", href: "/track" },
-      ],
     },
   };
 
@@ -403,56 +385,6 @@ export default function HomePage() {
                   index={i}
                 />
               ))}
-            </div>
-          </section>
-
-          <section className="rounded-[2rem] border border-emerald-100/80 bg-gradient-to-br from-emerald-50 via-white to-sky-50 px-5 py-8 shadow-[0_20px_50px_-28px_rgba(16,185,129,0.38)] dark:border-slate-700 dark:from-slate-800 dark:via-slate-900 dark:to-emerald-950/30 sm:px-8 sm:py-10">
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200">
-                  {t.publicInfoBadge}
-                </span>
-                <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-                  {t.publicInfoTitle}
-                </h2>
-              </div>
-              <p className="max-w-md text-sm leading-6 text-slate-600 dark:text-slate-300">{t.publicInfoSubtitle}</p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {t.publicInfoCards.map((item, idx) => {
-                const icons = [BellRing, FileText, Phone, BadgeCheck];
-                const Icon = icons[idx] || BellRing;
-
-                const content = (
-                  <>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-md shadow-emerald-900/15">
-                        <Icon className="h-5 w-5" aria-hidden="true" />
-                      </div>
-                      <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
-                        {item.tag}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{item.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{item.text}</p>
-                    <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 transition group-hover:bg-emerald-600 group-hover:text-white dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
-                      {language === "hi" ? "देखें" : "View"}
-                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </div>
-                  </>
-                );
-
-                return (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    className="group block rounded-2xl border border-emerald-200 bg-white/90 p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/90"
-                  >
-                    {content}
-                  </Link>
-                );
-              })}
             </div>
           </section>
 
