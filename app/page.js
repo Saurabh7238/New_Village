@@ -432,7 +432,7 @@ export default function HomePage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400">Chiutahara, Lauhara, Malikan</p>
                 </div>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><strong>{t.sarpanch}:</strong> Chhotelal Yadav</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><strong>{t.sarpanch}:</strong> </p>
               <p className="text-xs text-gray-600 dark:text-gray-400"><em>{t.villageDescription}</em></p>
             </div>
 
