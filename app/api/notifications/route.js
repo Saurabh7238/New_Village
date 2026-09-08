@@ -16,7 +16,13 @@ export async function GET(request) {
     await dbConnect();
     const { searchParams } = new URL(request.url);
 
-    const session = await getSession();
+    // Public notification reads must not fail when no auth session exists.
+    let session = null;
+    try {
+      session = await getSession();
+    } catch (error) {
+      console.warn('Notification session lookup skipped:', error?.message || error);
+    }
     const type = searchParams.get('type');
     const level = searchParams.get('level');
     const category = searchParams.get('category');
@@ -109,7 +115,7 @@ export async function GET(request) {
         page,
         pages: Math.ceil(total / limit),
       },
-      { status: 200 }
+      { status: 200, headers: { 'Cache-Control': 'no-store' } }
     );
   } catch (error) {
     console.warn('GET Notifications skipped: MongoDB unavailable.', error?.message || error);

@@ -31,7 +31,7 @@ export default function NotificationsPage() {
 
   // Filter state
   const [filters, setFilters] = useState({
-    type: 'message',
+    type: '',
     level: '',
     category: '',
     search: '',
