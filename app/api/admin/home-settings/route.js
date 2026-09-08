@@ -4,11 +4,6 @@ import HomeSettings from '@/models/HomeSettings';
 
 export async function GET() {
   try {
-    const session = await requireAdminSession();
-    if (!session) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await dbConnect();
     const settings = await HomeSettings.findOne({ name: 'default' }).lean();
 
