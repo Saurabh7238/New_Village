@@ -4,6 +4,7 @@ import Providers from "./auth-provider";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import WelcomeToast from "../components/WelcomeToast";
 import ChatWidget from "../components/ChatWidget";
+import PwaRegistration from "../components/PwaRegistration";
 import { LanguageProvider } from "./language-provider";
 
 export const metadata = {
@@ -16,7 +17,7 @@ export const metadata = {
   icons: {
     icon: "/favicon .ico",
     shortcut: "/favicon .ico",
-    apple: "/icon-192.png",
+    apple: "/favicon .ico",
   },
   appleWebApp: {
     capable: true,
@@ -73,6 +74,7 @@ export default function RootLayout({ children }) {
               </div>
             </noscript>
             <Header />
+            <PwaRegistration />
             <main className="mx-auto max-w-6xl px-4 pt-[6.75rem] sm:pt-[7.5rem]">
               <WelcomeToast />
               {children}
