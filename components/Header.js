@@ -47,8 +47,11 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
+    const handleScroll = () => {
+      const nextScrolled = window.scrollY > 10;
+      setScrolled((current) => (current === nextScrolled ? current : nextScrolled));
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -191,7 +194,7 @@ export default function Header() {
     navItems.push(["Admin Panel", "/admin"]);
   }
 
-  const baseClass = "fixed inset-x-0 top-0 z-[100] w-full transition-all duration-300";
+  const baseClass = "fixed inset-x-0 top-0 z-[100] w-full transition-colors duration-300";
   const scrolledClass = scrolled
     ? "bg-green-700/90 dark:bg-green-900/90 md:backdrop-blur shadow-lg"
     : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
@@ -241,17 +244,19 @@ export default function Header() {
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
       <div className="bg-green-600 dark:bg-green-800 overflow-hidden">
-        <motion.div
-          className="py-2 sm:py-3 text-sm font-semibold tracking-wide whitespace-nowrap text-white"
-          animate={isMobileViewport ? { x: 0 } : { x: ["100%", "-100%"] }}
-          transition={{
-            ease: "linear",
-            duration: 15,
-            repeat: Infinity,
-          }}
-        >
-          🌟 Welcome to Chiutahara Portal — Efficient Governance for Every Citizen 🌟
-        </motion.div>
+        {isMobileViewport ? (
+          <div className="py-2 text-center text-sm font-semibold tracking-wide text-white">
+            Welcome to Chiutahara Portal
+          </div>
+        ) : (
+          <motion.div
+            className="py-2 sm:py-3 text-sm font-semibold tracking-wide whitespace-nowrap text-white"
+            animate={{ x: ["100%", "-100%"] }}
+            transition={{ ease: "linear", duration: 15, repeat: Infinity }}
+          >
+            Welcome to Chiutahara Portal - Efficient Governance for Every Citizen
+          </motion.div>
+        )}
       </div>
 
       <div className="mx-auto flex max-w-6xl flex-nowrap items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-4 lg:px-8">
