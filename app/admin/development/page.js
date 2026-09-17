@@ -171,6 +171,9 @@ export default function DevelopmentAdmin() {
     });
     setBeforePhotoPreview(project.beforePhoto);
     setAfterPhotoPreview(project.afterPhoto);
+    window.requestAnimationFrame(() => {
+      document.getElementById("development-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   const handleDelete = async (id) => {
@@ -328,7 +331,7 @@ Print this report and display in Gram Sabha meetings for transparency and social
         <h1 className="text-4xl font-bold mb-8 text-green-700 dark:text-yellow-400">Development Projects Management</h1>
 
         {message && (
-          <div className={`mb-6 p-4 rounded-lg ${message.includes("Error") || message.includes("Failed") ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"}`}>
+          <div role="status" aria-live="polite" className={`mb-6 p-4 rounded-lg ${message.includes("Error") || message.includes("Failed") ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"}`}>
             {message}
           </div>
         )}
@@ -394,7 +397,7 @@ Print this report and display in Gram Sabha meetings for transparency and social
           </button>
         </div>
 
-        <div className={`${bgClass} p-8 rounded-lg shadow-lg mb-8`}>
+        <div id="development-editor" className={`${bgClass} scroll-mt-24 p-8 rounded-lg shadow-lg mb-8`}>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div>
               <p className={`text-sm font-semibold uppercase tracking-wide ${labelClass}`}>{formData.id ? "Editing saved record" : "New record"}</p>
@@ -552,7 +555,7 @@ Print this report and display in Gram Sabha meetings for transparency and social
                   onChange={handleInputChange}
                   placeholder="Ward number"
                   className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
-                  required
+                  required={!formData.id}
                 />
               </div>
 
@@ -582,7 +585,7 @@ Print this report and display in Gram Sabha meetings for transparency and social
                   min="0"
                   max="100"
                   className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
-                  required
+                  required={!formData.id}
                 />
               </div>
 

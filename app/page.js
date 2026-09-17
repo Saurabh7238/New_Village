@@ -162,6 +162,7 @@ export default function HomePage() {
       } else {
         const errorData = await res.json().catch(() => ({}));
         setReviewFeedback(errorData.message || t.reviewError);
+
       }
     } catch {
       setReviewFeedback(t.reviewError);
@@ -387,30 +388,6 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 px-5 py-5 dark:border-slate-700 sm:flex-row sm:items-center sm:px-8">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Location</p>
-                <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Chiutahara Panchayat Map</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Find the Panchayat location and nearby landmark.</p>
-              </div>
-              <Link
-                href="/map"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-teal-200 px-4 py-2 text-sm font-bold text-teal-800 transition hover:bg-teal-50 dark:border-teal-700 dark:text-teal-200 dark:hover:bg-teal-950"
-              >
-                Open full map <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </div>
-            <iframe
-              title="Chiutahara Panchayat map"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3584.370430999999!2d83.0625204!3d25.7310942!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3991cf1450dc16cf%3A0xd24a5f561129b0b!2sShri%20Radhe%20Krishna%20Mandir!5e0!3m2!1sen!2sin!4v1694767000000!5m2!1sen!2sin"
-              className="h-72 w-full border-0 sm:h-96"
-              loading="lazy"
-              allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </section>
-
           <section className="rounded-xl border border-slate-200 bg-white px-5 py-7 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-8 sm:py-8">
             <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">{t.village}</p><h2 className="mb-6 mt-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
               📍 {t.villageAbout}
@@ -625,6 +602,30 @@ export default function HomePage() {
             </form>
           </section>
         </div>
+
+        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex flex-col justify-between gap-3 border-b border-slate-200 px-5 py-5 dark:border-slate-700 sm:flex-row sm:items-center sm:px-8">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Location</p>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Chiutahara Panchayat Map</h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Find the Panchayat location and nearby landmark.</p>
+            </div>
+            <Link
+              href="/map"
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-teal-200 px-4 py-2 text-sm font-bold text-teal-800 transition hover:bg-teal-50 dark:border-teal-700 dark:text-teal-200 dark:hover:bg-teal-950"
+            >
+              Open full map <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+          <iframe
+            title="Chiutahara Panchayat map"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3584.370430999999!2d83.0625204!3d25.7310942!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3991cf1450dc16cf%3A0xd24a5f561129b0b!2sShri%20Radhe%20Krishna%20Mandir!5e0!3m2!1sen!2sin!4v1694767000000!5m2!1sen!2sin"
+            className="h-72 w-full border-0 sm:h-96"
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </section>
 
         <section className="rounded-2xl border border-white/70 bg-white/65 py-3 text-center shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-800/75">
           <p className="text-sm text-gray-700 dark:text-gray-300">

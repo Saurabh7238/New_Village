@@ -23,6 +23,7 @@ export default function DevelopmentPage() {
   const [projects, setProjects] = useState([]);
   const [viewType, setViewType] = useState("table"); // table, scheme, ward, or map
   const [filterYear, setFilterYear] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
   const [filterScheme, setFilterScheme] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -45,9 +46,15 @@ export default function DevelopmentPage() {
   };
 
   const availableYears = [...new Set(projects.map((project) => project.financialYear).filter(Boolean))].sort().reverse();
+  const availableMonths = [...new Set(projects
+    .map((project) => project.registeredOn?.slice(0, 7))
+    .filter(Boolean))]
+    .sort()
+    .reverse();
   const availableSchemes = [...new Set(projects.map((project) => project.scheme).filter(Boolean))].sort();
   const visibleProjects = projects.filter((project) =>
     (!filterYear || project.financialYear === filterYear) &&
+    (!filterMonth || project.registeredOn?.startsWith(filterMonth)) &&
     (!filterScheme || project.scheme === filterScheme)
   );
   const groupedData = viewType === "scheme" ? groupByScheme(visibleProjects) : viewType === "ward" ? groupByWard(visibleProjects) : {};
@@ -134,6 +141,21 @@ export default function DevelopmentPage() {
               {availableSchemes.map((scheme) => (
                 <option key={scheme} value={scheme}>
                   {scheme}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm font-semibold">
+            <span>Month</span>
+            <select
+              value={filterMonth}
+              onChange={(event) => setFilterMonth(event.target.value)}
+              className={`px-3 py-2 rounded-lg border ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"}`}
+            >
+              <option value="">All months</option>
+              {availableMonths.map((month) => (
+                <option key={month} value={month}>
+                  {new Date(`${month}-01T00:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
                 </option>
               ))}
             </select>

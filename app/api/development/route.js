@@ -49,7 +49,7 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Invalid project ID format.' }, { status: 400 });
     }
 
-    if (!title || !scheme || !financialYear || sanctionedAmount === undefined || sanctionedAmount === null || sanctionedAmount === '' || wardNo === undefined || wardNo === null || wardNo === '' || !location?.address || !status || physicalProgress === undefined || !startDate || !expectedCompletion || !implementingAgency) {
+    if (!title || !scheme || !financialYear || sanctionedAmount === undefined || sanctionedAmount === null || sanctionedAmount === '' || (!id && (wardNo === undefined || wardNo === null || wardNo === '')) || !location?.address || !status || (!id && (physicalProgress === undefined || physicalProgress === '')) || !startDate || !expectedCompletion || !implementingAgency) {
       return NextResponse.json(
         { message: 'All mandatory fields are required.' },
         { status: 400 }
@@ -68,14 +68,14 @@ export async function POST(request) {
       sanctionedAmount: parseFloat(sanctionedAmount),
       expectedAmount: parseFloat(expectedAmount ?? sanctionedAmount),
       amountSpent: parseFloat(amountSpent) || 0,
-      wardNo: parseInt(wardNo),
+      ...(wardNo !== undefined && wardNo !== null && wardNo !== '' ? { wardNo: parseInt(wardNo) } : {}),
       location: {
         latitude: location.latitude ? parseFloat(location.latitude) : null,
         longitude: location.longitude ? parseFloat(location.longitude) : null,
         address: location.address
       },
       status,
-      physicalProgress: parseInt(physicalProgress),
+      ...(physicalProgress !== undefined && physicalProgress !== null && physicalProgress !== '' ? { physicalProgress: parseInt(physicalProgress) } : {}),
       startDate: new Date(startDate),
       expectedCompletion: new Date(expectedCompletion),
       actualCompletion: actualCompletion ? new Date(actualCompletion) : null,
