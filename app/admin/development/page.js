@@ -331,8 +331,28 @@ Print this report and display in Gram Sabha meetings for transparency and social
         <h1 className="text-4xl font-bold mb-8 text-green-700 dark:text-yellow-400">Development Projects Management</h1>
 
         {message && (
-          <div role="status" aria-live="polite" className={`mb-6 p-4 rounded-lg ${message.includes("Error") || message.includes("Failed") ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"}`}>
-            {message}
+          <div
+            role="status"
+            aria-live="polite"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+          >
+            <div
+              className={`flex w-full max-w-md items-center justify-between gap-4 rounded-xl border px-5 py-4 text-center shadow-2xl ${
+                message.includes("Error") || message.includes("Failed")
+                  ? "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
+                  : "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+              }`}
+            >
+              <span className="flex-1 font-semibold">{message}</span>
+              <button
+                type="button"
+                onClick={() => setMessage("")}
+                aria-label="Close message"
+                className="rounded-md px-2 py-1 text-lg leading-none opacity-70 hover:bg-black/10 hover:opacity-100"
+              >
+                ×
+              </button>
+            </div>
           </div>
         )}
 
