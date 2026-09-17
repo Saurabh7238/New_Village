@@ -22,6 +22,7 @@ export default function DevelopmentPage() {
   const { isDark } = useTheme();
   const [projects, setProjects] = useState([]);
   const [viewType, setViewType] = useState("table"); // table, scheme, ward, or map
+  const [filterYear, setFilterYear] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,7 +43,11 @@ export default function DevelopmentPage() {
     }
   };
 
-  const groupedData = viewType === "scheme" ? groupByScheme(projects) : viewType === "ward" ? groupByWard(projects) : {};
+  const availableYears = [...new Set(projects.map((project) => project.financialYear).filter(Boolean))].sort().reverse();
+  const visibleProjects = filterYear
+    ? projects.filter((project) => project.financialYear === filterYear)
+    : projects;
+  const groupedData = viewType === "scheme" ? groupByScheme(visibleProjects) : viewType === "ward" ? groupByWard(visibleProjects) : {};
 
   if (loading) {
     return <LoadingSpinner message="Loading Development Projects..." />;
@@ -100,6 +105,21 @@ export default function DevelopmentPage() {
           >
             🗺️ View on Map
           </button>
+          <label className="ml-auto flex items-center gap-2 text-sm font-semibold">
+            <span>Plan year</span>
+            <select
+              value={filterYear}
+              onChange={(event) => setFilterYear(event.target.value)}
+              className={`px-3 py-2 rounded-lg border ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"}`}
+            >
+              <option value="">All years</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {/* Projects Grouped Display */}
@@ -114,7 +134,7 @@ export default function DevelopmentPage() {
                 </tr>
               </thead>
               <tbody>
-                {projects.map((project) => (
+                {visibleProjects.map((project) => (
                   <tr key={project._id} className={`border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
                     <td className="px-4 py-4 font-medium">{project.title}</td>
                     <td className="px-4 py-4">{project.scheme}</td>
@@ -139,7 +159,7 @@ export default function DevelopmentPage() {
           </div>
         ) : viewType === "map" ? (
           <div>
-            <DevelopmentMap projects={projects} className="mb-8" />
+            <DevelopmentMap projects={visibleProjects} className="mb-8" />
             <div className={`${isDark ? "bg-gray-800" : "bg-white"} rounded-lg shadow-lg p-6`}>
               <h3 className="text-lg font-bold mb-4">Map Legend</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

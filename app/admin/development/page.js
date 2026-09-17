@@ -14,6 +14,7 @@ export default function DevelopmentAdmin() {
     scheme: "MNREGA",
     financialYear: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
     sanctionedAmount: "",
+    expectedAmount: "",
     amountSpent: "",
     wardNo: "",
     location: { address: "", latitude: "", longitude: "" },
@@ -22,7 +23,10 @@ export default function DevelopmentAdmin() {
     startDate: "",
     expectedCompletion: "",
     actualCompletion: "",
+    registeredOn: "",
+    sanctionedDate: "",
     implementingAgency: "",
+    focusedArea: "",
     beneficiaryCount: "",
     beforePhoto: null,
     afterPhoto: null,
@@ -120,6 +124,7 @@ export default function DevelopmentAdmin() {
       const payload = {
         ...formData,
         sanctionedAmount: parseFloat(formData.sanctionedAmount),
+        expectedAmount: parseFloat(formData.expectedAmount) || parseFloat(formData.sanctionedAmount),
         amountSpent: parseFloat(formData.amountSpent) || 0,
         wardNo: parseInt(formData.wardNo),
         physicalProgress: parseInt(formData.physicalProgress),
@@ -152,9 +157,12 @@ export default function DevelopmentAdmin() {
   const handleEdit = (project) => {
     setFormData({
       ...project,
+      id: project._id,
       startDate: project.startDate ? project.startDate.split("T")[0] : "",
       expectedCompletion: project.expectedCompletion ? project.expectedCompletion.split("T")[0] : "",
       actualCompletion: project.actualCompletion ? project.actualCompletion.split("T")[0] : "",
+      registeredOn: project.registeredOn ? project.registeredOn.split("T")[0] : "",
+      sanctionedDate: project.sanctionedDate ? project.sanctionedDate.split("T")[0] : "",
     });
     setBeforePhotoPreview(project.beforePhoto);
     setAfterPhotoPreview(project.afterPhoto);
@@ -190,6 +198,7 @@ export default function DevelopmentAdmin() {
       scheme: "MNREGA",
       financialYear: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
       sanctionedAmount: "",
+      expectedAmount: "",
       amountSpent: "",
       wardNo: "",
       location: { address: "", latitude: "", longitude: "" },
@@ -198,7 +207,10 @@ export default function DevelopmentAdmin() {
       startDate: "",
       expectedCompletion: "",
       actualCompletion: "",
+      registeredOn: "",
+      sanctionedDate: "",
       implementingAgency: "",
+      focusedArea: "",
       beneficiaryCount: "",
       beforePhoto: null,
       afterPhoto: null,
@@ -213,6 +225,8 @@ export default function DevelopmentAdmin() {
 
   const filteredProjects = projects.filter((project) =>
     project.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.scheme?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.focusedArea?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     project.implementingAgency?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -361,7 +375,21 @@ Print this report and display in Gram Sabha meetings for transparency and social
         </div>
 
         <div className={`${bgClass} p-8 rounded-lg shadow-lg mb-8`}>
-          <h2 className="text-2xl font-bold mb-6">Add/Edit Development Project</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+              <p className={`text-sm font-semibold uppercase tracking-wide ${labelClass}`}>{formData.id ? "Editing saved record" : "New record"}</p>
+              <h2 className="text-2xl font-bold">{formData.id ? "Edit Development Project" : "Add Development Project"}</h2>
+            </div>
+            {formData.id && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-4 py-2 border border-gray-400 rounded-lg font-semibold hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Cancel edit
+              </button>
+            )}
+          </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -417,6 +445,18 @@ Print this report and display in Gram Sabha meetings for transparency and social
                   placeholder="0"
                   className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
                   required
+                />
+              </div>
+
+              <div>
+                <label className={`block ${labelClass} mb-2 font-semibold`}>Expected Amount (₹)</label>
+                <input
+                  type="number"
+                  name="expectedAmount"
+                  value={formData.expectedAmount}
+                  onChange={handleInputChange}
+                  placeholder="Defaults to sanctioned amount"
+                  className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
                 />
               </div>
 
@@ -500,6 +540,28 @@ Print this report and display in Gram Sabha meetings for transparency and social
               </div>
 
               <div>
+                <label className={`block ${labelClass} mb-2 font-semibold`}>Registered On</label>
+                <input
+                  type="date"
+                  name="registeredOn"
+                  value={formData.registeredOn}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                />
+              </div>
+
+              <div>
+                <label className={`block ${labelClass} mb-2 font-semibold`}>Sanctioned Date</label>
+                <input
+                  type="date"
+                  name="sanctionedDate"
+                  value={formData.sanctionedDate}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                />
+              </div>
+
+              <div>
                 <label className={`block ${labelClass} mb-2 font-semibold`}>Actual Completion</label>
                 <input
                   type="date"
@@ -543,6 +605,18 @@ Print this report and display in Gram Sabha meetings for transparency and social
                 onChange={handleInputChange}
                 placeholder="Project details and scope"
                 rows="3"
+                className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+              />
+            </div>
+
+            <div>
+              <label className={`block ${labelClass} mb-2 font-semibold`}>Focused Area</label>
+              <input
+                type="text"
+                name="focusedArea"
+                value={formData.focusedArea}
+                onChange={handleInputChange}
+                placeholder="e.g., Roads, Sanitation, Education"
                 className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
               />
             </div>
@@ -698,13 +772,13 @@ Print this report and display in Gram Sabha meetings for transparency and social
         <div className={`${bgClass} p-8 rounded-lg shadow-lg`}>
           <h2 className="text-2xl font-bold mb-6">Projects List</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-3 mb-6">
             <input
               type="text"
-              placeholder="Search by title or agency..."
+              placeholder="Search activity, scheme, area..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`px-4 py-2 border rounded-lg ${inputClass}`}
+              className={`flex-1 min-w-[220px] px-4 py-2 border rounded-lg ${inputClass}`}
             />
             <select
               value={filterScheme}
@@ -742,18 +816,31 @@ Print this report and display in Gram Sabha meetings for transparency and social
                 </option>
               ))}
             </select>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setFilterScheme("");
+                setFilterWard("");
+                setFilterStatus("");
+              }}
+              className="px-4 py-2 border border-gray-400 rounded-lg font-semibold hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Clear filters
+            </button>
+            <span className={`text-sm font-semibold ${labelClass}`}>{filteredProjects.length} shown</span>
           </div>
 
           <div className="hidden md:block overflow-x-auto">
             <table className={`w-full border-collapse text-sm ${isDark ? "border-gray-700" : "border-gray-300"}`}>
               <thead>
                 <tr className={`border-b-2 ${isDark ? "border-gray-700 bg-gray-800" : "border-gray-300 bg-gray-100"}`}>
-                  <th className="px-4 py-3 text-left">Title</th>
+                  <th className="px-4 py-3 text-left">Activity</th>
                   <th className="px-4 py-3 text-left">Scheme</th>
-                  <th className="px-4 py-3 text-left">Ward</th>
+                  <th className="px-4 py-3 text-left">Registered</th>
+                  <th className="px-4 py-3 text-left">Expected</th>
                   <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Progress</th>
-                  <th className="px-4 py-3 text-left">Amount</th>
+                  <th className="px-4 py-3 text-left">Focused Area</th>
                   <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
               </thead>
@@ -766,14 +853,14 @@ Print this report and display in Gram Sabha meetings for transparency and social
                     >
                       <td className="px-4 py-3">{project.title}</td>
                       <td className="px-4 py-3">{project.scheme}</td>
-                      <td className="px-4 py-3">Ward {project.wardNo}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{formatDate(project.registeredOn || project.startDate)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{formatCurrency(project.expectedAmount ?? project.sanctionedAmount)}</td>
                       <td className="px-4 py-3">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBgClass(project.status)}`}>
                           {project.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">{project.physicalProgress}%</td>
-                      <td className="px-4 py-3">{formatCurrency(project.sanctionedAmount)}</td>
+                      <td className="px-4 py-3">{project.focusedArea || "Not provided"}</td>
                       <td className="px-4 py-3 text-center">
                         <button
                           onClick={() => handleEdit(project)}
@@ -814,9 +901,10 @@ Print this report and display in Gram Sabha meetings for transparency and social
                       </div>
                     </div>
                     <div className="border-t dark:border-gray-600 pt-2 grid grid-cols-2 gap-2">
-                      <div><strong>Ward:</strong> {project.wardNo}</div>
+                      <div><strong>Registered:</strong> {formatDate(project.registeredOn || project.startDate)}</div>
                       <div><strong>Progress:</strong> {project.physicalProgress}%</div>
-                      <div className="col-span-2"><strong>Amount:</strong> {formatCurrency(project.sanctionedAmount)}</div>
+                      <div className="col-span-2"><strong>Expected:</strong> {formatCurrency(project.expectedAmount ?? project.sanctionedAmount)}</div>
+                      <div className="col-span-2"><strong>Area:</strong> {project.focusedArea || "Not provided"}</div>
                       <div className="col-span-2">
                         <strong>Status:</strong> <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBgClass(project.status)}`}>{project.status}</span>
                       </div>
