@@ -12,7 +12,7 @@ const DevelopmentSchema = new mongoose.Schema({
   scheme: {
     type: String,
     required: [true, 'Scheme/Fund source is required'],
-    enum: ['15th Finance Commission', 'MNREGA', 'Gram Nidhi', 'PMAY', 'Swachh Bharat', 'Jal Jeevan Mission', 'PM-KISAN', 'Other State Scheme', 'Central Scheme', 'Other']
+    enum: ['15th Finance Commission', 'MNREGA', 'Gram Nidhi', 'PMAY', 'Swachh Bharat', 'Jal Jeevan Mission', 'PM-KISAN', '4th State Finance Commission', '5th State Finance Commission', 'Fourteen Finance Commission', 'XV Finance Commission', 'Own Funds', 'Viksit Bharat-Guarantee for Rozgar and Ajeevika Mission (Gramin)', 'Other State Scheme', 'Central Scheme', 'Other']
   },
   financialYear: {
     type: String,
@@ -23,6 +23,11 @@ const DevelopmentSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Sanctioned amount is required'],
     min: [0, 'Amount cannot be negative']
+  },
+  expectedAmount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Expected amount cannot be negative']
   },
   amountSpent: {
     type: Number,
@@ -40,7 +45,7 @@ const DevelopmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Sanctioned', 'Ongoing', 'Completed', 'On Hold'],
+    enum: ['Sanctioned', 'Ongoing', 'Completed', 'On Hold', 'Acquisition', 'Abandoned', 'Under Approval'],
     default: 'Sanctioned'
   },
   physicalProgress: {
@@ -53,6 +58,14 @@ const DevelopmentSchema = new mongoose.Schema({
     type: Date,
     required: [true, 'Start date is required']
   },
+  registeredOn: {
+    type: Date,
+    default: null
+  },
+  sanctionedDate: {
+    type: Date,
+    default: null
+  },
   expectedCompletion: {
     type: Date,
     required: [true, 'Expected completion date is required']
@@ -64,6 +77,10 @@ const DevelopmentSchema = new mongoose.Schema({
   implementingAgency: {
     type: String,
     required: [true, 'Implementing agency is required']
+  },
+  focusedArea: {
+    type: String,
+    default: ''
   },
   beneficiaryCount: {
     type: String,

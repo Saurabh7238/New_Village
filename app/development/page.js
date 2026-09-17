@@ -21,7 +21,7 @@ import DevelopmentMap from "@/components/DevelopmentMap";
 export default function DevelopmentPage() {
   const { isDark } = useTheme();
   const [projects, setProjects] = useState([]);
-  const [viewType, setViewType] = useState("scheme"); // scheme, ward, or map
+  const [viewType, setViewType] = useState("table"); // table, scheme, ward, or map
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function DevelopmentPage() {
     }
   };
 
-  const groupedData = viewType === "scheme" ? groupByScheme(projects) : groupByWard(projects);
+  const groupedData = viewType === "scheme" ? groupByScheme(projects) : viewType === "ward" ? groupByWard(projects) : {};
 
   if (loading) {
     return <LoadingSpinner message="Loading Development Projects..." />;
@@ -60,6 +60,16 @@ export default function DevelopmentPage() {
 
         {/* View Toggle */}
         <div className="mb-8 flex gap-4">
+          <button
+            onClick={() => setViewType("table")}
+            className={`px-6 py-3 rounded-lg font-semibold transition ${
+              viewType === "table"
+                ? "bg-green-600 text-white"
+                : `${isDark ? "bg-gray-800 hover:bg-gray-700" : "bg-white hover:bg-gray-100"} border ${isDark ? "border-gray-700" : "border-gray-300"}`
+            }`}
+          >
+            📋 Activity Table
+          </button>
           <button
             onClick={() => setViewType("scheme")}
             className={`px-6 py-3 rounded-lg font-semibold transition ${
@@ -93,7 +103,41 @@ export default function DevelopmentPage() {
         </div>
 
         {/* Projects Grouped Display */}
-        {viewType === "map" ? (
+        {viewType === "table" ? (
+          <div className={`${isDark ? "bg-gray-800" : "bg-white"} rounded-lg shadow-lg overflow-x-auto`}>
+            <table className="min-w-[1100px] w-full text-sm">
+              <thead className="bg-blue-900 text-white">
+                <tr>
+                  {['Activity Name', 'Scheme', 'Registered on', 'Sanctioned Date', 'Expected Amount', 'Current Status', 'Focused Area', 'Actions'].map((heading) => (
+                    <th key={heading} className="px-4 py-4 text-left font-semibold">{heading}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map((project) => (
+                  <tr key={project._id} className={`border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+                    <td className="px-4 py-4 font-medium">{project.title}</td>
+                    <td className="px-4 py-4">{project.scheme}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">{formatDate(project.registeredOn || project.startDate)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">{formatDate(project.sanctionedDate || project.startDate)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap font-semibold">{formatCurrency(project.expectedAmount ?? project.sanctionedAmount)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBgClass(project.status)}`}>
+                        {project.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">{project.focusedArea || 'Not provided'}</td>
+                    <td className="px-4 py-4">
+                      <Link href={`/development/${project._id}`} className="text-blue-600 hover:text-blue-800 font-semibold">
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : viewType === "map" ? (
           <div>
             <DevelopmentMap projects={projects} className="mb-8" />
             <div className={`${isDark ? "bg-gray-800" : "bg-white"} rounded-lg shadow-lg p-6`}>

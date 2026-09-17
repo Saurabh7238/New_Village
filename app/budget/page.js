@@ -15,17 +15,23 @@ export default function BudgetPage() {
   const { language } = useLanguage();
   const t = TRANSLATIONS.budget[language];
   const [budgets, setBudgets] = useState([]);
+  const [proposedActivities, setProposedActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
-    fetch("/api/budget")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load budget data");
-        return res.json();
+    Promise.all([fetch("/api/budget"), fetch("/api/development")])
+      .then(async ([budgetResponse, developmentResponse]) => {
+        if (!budgetResponse.ok) throw new Error("Failed to load budget data");
+        if (!developmentResponse.ok) throw new Error("Failed to load proposed activities");
+        const [budgetData, developmentData] = await Promise.all([
+          budgetResponse.json(),
+          developmentResponse.json(),
+        ]);
+        setBudgets(Array.isArray(budgetData) ? budgetData : []);
+        setProposedActivities(Array.isArray(developmentData) ? developmentData : []);
       })
-      .then((data) => setBudgets(Array.isArray(data) ? data : []))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -104,6 +110,57 @@ export default function BudgetPage() {
             </p>
           </div>
         </div>
+      )}
+
+      {proposedActivities.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Proposed Activities
+          </h2>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            Development activities imported from the Chiutahara Meri Panchayat records.
+          </p>
+          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
+            <table className="min-w-[1050px] w-full text-left text-sm">
+              <thead>
+                <tr className="bg-blue-900 text-white">
+                  <th className="px-4 py-4">Plan Year</th>
+                  <th className="px-4 py-4">Expected Fund</th>
+                  <th className="px-4 py-4">Plan Type</th>
+                  <th className="px-4 py-4">Fund Received</th>
+                  <th className="px-4 py-4">Expenditure Fund</th>
+                  <th className="px-4 py-4">Proposed</th>
+                  <th className="px-4 py-4">Initiated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proposedActivities.map((activity) => (
+                  <tr
+                    key={activity._id}
+                    className="border-b hover:bg-blue-50 dark:hover:bg-gray-700 dark:border-gray-600"
+                  >
+                    <td className="px-4 py-3 whitespace-nowrap">{activity.financialYear}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {formatBudgetAmount(activity.expectedAmount ?? activity.sanctionedAmount)}
+                    </td>
+                    <td className="px-4 py-3">{activity.scheme}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{formatBudgetAmount(0)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {formatBudgetAmount(activity.amountSpent || 0)}
+                    </td>
+                    <td className="px-4 py-3 min-w-[280px]">
+                      <p className="font-medium">{activity.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {activity.focusedArea || "Not provided"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">{activity.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {loading && (
