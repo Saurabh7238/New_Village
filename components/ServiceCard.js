@@ -69,17 +69,17 @@ export default function ServiceCard({ title, hindi, href, index }) {
         href={href}
         aria-label={`Manage ${title}`}
         onClick={handleClick}
-        className={`group flex min-h-[5.5rem] items-center rounded-2xl border p-4 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md ${
+        className={`group flex min-h-[5rem] items-center rounded-lg border p-3.5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${
           isVisited
             ? "border-amber-300 bg-amber-50 text-amber-900 shadow-amber-100 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200"
-            : "border-slate-200 bg-white hover:border-emerald-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700"
+            : "border-slate-200 bg-white hover:border-teal-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700"
         }`}
       >
         <div className="flex min-w-0 items-center gap-3">
           <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-transform duration-200 group-hover:scale-105 ${
             isVisited
               ? "bg-amber-200 text-amber-900 dark:bg-amber-800/60 dark:text-amber-100"
-              : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+              : "bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300"
           }`}>
             <Icon className="text-lg" />
           </span>

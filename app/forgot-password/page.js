@@ -68,18 +68,18 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 px-4 py-12">
-      <div className="w-full max-w-md rounded-xl border border-green-200 bg-white p-8 shadow-xl shadow-green-100">
+    <div className="flex min-h-[calc(100vh-11rem)] items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-green-800">{labels.forgotPassword}</h1>
-          <p className="mt-2 text-sm text-green-700/80">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{labels.forgotPassword}</h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             Verify with Aadhaar and date of birth to reset your password
           </p>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">{labels.aadhaarNumber}</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.aadhaarNumber}</label>
             <input
               type="text"
               value={aadhaarNumber}
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{labels.dateOfBirth}</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.dateOfBirth}</label>
             <input
               type="date"
               value={dateOfBirth}
@@ -102,7 +102,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{labels.newPassword}</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.newPassword}</label>
             <input
               type="password"
               value={newPassword}
@@ -114,7 +114,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{labels.confirmPassword}</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.confirmPassword}</label>
             <input
               type="password"
               value={confirmPassword}
@@ -129,7 +129,7 @@ export default function ForgotPasswordPage() {
             type="button"
             onClick={resetPassword}
             disabled={loading}
-            className="w-full rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Resetting..." : labels.resetPassword}
           </button>
@@ -147,8 +147,8 @@ export default function ForgotPasswordPage() {
           )}
         </div>
 
-        <div className="mt-4 text-center text-sm text-gray-600">
-          <Link href="/signin" className="font-semibold text-green-700 hover:underline">
+        <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+          <Link href="/signin" className="font-semibold text-teal-700 hover:text-teal-800 hover:underline dark:text-teal-300">
             {labels.backToSignIn}
           </Link>
         </div>

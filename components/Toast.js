@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AlertCircle, CheckCircle2, Info, TriangleAlert, X } from "lucide-react";
 
 export function useToast() {
   const [toasts, setToasts] = useState([]);
@@ -28,35 +29,37 @@ export function useToast() {
 
 export function ToastContainer({ toasts, removeToast, isDark }) {
   return (
-    <div className="fixed left-3 right-3 top-3 z-50 space-y-2 sm:left-auto sm:right-4 sm:top-4 sm:w-full sm:max-w-md">
+    <div className="fixed left-3 right-3 top-3 z-[120] space-y-2 sm:left-auto sm:right-4 sm:top-4 sm:w-full sm:max-w-md" aria-live="polite">
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className={`flex min-h-12 items-center justify-between rounded-lg p-3 shadow-lg animate-slide-in sm:p-4 ${
+          role="status"
+          className={`flex min-h-12 items-center gap-3 justify-between rounded-lg border p-3 shadow-lg animate-slide-in sm:p-4 ${
             toast.type === "success"
               ? isDark
-                ? "bg-green-900 text-green-200 border border-green-700"
-                : "bg-green-100 text-green-800 border border-green-300"
+                ? "border-teal-700 bg-teal-950 text-teal-200"
+                : "border-teal-200 bg-teal-50 text-teal-900"
               : toast.type === "error"
               ? isDark
-                ? "bg-red-900 text-red-200 border border-red-700"
-                : "bg-red-100 text-red-800 border border-red-300"
+                ? "border-red-700 bg-red-950 text-red-200"
+                : "border-red-200 bg-red-50 text-red-900"
               : toast.type === "warning"
               ? isDark
-                ? "bg-yellow-900 text-yellow-200 border border-yellow-700"
-                : "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                ? "border-amber-700 bg-amber-950 text-amber-200"
+                : "border-amber-200 bg-amber-50 text-amber-900"
               : isDark
-              ? "bg-blue-900 text-blue-200 border border-blue-700"
-              : "bg-blue-100 text-blue-800 border border-blue-300"
+              ? "border-slate-700 bg-slate-900 text-slate-200"
+              : "border-slate-200 bg-white text-slate-800"
           }`}
         >
+          {toast.type === "success" ? <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" /> : toast.type === "error" ? <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" /> : toast.type === "warning" ? <TriangleAlert className="h-5 w-5 shrink-0" aria-hidden="true" /> : <Info className="h-5 w-5 shrink-0" aria-hidden="true" />}
           <span className="flex-1">{toast.message}</span>
           <button
             onClick={() => removeToast(toast.id)}
-            className="ml-3 grid h-11 w-11 shrink-0 place-items-center rounded text-lg hover:opacity-70"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md hover:bg-black/5 dark:hover:bg-white/10"
             aria-label="Dismiss notification"
           >
-            ×
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       ))}

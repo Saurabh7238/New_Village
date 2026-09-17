@@ -5,6 +5,9 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useToast, ToastContainer } from '@/components/Toast';
+import PageHeader from '@/components/PageHeader';
+import EmptyState from '@/components/EmptyState';
+import Button from '@/components/Button';
 
 const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Approved', 'Rejected', 'Completed'];
 
@@ -137,7 +140,7 @@ function AdminApplicationsContent() {
   };
 
   if (authStatus === 'loading') {
-    return <div className="p-8 text-center">Loading...</div>;
+    return <div className="p-8 text-center text-slate-600 dark:text-slate-300">Loading...</div>;
   }
 
   if (session?.user?.role !== 'admin') {
@@ -156,22 +159,12 @@ function AdminApplicationsContent() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-8 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold capitalize text-green-700 dark:text-yellow-400">
-              {serviceTitle}
-            </h1>
-            <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-              Review citizen details, documents, status, and response remarks.
-            </p>
-          </div>
-          <Link
-            href="/admin"
-            className="self-start rounded bg-gray-600 px-4 py-2 text-sm text-white hover:bg-gray-700 whitespace-nowrap"
-          >
-            Back to Admin
-          </Link>
-        </div>
+        <PageHeader
+          eyebrow="Service operations"
+          title={serviceTitle}
+          description="Review citizen details, documents, status, and response remarks."
+          actions={<Button href="/admin" variant="secondary">Back to Admin</Button>}
+        />
 
         {/* Details Section */}
         {selectedApplication && (
@@ -472,9 +465,7 @@ function AdminApplicationsContent() {
         </div>
 
         {visibleApplications.length === 0 && (
-          <div className="text-center py-8 text-gray-500 text-sm">
-            No applications found.
-          </div>
+          <EmptyState title="No applications found" description="New citizen applications will appear here when they are submitted." />
         )}
         <ToastContainer toasts={toasts} removeToast={removeToast} isDark={true} />
       </div>

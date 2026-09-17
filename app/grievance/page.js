@@ -139,11 +139,11 @@ export default function GrievancePage() {
 
   if (step === "form") {
     return (
-      <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-gray-50"} ${textClass} py-12 px-4`}>
-        <div className="max-w-2xl mx-auto">
-          <div className={`${bgClass} rounded-lg shadow-lg p-8`}>
-            <h1 className="text-3xl font-bold mb-2 text-green-700 dark:text-yellow-400">शिकायत दर्ज करें</h1>
-            <h2 className="text-3xl font-bold mb-6">Raise Query</h2>
+      <div className={`min-h-screen ${isDark ? "bg-slate-950" : "bg-slate-50"} ${textClass} px-4 py-8`}>
+        <div className="mx-auto max-w-2xl">
+          <div className={`${bgClass} rounded-xl border border-slate-200 p-6 shadow-sm dark:border-slate-700 sm:p-8`}>
+            <h1 className="mb-2 text-2xl font-bold text-teal-700 dark:text-teal-300">शिकायत दर्ज करें</h1>
+            <h2 className="mb-6 text-2xl font-bold">Raise Query</h2>
             {message && <div className={`mb-4 p-3 rounded-lg ${message.includes("Error") || message.includes("reached") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>{message}</div>}
             {rateLimitInfo && <div className={`mb-4 p-3 rounded-lg ${isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"}`}>{rateLimitInfo.message}</div>}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -165,8 +165,8 @@ export default function GrievancePage() {
   }
   return (
     <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-gray-50"} ${textClass} py-12 px-4`}>
-      <div className="max-w-md mx-auto">
-        <div className={`${bgClass} rounded-lg shadow-lg p-8 text-center fixed inset-0 flex items-center justify-center`}>
+      <div className="mx-auto flex min-h-[calc(100vh-11rem)] max-w-md items-center justify-center">
+      <div className={`${bgClass} w-full rounded-xl border border-slate-200 p-8 text-center shadow-sm dark:border-slate-700`}>
           <div className="w-full max-w-md">
             <div className="text-5xl mb-4">✅</div>
             <h1 className="text-2xl font-bold mb-4 text-green-600">Grievance Submitted!</h1>

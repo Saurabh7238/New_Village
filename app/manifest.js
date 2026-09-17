@@ -5,8 +5,8 @@ export default function manifest() {
     description: "Public services and information for Gram Panchayat Chiutahara.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f0fdf4",
-    theme_color: "#059669",
+    background_color: "#f6f8fb",
+    theme_color: "#0f766e",
     orientation: "portrait-primary",
     icons: [
       {

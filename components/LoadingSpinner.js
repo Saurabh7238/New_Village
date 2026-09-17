@@ -1,29 +1,19 @@
 export default function LoadingSpinner({ message = "Loading..." }) {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-yellow-50 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950">
-      <div className="text-center">
-        {/* Animated spinner */}
-        <div className="flex justify-center mb-6">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-4 border-green-200 dark:border-green-800"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-green-600 dark:border-t-green-400 animate-spin"></div>
+    <div className="flex min-h-[18rem] items-center justify-center px-4 py-10">
+      <div className="text-center" role="status" aria-live="polite">
+        <div className="mb-4 flex justify-center">
+          <div className="relative h-10 w-10">
+            <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-700"></div>
+            <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-teal-700 dark:border-t-teal-400"></div>
           </div>
         </div>
-
-        {/* Loading text */}
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">
           {message}
         </h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Please wait while we fetch your information...
         </p>
-
-        {/* Animated dots */}
-        <div className="mt-4 flex justify-center gap-1">
-          <span className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "0s" }}></span>
-          <span className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></span>
-          <span className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></span>
-        </div>
       </div>
     </div>
   );

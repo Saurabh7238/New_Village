@@ -8,16 +8,41 @@ import PwaRegistration from "../components/PwaRegistration";
 import { LanguageProvider } from "./language-provider";
 
 export const metadata = {
-  title: "Gram Panchayat Chiutahara",
-  description: "Manage Gram Panchayat information for Chiutahra",
+  metadataBase: new URL("https://www.grampanchayatchiutahara.online"),
+  title: {
+    default: "Gram Panchayat Chiutahara",
+    template: "%s | Gram Panchayat Chiutahara",
+  },
+  description: "Access citizen services, certificates, notices, development updates, and local governance information for Gram Panchayat Chiutahara.",
+  applicationName: "Gram Panchayat Chiutahara Portal",
+  keywords: ["Gram Panchayat", "Chiutahara", "citizen services", "local governance"],
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    siteName: "Gram Panchayat Chiutahara",
+    title: "Gram Panchayat Chiutahara",
+    description: "Digital access to Gram Panchayat Chiutahara services and information.",
+    url: "https://www.grampanchayatchiutahara.online",
+    images: [{ url: "/favicon.png", width: 512, height: 512, alt: "Gram Panchayat Chiutahara" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Gram Panchayat Chiutahara",
+    description: "Digital access to Gram Panchayat Chiutahara services and information.",
+    images: ["/favicon.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   referrer: "no-referrer-when-downgrade",
   other: {
     "ea9456cfebe0b9f15eb7": "7332b2c0c97e285c3aca",
   },
   icons: {
-    icon: "/favicon .ico",
-    shortcut: "/favicon .ico",
-    apple: "/favicon .ico",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
   appleWebApp: {
     capable: true,
@@ -31,7 +56,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#059669",
+  themeColor: "#0f766e",
 };
 
 export default function RootLayout({ children }) {
@@ -46,7 +71,7 @@ export default function RootLayout({ children }) {
               "@type": "Organization",
               name: "Gram Panchayat Chiutahara",
               url: "https://www.grampanchayatchiutahara.online",
-              logo: "https://www.grampanchayatchiutahara.online/favicon .ico",
+              logo: "https://www.grampanchayatchiutahara.online/favicon.png",
               sameAs: [],
             }),
           }}
@@ -65,7 +90,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-yellow-50 text-gray-900 font-sans relative dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950 dark:text-gray-100 transition-colors">
+      <body className="min-h-screen bg-slate-50 text-slate-900 font-sans relative dark:bg-slate-950 dark:text-slate-100 transition-colors">
         <Providers>
           <LanguageProvider>
             <noscript>
@@ -75,14 +100,14 @@ export default function RootLayout({ children }) {
             </noscript>
             <Header />
             <PwaRegistration />
-            <main className="mx-auto max-w-6xl px-4 pt-[6.75rem] sm:pt-[7.5rem]">
+            <main className="mx-auto min-h-[calc(100vh-10rem)] max-w-6xl px-4 pb-8 pt-[7.25rem] sm:pt-[7.5rem]">
               <WelcomeToast />
               {children}
             </main>
             <ScrollToTopButton />
             <ChatWidget />
-            <footer className="bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700 text-white">
-                <div className="max-w-6xl mx-auto px-4 py-4 text-center text-sm">
+            <footer className="border-t border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+              <div className="mx-auto max-w-6xl px-4 py-5 text-center text-sm">
                 © {new Date().getFullYear()} Gram Panchayat Chiutahara
               </div>
             </footer>

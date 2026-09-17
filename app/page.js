@@ -285,7 +285,7 @@ export default function HomePage() {
 
   return (
     <div className="relative isolate overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[38rem] bg-[radial-gradient(circle_at_8%_12%,rgba(167,243,208,.55),transparent_30%),radial-gradient(circle_at_92%_18%,rgba(186,230,253,.5),transparent_30%),linear-gradient(135deg,#f0fdf4,#f8fafc_48%,#ecfeff)] dark:bg-[radial-gradient(circle_at_8%_12%,rgba(6,78,59,.6),transparent_30%),radial-gradient(circle_at_92%_18%,rgba(12,74,110,.5),transparent_30%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 border-b border-slate-200/70 bg-white/60 dark:border-slate-800 dark:bg-slate-900/40" />
       <div className="relative min-h-screen text-black dark:text-white">
         {/* Notification Banner */}
         {homeSettingsLoaded && showBanner && homeSettings.popupEnabled && (
@@ -312,17 +312,16 @@ export default function HomePage() {
 
         {/* Main Content */}
         <div className="space-y-5 pb-5 transition-colors duration-300 sm:space-y-7">
-          <section className="relative overflow-hidden rounded-[1.75rem] border border-emerald-100/80 bg-white/80 px-5 py-7 text-center shadow-[0_20px_60px_-34px_rgba(6,78,59,.45)] backdrop-blur-xl dark:border-emerald-900/60 dark:bg-slate-900/80 sm:px-10 sm:py-10 lg:px-16">
-            <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-300/35 blur-3xl dark:bg-emerald-700/25" /><div className="absolute -bottom-24 -left-14 h-64 w-64 rounded-full bg-sky-300/30 blur-3xl dark:bg-sky-800/25" />
+          <section className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-5 py-7 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-10 sm:py-9 lg:px-16">
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .55 }} className="relative mx-auto max-w-4xl">
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/90 px-3 py-1.5 text-xs font-bold uppercase tracking-[.14em] text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" />Digital village services</span>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-emerald-950 dark:text-emerald-200 sm:text-4xl lg:text-5xl">
+              <span className="inline-flex items-center gap-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[.14em] text-teal-800 dark:border-teal-800 dark:bg-teal-950/60 dark:text-teal-200"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" />Digital village services</span>
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl lg:text-5xl">
               {t.welcome}
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
               {t.description}
             </p>
-            <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/grievance" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/grievance", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="group inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-200 dark:focus:ring-emerald-900">Raise a request <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link><Link href="/track" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/track", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">Track your request <ChevronRight className="h-4 w-4" /></Link></div>
+            <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/grievance" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/grievance", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="group inline-flex items-center justify-center gap-2 rounded-md bg-teal-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-teal-800 focus:outline-none focus:ring-4 focus:ring-teal-200 dark:focus:ring-teal-900">Raise a request <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link><Link href="/track" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/track", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:text-teal-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">Track your request <ChevronRight className="h-4 w-4" /></Link></div>
             <p className="mt-4 flex items-center justify-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300"><ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />Simple, secure access to Panchayat services</p>
             </motion.div>
           </section>
@@ -339,7 +338,7 @@ export default function HomePage() {
             </motion.div>
           </section>
 
-          <section aria-label="Village highlights" className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/70 p-3 shadow-xl shadow-slate-900/5 backdrop-blur dark:border-slate-700 dark:bg-slate-800/80 sm:p-4">
+          <section aria-label="Village highlights" className="overflow-hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-4">
             <div className="relative w-full">
               <motion.div
                 className="flex gap-3"
@@ -369,7 +368,7 @@ export default function HomePage() {
           <section id="services" className="py-2 sm:py-4">
             <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Citizen portal</p>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-700 dark:text-teal-400">Citizen portal</p>
                 <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
               {t.services}
             </h2>
@@ -388,8 +387,8 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-sky-100/80 bg-gradient-to-br from-sky-50/90 via-white/80 to-emerald-50/90 px-5 py-8 shadow-xl shadow-sky-950/5 dark:border-slate-700 dark:from-slate-800 dark:via-slate-900 dark:to-emerald-950/40 sm:px-8 sm:py-10">
-            <p className="text-xs font-bold uppercase tracking-[.18em] text-sky-700 dark:text-sky-300">{t.village}</p><h2 className="mb-6 mt-2 text-2xl font-bold tracking-tight text-emerald-950 dark:text-emerald-300 sm:text-3xl">
+          <section className="rounded-xl border border-slate-200 bg-white px-5 py-7 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-8 sm:py-8">
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">{t.village}</p><h2 className="mb-6 mt-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
               📍 {t.villageAbout}
             </h2>
 

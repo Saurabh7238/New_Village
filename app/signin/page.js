@@ -89,15 +89,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 px-4 py-12">
-      <div className="w-full max-w-sm rounded-xl border border-green-200 bg-white p-8 shadow-xl shadow-green-100">
+    <div className="flex min-h-[calc(100vh-11rem)] items-center justify-center px-4 py-8">
+      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-green-800">{labels.login}</h1>
-          <p className="mt-2 text-sm text-green-700/80">{labels.registerAccount}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{labels.login}</h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{labels.registerAccount}</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">{labels.mobileOrEmail}</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.mobileOrEmail}</label>
             <input
               type="text"
               value={identifier}
@@ -110,7 +110,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">{labels.password}</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.password}</label>
             <input
               type="password"
               value={password}
@@ -129,20 +129,20 @@ export default function LoginPage() {
           )}
           <button
             type="submit"
-            className="w-full rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={loading}
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
-        <div className="mt-4 text-center text-sm text-gray-600">
+        <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
           <div className="mb-2">
-            <Link href="/forgot-password" className="font-semibold text-green-700 hover:underline">
+            <Link href="/forgot-password" className="font-semibold text-teal-700 hover:text-teal-800 hover:underline dark:text-teal-300">
               {labels.forgotPassword}?
             </Link>
           </div>
           {labels.registerAccount}?{" "}
-          <Link href="/register" className="font-semibold text-green-700 hover:underline">
+          <Link href="/register" className="font-semibold text-teal-700 hover:text-teal-800 hover:underline dark:text-teal-300">
             {labels.register}
           </Link>
         </div>

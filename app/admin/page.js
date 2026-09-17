@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import AdminAnalyticsDashboard from "@/components/AdminAnalyticsDashboard";
 import { BarChart3, ChevronDown } from "lucide-react";
+import Button from "@/components/Button";
+import PageHeader from "@/components/PageHeader";
 
 export default function AdminPanel() {
   const { data: session, status } = useSession();
@@ -23,105 +25,108 @@ export default function AdminPanel() {
   const badge = (count) => count > 0 ? <span className="ml-2 inline-grid min-w-5 place-items-center rounded-full bg-white px-1.5 py-0.5 text-xs font-bold text-red-700">{count}</span> : null;
 
   if (status === "loading") {
-    return <div className="p-8 text-center">Loading...</div>;
+    return <div className="p-8 text-center text-slate-600 dark:text-slate-300">Loading...</div>;
   }
 
   if (status === "unauthenticated" || session?.user?.role !== "admin") {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900 text-red-500">
+      <div className="flex min-h-[calc(100vh-11rem)] items-center justify-center bg-slate-50 p-8 text-red-600 dark:bg-slate-950 dark:text-red-300">
         Access Denied. You must be an admin to view this page.
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-black dark:text-white">
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-green-700 dark:text-yellow-400">Admin Panel</h1>
-          <div className="flex gap-3">
-            <button 
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
+        <PageHeader
+          eyebrow="Administration"
+          title="Admin Panel"
+          description="Manage citizen services, content, records, and Panchayat operations."
+          actions={<>
+            <Button
+              variant="secondary"
               onClick={() => setShowAnalytics(!showAnalytics)}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
+              className="min-h-10"
             >
               <BarChart3 className="w-4 h-4" />
               Analytics
-            </button>
-            <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            </Button>
+            <Button variant="danger" onClick={() => signOut({ callbackUrl: "/?logout=true" })}>
               Sign Out
-            </button>
-          </div>
-        </div>
+            </Button>
+          </>}
+        />
 
         {showAnalytics && (
           <AdminAnalyticsDashboard />
         )}
 
         {!showAnalytics && (
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Management Sections</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/admin/applications?service=aadhaar-request" className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
+          <h2 className="mb-5 text-xl font-bold">Management Sections</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Link href="/admin/applications?service=aadhaar-request" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Aadhaar Requests {badge(serviceCounts['aadhaar-request'] || 0)}
             </Link>
-            <Link href="/admin/applications?service=birth-certificate" className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/applications?service=birth-certificate" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Birth Certificates {badge(serviceCounts['birth-certificate'] || 0)}
             </Link>
-            <Link href="/admin/applications?service=death-certificate" className="bg-slate-600 hover:bg-slate-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/applications?service=death-certificate" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Death Certificates {badge(serviceCounts['death-certificate'] || 0)}
             </Link>
-            <Link href="/admin/members" className="bg-green-700 hover:bg-green-800 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/members" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Panchayat Members
             </Link>
-            <Link href="/admin/applications" className="bg-sky-600 hover:bg-sky-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/applications" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Service Applications {badge(applicationCount)}
             </Link>
-            <Link href="/admin/queries" className="bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/queries" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               🎯 Query Management {badge(queryCount)}
             </Link>
-            <Link href="/admin/appointments" className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/appointments" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Appointments
             </Link>
             <Link href="/admin/members" className="hidden">
               👥 Members
             </Link>
-            <Link href="/admin/notifications" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/notifications" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               📢 Notifications
             </Link>
-            <Link href="/admin/chats" className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/chats" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               💬 Live Chats
             </Link>
-            <Link href="/admin/home" className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/home" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               🏠 Home Settings
             </Link>
-            <Link href="/admin/reviews" className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/reviews" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               ⭐ Reviews
             </Link>
-            <Link href="/admin/activity-log" className="bg-slate-700 hover:bg-slate-800 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/activity-log" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Activity Log
             </Link>
-            <Link href="/admin/gallery" className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/gallery" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               🖼️ Gallery
             </Link>
-            <Link href="/admin/budget" className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/budget" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               💰 Budget
             </Link>
-            <Link href="/admin/funds" className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/funds" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               💰 Funds
             </Link>
-            <Link href="/admin/infrastructure" className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/infrastructure" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               🏗️ Infrastructure
             </Link>
-            <Link href="/admin/documents" className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/documents" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               📁 Citizen Documents
             </Link>
-            <Link href="/admin/users" className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/users" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               👤 Citizen Directory
             </Link>
-            <Link href="/admin/voters" className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/voters" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               🗳️ Voters
             </Link>
-            <Link href="/admin/development" className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-4 rounded-lg text-center font-semibold transition transform hover:scale-105">
+            <Link href="/admin/development" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               🏗️ Development
             </Link>
           </div>

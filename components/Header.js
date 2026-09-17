@@ -196,8 +196,8 @@ export default function Header() {
 
   const baseClass = "fixed inset-x-0 top-0 z-[100] w-full transition-colors duration-300";
   const scrolledClass = scrolled
-    ? "bg-green-700/90 dark:bg-green-900/90 md:backdrop-blur shadow-lg"
-    : "bg-gradient-to-r from-green-700 via-green-600 to-green-500 dark:from-green-900 dark:via-green-800 dark:to-green-700";
+    ? "bg-slate-950/95 dark:bg-slate-950/95 backdrop-blur shadow-lg shadow-slate-950/10"
+    : "bg-slate-950 dark:bg-slate-950";
   const menuItemBaseClass =
     "flex w-full items-center rounded-lg bg-slate-100 px-2.5 py-2.5 text-left text-xs sm:text-sm font-semibold transition-colors dark:bg-slate-700";
   const menuItemActiveClass =
@@ -243,14 +243,14 @@ export default function Header() {
 
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
-      <div className="bg-green-600 dark:bg-green-800 overflow-hidden">
+      <div className="overflow-hidden border-b border-white/10 bg-slate-900">
         {isMobileViewport ? (
-          <div className="py-2 text-center text-sm font-semibold tracking-wide text-white">
+            <div className="py-1.5 text-center text-xs font-semibold tracking-wide text-slate-200">
             Welcome to Chiutahara Portal
           </div>
         ) : (
           <motion.div
-            className="py-2 sm:py-3 text-sm font-semibold tracking-wide whitespace-nowrap text-white"
+            className="py-1.5 text-xs font-semibold tracking-wide whitespace-nowrap text-slate-200"
             animate={{ x: ["100%", "-100%"] }}
             transition={{ ease: "linear", duration: 15, repeat: Infinity }}
           >
@@ -259,7 +259,7 @@ export default function Header() {
         )}
       </div>
 
-      <div className="mx-auto flex max-w-6xl flex-nowrap items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-4 lg:px-8">
+      <div className="mx-auto flex max-w-6xl flex-nowrap items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 lg:px-8">
         <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
           <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12">
             <Image
@@ -290,7 +290,7 @@ export default function Header() {
           </Link>
           <button
             onClick={toggleLargeText}
-            className="grid h-9 w-9 place-items-center rounded-md bg-white text-sm font-bold text-green-700 shadow transition hover:scale-105 sm:h-10 sm:w-10"
+            className="grid h-9 w-9 place-items-center rounded-md bg-white text-sm font-bold text-teal-800 shadow transition hover:bg-teal-50 sm:h-10 sm:w-10"
             aria-label={largeText ? "Use normal text size" : "Use larger text size"}
             aria-pressed={largeText}
           >
@@ -298,7 +298,7 @@ export default function Header() {
           </button>
           <button
             onClick={toggleDarkMode}
-            className="grid h-9 w-9 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105 sm:h-10 sm:w-10"
+            className="grid h-9 w-9 place-items-center rounded-md bg-white text-teal-800 shadow transition hover:bg-teal-50 sm:h-10 sm:w-10"
             aria-label="Toggle dark mode"
           >
             {darkMode ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
@@ -309,7 +309,7 @@ export default function Header() {
                 setOpen(false);
                 setShowNotifications((current) => !current);
               }}
-              className="relative grid h-9 w-9 place-items-center rounded-md bg-white text-green-700 shadow transition hover:scale-105 sm:h-10 sm:w-10"
+              className="relative grid h-9 w-9 place-items-center rounded-md bg-white text-teal-800 shadow transition hover:bg-teal-50 sm:h-10 sm:w-10"
               aria-label="Notifications"
               aria-expanded={showNotifications}
             >
@@ -374,7 +374,7 @@ export default function Header() {
               setShowNotifications(false);
               setOpen(!open);
             }}
-            className="rounded-md bg-white px-2.5 py-2 text-sm font-semibold whitespace-nowrap text-green-700 shadow transition hover:scale-105 sm:px-4 sm:text-base"
+            className="rounded-md bg-white px-2.5 py-2 text-sm font-semibold whitespace-nowrap text-teal-800 shadow transition hover:bg-teal-50 sm:px-4 sm:text-base"
             aria-expanded={open}
             aria-controls="main-menu"
             aria-label={open ? langLabels.close : langLabels.menu}
@@ -393,7 +393,7 @@ export default function Header() {
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 className="absolute right-0 top-full mt-2 max-h-[calc(100dvh-8rem)] w-[min(78vw,21rem)] origin-top-right overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800"
               >
-                <ul className="space-y-3">
+                <ul className="space-y-2">
                   {navItems.map(([label, href, subItems]) => (
                   <li key={label}>
                     {subItems ? (

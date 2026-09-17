@@ -110,15 +110,15 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 py-12 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-green-200 bg-white p-8 shadow-xl shadow-green-100">
+    <div className="flex min-h-[calc(100vh-11rem)] items-center justify-center px-4 py-8">
+      <div className="w-full max-w-xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-green-800">{labels.register}</h1>
-          <p className="mt-2 text-sm text-green-700/80">{labels.registerAccount}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{labels.register}</h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{labels.registerAccount}</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
               Full Name
             </label>
             <input
@@ -133,12 +133,12 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Father&apos;s Name</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Father&apos;s Name</label>
             <input type="text" name="fatherName" value={formData.fatherName} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200" placeholder="Enter father&apos;s name" required />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
               Email
             </label>
             <input
@@ -153,11 +153,11 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Ward Number</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Ward Number</label>
             <input type="number" min="1" max="50" name="ward" value={formData.ward} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
               Mobile Number
             </label>
             <input
@@ -173,7 +173,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{labels.dateOfBirth}</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.dateOfBirth}</label>
             <input
               type="date"
               name="dateOfBirth"
@@ -186,13 +186,13 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{labels.aadhaarNumber}</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.aadhaarNumber}</label>
             <input type="password" inputMode="numeric" name="aadhaarNumber" value={formData.aadhaarNumber} onChange={(e) => setFormData({ ...formData, aadhaarNumber: e.target.value.replace(/\D/g, "").slice(0, 12) })} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200" placeholder="12-digit Aadhaar number" maxLength={12} required />
             <p className="mt-1 text-xs text-gray-500">Stored securely; it will never be displayed in full.</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
               {labels.password}
             </label>
             <input
@@ -207,7 +207,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
               {labels.confirmPassword}
             </label>
             <input
@@ -236,15 +236,15 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md border border-transparent bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="w-full rounded-md border border-transparent bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
-        <div className="text-center mt-4 text-sm">
+        <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
           Already have an account?{" "}
-          <Link href="/signin" className="font-semibold text-green-700 hover:underline">
+          <Link href="/signin" className="font-semibold text-teal-700 hover:text-teal-800 hover:underline dark:text-teal-300">
             {labels.signIn}
           </Link>
         </div>
