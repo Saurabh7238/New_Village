@@ -9,6 +9,22 @@ const DevelopmentSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  workCode: {
+    type: String,
+    default: ''
+  },
+  workType: {
+    type: String,
+    default: 'Community Works'
+  },
+  activityType: {
+    type: String,
+    default: 'New/Fresh'
+  },
+  component: {
+    type: String,
+    default: 'Development'
+  },
   scheme: {
     type: String,
     required: [true, 'Scheme/Fund source is required'],
@@ -81,6 +97,28 @@ const DevelopmentSchema = new mongoose.Schema({
   focusedArea: {
     type: String,
     default: ''
+  },
+  assetType: {
+    type: String,
+    default: ''
+  },
+  assetCategory: {
+    type: String,
+    default: ''
+  },
+  assetSubCategory: {
+    type: String,
+    default: ''
+  },
+  totalUnits: {
+    type: Number,
+    default: 0,
+    min: [0, 'Total units cannot be negative']
+  },
+  unitCost: {
+    type: Number,
+    default: 0,
+    min: [0, 'Unit cost cannot be negative']
   },
   beneficiaryCount: {
     type: String,

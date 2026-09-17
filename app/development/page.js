@@ -23,6 +23,7 @@ export default function DevelopmentPage() {
   const [projects, setProjects] = useState([]);
   const [viewType, setViewType] = useState("table"); // table, scheme, ward, or map
   const [filterYear, setFilterYear] = useState("");
+  const [filterScheme, setFilterScheme] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,9 +45,11 @@ export default function DevelopmentPage() {
   };
 
   const availableYears = [...new Set(projects.map((project) => project.financialYear).filter(Boolean))].sort().reverse();
-  const visibleProjects = filterYear
-    ? projects.filter((project) => project.financialYear === filterYear)
-    : projects;
+  const availableSchemes = [...new Set(projects.map((project) => project.scheme).filter(Boolean))].sort();
+  const visibleProjects = projects.filter((project) =>
+    (!filterYear || project.financialYear === filterYear) &&
+    (!filterScheme || project.scheme === filterScheme)
+  );
   const groupedData = viewType === "scheme" ? groupByScheme(visibleProjects) : viewType === "ward" ? groupByWard(visibleProjects) : {};
 
   if (loading) {
@@ -64,7 +67,7 @@ export default function DevelopmentPage() {
         </div>
 
         {/* View Toggle */}
-        <div className="mb-8 flex gap-4">
+        <div className="mb-8 flex flex-wrap items-center gap-4">
           <button
             onClick={() => setViewType("table")}
             className={`px-6 py-3 rounded-lg font-semibold transition ${
@@ -116,6 +119,21 @@ export default function DevelopmentPage() {
               {availableYears.map((year) => (
                 <option key={year} value={year}>
                   {year}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm font-semibold">
+            <span>Scheme</span>
+            <select
+              value={filterScheme}
+              onChange={(event) => setFilterScheme(event.target.value)}
+              className={`max-w-[280px] px-3 py-2 rounded-lg border ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"}`}
+            >
+              <option value="">All schemes</option>
+              {availableSchemes.map((scheme) => (
+                <option key={scheme} value={scheme}>
+                  {scheme}
                 </option>
               ))}
             </select>

@@ -12,6 +12,10 @@ export async function POST(request) {
       id,
       title,
       description,
+      workCode,
+      workType,
+      activityType,
+      component,
       scheme,
       financialYear,
       sanctionedAmount,
@@ -28,6 +32,11 @@ export async function POST(request) {
       sanctionedDate,
       implementingAgency,
       focusedArea,
+      assetType,
+      assetCategory,
+      assetSubCategory,
+      totalUnits,
+      unitCost,
       beneficiaryCount,
       beforePhoto,
       afterPhoto,
@@ -40,7 +49,7 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Invalid project ID format.' }, { status: 400 });
     }
 
-    if (!title || !scheme || !financialYear || !sanctionedAmount || !wardNo || !location?.address || !status || physicalProgress === undefined || !startDate || !expectedCompletion || !implementingAgency) {
+    if (!title || !scheme || !financialYear || sanctionedAmount === undefined || sanctionedAmount === null || sanctionedAmount === '' || wardNo === undefined || wardNo === null || wardNo === '' || !location?.address || !status || physicalProgress === undefined || !startDate || !expectedCompletion || !implementingAgency) {
       return NextResponse.json(
         { message: 'All mandatory fields are required.' },
         { status: 400 }
@@ -50,6 +59,10 @@ export async function POST(request) {
     const payload = {
       title,
       description: description || '',
+      workCode: workCode || '',
+      workType: workType || 'Community Works',
+      activityType: activityType || 'New/Fresh',
+      component: component || 'Development',
       scheme,
       financialYear,
       sanctionedAmount: parseFloat(sanctionedAmount),
@@ -70,6 +83,11 @@ export async function POST(request) {
       sanctionedDate: sanctionedDate ? new Date(sanctionedDate) : new Date(startDate),
       implementingAgency,
       focusedArea: focusedArea || '',
+      assetType: assetType || '',
+      assetCategory: assetCategory || '',
+      assetSubCategory: assetSubCategory || '',
+      totalUnits: parseFloat(totalUnits) || 0,
+      unitCost: parseFloat(unitCost) || 0,
       beneficiaryCount: beneficiaryCount || '',
       beforePhoto: beforePhoto || null,
       afterPhoto: afterPhoto || null,

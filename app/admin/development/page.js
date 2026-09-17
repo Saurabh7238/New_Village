@@ -11,6 +11,10 @@ export default function DevelopmentAdmin() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    workCode: "",
+    workType: "Community Works",
+    activityType: "New/Fresh",
+    component: "Development",
     scheme: "MNREGA",
     financialYear: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
     sanctionedAmount: "",
@@ -27,6 +31,11 @@ export default function DevelopmentAdmin() {
     sanctionedDate: "",
     implementingAgency: "",
     focusedArea: "",
+    assetType: "",
+    assetCategory: "",
+    assetSubCategory: "",
+    totalUnits: "",
+    unitCost: "",
     beneficiaryCount: "",
     beforePhoto: null,
     afterPhoto: null,
@@ -41,24 +50,20 @@ export default function DevelopmentAdmin() {
   const [filterScheme, setFilterScheme] = useState("");
   const [filterWard, setFilterWard] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterYear, setFilterYear] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   const fetchProjects = useCallback(async () => {
     try {
-      const params = new URLSearchParams();
-      if (filterScheme) params.append("scheme", filterScheme);
-      if (filterWard) params.append("ward", filterWard);
-      if (filterStatus) params.append("status", filterStatus);
-
-      const res = await fetch(`/api/development?${params.toString()}`);
+      const res = await fetch("/api/development");
       const data = await res.json();
       setProjects(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching projects:", error);
       setProjects([]);
     }
-  }, [filterScheme, filterWard, filterStatus]);
+  }, []);
 
   useEffect(() => {
     fetchProjects();
@@ -195,6 +200,10 @@ export default function DevelopmentAdmin() {
     setFormData({
       title: "",
       description: "",
+      workCode: "",
+      workType: "Community Works",
+      activityType: "New/Fresh",
+      component: "Development",
       scheme: "MNREGA",
       financialYear: new Date().getFullYear() + "-" + (new Date().getFullYear() + 1),
       sanctionedAmount: "",
@@ -211,6 +220,11 @@ export default function DevelopmentAdmin() {
       sanctionedDate: "",
       implementingAgency: "",
       focusedArea: "",
+      assetType: "",
+      assetCategory: "",
+      assetSubCategory: "",
+      totalUnits: "",
+      unitCost: "",
       beneficiaryCount: "",
       beforePhoto: null,
       afterPhoto: null,
@@ -224,11 +238,17 @@ export default function DevelopmentAdmin() {
   };
 
   const filteredProjects = projects.filter((project) =>
-    project.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.scheme?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.focusedArea?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.implementingAgency?.toLowerCase().includes(searchQuery.toLowerCase())
+    (!filterYear || project.financialYear === filterYear) &&
+    (!filterScheme || project.scheme === filterScheme) &&
+    (!filterWard || String(project.wardNo) === filterWard) &&
+    (!filterStatus || project.status === filterStatus) &&
+    (project.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.scheme?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.focusedArea?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.implementingAgency?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const availableYears = [...new Set(projects.map((project) => project.financialYear).filter(Boolean))].sort().reverse();
 
   const stats = {
     totalProjects: projects.length,
@@ -402,6 +422,57 @@ Print this report and display in Gram Sabha meetings for transparency and social
                   placeholder="e.g., Road Construction in Ward 5"
                   className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
                   required
+                />
+              </div>
+
+              <div>
+                <label className={`block ${labelClass} mb-2 font-semibold`}>Work Code</label>
+                <input
+                  type="text"
+                  name="workCode"
+                  value={formData.workCode}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 54331427"
+                  className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                />
+              </div>
+
+              <div>
+                <label className={`block ${labelClass} mb-2 font-semibold`}>Work Type</label>
+                <input
+                  type="text"
+                  name="workType"
+                  value={formData.workType}
+                  onChange={handleInputChange}
+                  placeholder="Community Works"
+                  className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                />
+              </div>
+
+              <div>
+                <label className={`block ${labelClass} mb-2 font-semibold`}>Activity Type</label>
+                <select
+                  name="activityType"
+                  value={formData.activityType}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                >
+                  <option value="New/Fresh">New/Fresh</option>
+                  <option value="Repair">Repair</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Expansion">Expansion</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={`block ${labelClass} mb-2 font-semibold`}>Component</label>
+                <input
+                  type="text"
+                  name="component"
+                  value={formData.component}
+                  onChange={handleInputChange}
+                  placeholder="Development"
+                  className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
                 />
               </div>
 
@@ -621,6 +692,67 @@ Print this report and display in Gram Sabha meetings for transparency and social
               />
             </div>
 
+            <div className="border-t border-gray-300 dark:border-gray-600 pt-6">
+              <h3 className="text-xl font-bold mb-4">Asset Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <label className={`block ${labelClass} mb-2 font-semibold`}>Asset Type</label>
+                  <input
+                    type="text"
+                    name="assetType"
+                    value={formData.assetType}
+                    onChange={handleInputChange}
+                    placeholder="Immovable"
+                    className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block ${labelClass} mb-2 font-semibold`}>Asset Category</label>
+                  <input
+                    type="text"
+                    name="assetCategory"
+                    value={formData.assetCategory}
+                    onChange={handleInputChange}
+                    placeholder="Not Available"
+                    className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block ${labelClass} mb-2 font-semibold`}>Asset Sub Category</label>
+                  <input
+                    type="text"
+                    name="assetSubCategory"
+                    value={formData.assetSubCategory}
+                    onChange={handleInputChange}
+                    placeholder="Street Light"
+                    className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block ${labelClass} mb-2 font-semibold`}>Total Units</label>
+                  <input
+                    type="number"
+                    min="0"
+                    name="totalUnits"
+                    value={formData.totalUnits}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                  />
+                </div>
+                <div>
+                  <label className={`block ${labelClass} mb-2 font-semibold`}>Unit Cost (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    name="unitCost"
+                    value={formData.unitCost}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2 border rounded-lg ${inputClass}`}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className={`block ${labelClass} mb-2 font-semibold`}>Location Address *</label>
@@ -793,6 +925,18 @@ Print this report and display in Gram Sabha meetings for transparency and social
               ))}
             </select>
             <select
+              value={filterYear}
+              onChange={(e) => setFilterYear(e.target.value)}
+              className={`px-4 py-2 border rounded-lg ${inputClass}`}
+            >
+              <option value="">All Plan Years</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+            <select
               value={filterWard}
               onChange={(e) => setFilterWard(e.target.value)}
               className={`px-4 py-2 border rounded-lg ${inputClass}`}
@@ -823,12 +967,15 @@ Print this report and display in Gram Sabha meetings for transparency and social
                 setFilterScheme("");
                 setFilterWard("");
                 setFilterStatus("");
+                setFilterYear("");
               }}
               className="px-4 py-2 border border-gray-400 rounded-lg font-semibold hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Clear filters
             </button>
-            <span className={`text-sm font-semibold ${labelClass}`}>{filteredProjects.length} shown</span>
+            <span className={`text-sm font-semibold ${labelClass}`}>
+              {filteredProjects.length} shown of {projects.length} stored
+            </span>
           </div>
 
           <div className="hidden md:block overflow-x-auto">
