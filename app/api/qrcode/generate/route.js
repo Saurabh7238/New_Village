@@ -2,6 +2,8 @@ import dbConnect from '@/lib/dbConnect';
 import QRCode from 'qrcode';
 import Application from '@/models/Application';
 import Query from '@/models/Query';
+import Development from '@/models/Development';
+import mongoose from 'mongoose';
 
 export async function GET(req) {
   try {
@@ -22,6 +24,14 @@ export async function GET(req) {
     } else if (type === 'query') {
       entity = await Query.findById(id);
       trackingUrl = `${process.env.NEXTAUTH_URL}/track?queryId=${id}`;
+    } else if (type === 'development') {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return Response.json({ error: 'Invalid project ID' }, { status: 400 });
+      }
+      entity = await Development.findById(id).select('_id');
+      trackingUrl = new URL(`/development/${id}`, req.url).toString();
+    } else {
+      return Response.json({ error: 'Unsupported QR code type' }, { status: 400 });
     }
 
     if (!entity) {

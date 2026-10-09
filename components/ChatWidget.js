@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Send } from "lucide-react";
+import { ArrowRight, Check, Copy, ExternalLink, Send, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function ChatWidget() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -14,6 +14,10 @@ export default function ChatWidget() {
   const [loading, setLoading] = useState(false);
   const [quickReplies, setQuickReplies] = useState([]);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [ticketConfirmation, setTicketConfirmation] = useState(null);
+  const [sendError, setSendError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [copyFeedback, setCopyFeedback] = useState("");
   const messagesEndRef = useRef(null);
   const audioContextRef = useRef(null);
   const lastMessageSignatureRef = useRef("");
@@ -59,24 +63,32 @@ export default function ChatWidget() {
         if (res.status === 401) {
           setMessages([]);
           lastMessageSignatureRef.current = "";
+          setLoadError("");
           return;
         }
         if (res.ok) {
           const data = await res.json();
-          const signature = JSON.stringify(data);
-          const hasNewMessage = signature !== lastMessageSignatureRef.current && Array.isArray(data) && data.length > 0;
+          const chatMessages = Array.isArray(data) ? data : data.messages || [];
+          const signature = JSON.stringify(chatMessages);
+          const hasNewMessage = signature !== lastMessageSignatureRef.current && chatMessages.length > 0;
 
-          setMessages(data);
+          setMessages(chatMessages);
+          setLoadError("");
+          setQuickReplies(Array.isArray(data.quickReplies) ? data.quickReplies : []);
+          setTicketConfirmation(data.confirmation || null);
           lastMessageSignatureRef.current = signature;
 
           if (hasNewMessage) {
-            playChatTone(data[data.length - 1]?.sender === "user" ? "sent" : "incoming");
+            playChatTone(chatMessages[chatMessages.length - 1]?.sender === "user" ? "sent" : "incoming");
           }
 
           scrollToBottom();
+        } else {
+          setLoadError("Could not refresh this conversation. Please try again.");
         }
       } catch (error) {
         console.error("Failed to fetch messages:", error);
+        setLoadError("Connection problem. Chat history could not be refreshed.");
       }
     };
 
@@ -103,6 +115,19 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading, quickReplies, ticketConfirmation]);
+
+  const copyTicketNumber = async () => {
+    try {
+      await navigator.clipboard.writeText(ticketConfirmation.ticketId);
+      setCopyFeedback("Ticket number copied.");
+    } catch {
+      setCopyFeedback("Could not copy automatically. Select and copy the ticket number.");
+    }
+  };
+
   const handleSend = async (directText) => {
     if (status !== "authenticated") {
       setShowLoginPrompt(true);
@@ -114,6 +139,8 @@ export default function ChatWidget() {
 
     setInput("");
     setLoading(true);
+    setSendError("");
+    setCopyFeedback("");
 
     try {
       const res = await fetch("/api/chat", {
@@ -124,25 +151,32 @@ export default function ChatWidget() {
 
       if (res.status === 401) {
         setShowLoginPrompt(true);
-        setLoading(false);
         return;
       }
 
       if (res.ok) {
         const data = await res.json();
         setQuickReplies(data.quickReplies || []);
+        setTicketConfirmation(data.confirmation || null);
         playChatTone("sent");
 
         const messagesRes = await fetch(`/api/chat`);
         if (messagesRes.ok) {
           const updatedMessages = await messagesRes.json();
-          setMessages(updatedMessages);
-          lastMessageSignatureRef.current = JSON.stringify(updatedMessages);
+          const chatMessages = Array.isArray(updatedMessages) ? updatedMessages : updatedMessages.messages || [];
+          setMessages(chatMessages);
+          setQuickReplies(Array.isArray(updatedMessages.quickReplies) ? updatedMessages.quickReplies : data.quickReplies || []);
+          setTicketConfirmation(updatedMessages.confirmation || data.confirmation || null);
+          lastMessageSignatureRef.current = JSON.stringify(chatMessages);
           scrollToBottom();
         }
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setSendError(data.error || "Message could not be sent. Please try again.");
       }
     } catch (error) {
       console.error("Failed to send message:", error);
+      setSendError("Connection problem. Check your internet and try again.");
     } finally {
       setLoading(false);
     }
@@ -151,7 +185,7 @@ export default function ChatWidget() {
   if (status === "loading") return null;
 
   return (
-    <div ref={chatWidgetRef} className="fixed bottom-5 right-5 z-40 font-sans">
+    <div ref={chatWidgetRef} className="fixed bottom-4 right-4 z-40 font-sans sm:bottom-5 sm:right-5">
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -191,19 +225,22 @@ export default function ChatWidget() {
       )}
 
       {isOpen && (
-        <div className="absolute bottom-0 right-0 w-80 h-[500px] bg-slate-900 text-white rounded-xl shadow-2xl flex flex-col overflow-hidden border border-slate-700">
-          <div className="bg-emerald-700 p-4 flex items-center justify-between rounded-t-xl">
-            <h3 className="font-bold text-lg">सेवा बॉट</h3>
+        <section aria-label="Panchayat service chat" className="absolute bottom-0 right-0 flex h-[min(34rem,calc(100dvh-2rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900 text-white shadow-2xl">
+          <header className="flex items-center justify-between bg-emerald-700 p-4">
+            <div>
+              <h3 className="text-lg font-bold">सेवा बॉट</h3>
+              <p className="text-xs text-emerald-100">Panchayat Service Assistant</p>
+            </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="hover:bg-emerald-800 p-1 rounded transition"
+              className="rounded p-2 hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-white"
               aria-label="Close chat"
             >
               <X size={20} />
             </button>
-          </div>
+          </header>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-900">
+          <div aria-label="Chat messages" aria-live="polite" aria-relevant="additions text" role="log" className="flex-1 space-y-3 overflow-y-auto bg-slate-900 p-4">
             {status !== "authenticated" ? (
               <div className="text-center text-slate-400 text-sm py-6">
                 <p className="mb-2 text-lg">🔒 Login Required</p>
@@ -223,23 +260,34 @@ export default function ChatWidget() {
               </div>
             ) : (
               messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${
-                    msg.sender === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-xs px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${
-                      msg.sender === "user"
-                        ? "bg-emerald-600 text-white rounded-br-none"
-                        : "bg-slate-700 text-slate-100 rounded-bl-none"
-                    }`}
-                  >
+                <div key={msg._id || `${msg.createdAt}-${idx}`} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
+                  <div className={`max-w-[90%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${msg.sender === "user" ? "rounded-br-none bg-emerald-600 text-white" : "rounded-bl-none bg-slate-700 text-slate-100"}`}>
                     {msg.message}
                   </div>
+                  {msg.createdAt && <time dateTime={msg.createdAt} className="mt-1 px-1 text-[10px] text-slate-400">{new Date(msg.createdAt).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}</time>}
                 </div>
               ))
+            )}
+
+            {loading && <p role="status" className="text-xs text-slate-300">Assistant is preparing a response…</p>}
+
+            {ticketConfirmation && (
+              <section aria-label="Ticket confirmation" className="rounded-xl border border-emerald-500/60 bg-emerald-950/70 p-3">
+                <div className="flex items-center gap-2 font-bold text-emerald-200"><Check className="h-4 w-4" aria-hidden="true" /> Request received</div>
+                <dl className="mt-2 space-y-1 text-xs">
+                  <div className="flex justify-between gap-2"><dt className="text-slate-300">Ticket</dt><dd className="font-bold text-white">#{ticketConfirmation.ticketId}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-slate-300">Service</dt><dd className="text-right">{ticketConfirmation.service}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-slate-300">Ward</dt><dd>Ward {ticketConfirmation.ward}</dd></div>
+                  <div className="flex justify-between gap-2"><dt className="text-slate-300">Status</dt><dd>{ticketConfirmation.status}</dd></div>
+                </dl>
+                <p className="mt-2 text-xs text-slate-200">Keep this number. The Panchayat team will review your request.</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button onClick={copyTicketNumber} className="inline-flex items-center justify-center gap-1 rounded-lg border border-emerald-500 px-2 py-2 text-xs font-semibold hover:bg-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"><Copy className="h-3.5 w-3.5" aria-hidden="true" />Copy ticket</button>
+                  <button onClick={() => setIsOpen(false)} className="inline-flex items-center justify-center gap-1 rounded-lg border border-slate-500 px-2 py-2 text-xs font-semibold hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300">Close chat</button>
+                  <button onClick={() => { setIsOpen(false); router.push(`/chat/track?ticketId=${encodeURIComponent(ticketConfirmation.ticketId)}`); }} className="col-span-2 inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-2 py-2 text-xs font-semibold hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-300">Track this ticket <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></button>
+                </div>
+                {copyFeedback && <p aria-live="polite" className="mt-2 text-center text-xs text-emerald-200">{copyFeedback}</p>}
+              </section>
             )}
             
             {quickReplies && quickReplies.length > 0 && (
@@ -248,11 +296,9 @@ export default function ChatWidget() {
                   {quickReplies.map((opt, i) => (
                     <button
                       key={i}
-                      onClick={() => {
-                        setInput(opt);
-                        handleSend(opt);
-                      }}
-                      className="px-3 py-1.5 text-xs font-medium border-2 border-emerald-600 text-emerald-600 rounded-full hover:bg-emerald-600 hover:text-white transition bg-slate-800 whitespace-nowrap"
+                      onClick={() => handleSend(opt)}
+                      disabled={loading}
+                      className="whitespace-nowrap rounded-full border-2 border-emerald-600 bg-slate-800 px-3 py-1.5 text-xs font-medium text-emerald-300 transition hover:bg-emerald-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300 disabled:opacity-50"
                     >
                       {opt}
                     </button>
@@ -260,30 +306,43 @@ export default function ChatWidget() {
                 </div>
               </div>
             )}
+
+            {ticketConfirmation && (
+              <button onClick={() => handleSend("Start new request")} disabled={loading} className="inline-flex items-center gap-1 rounded-lg border border-slate-600 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50">
+                Start new request <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            )}
+
+            {loadError && <p role="alert" className="rounded-lg bg-amber-950 px-3 py-2 text-xs text-amber-100">{loadError}</p>}
+            {sendError && <p role="alert" className="rounded-lg bg-red-950 px-3 py-2 text-xs text-red-200">{sendError}</p>}
             
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t border-slate-700 p-3 flex gap-2 bg-slate-800">
+          <form onSubmit={(event) => { event.preventDefault(); handleSend(); }} className="flex gap-2 border-t border-slate-700 bg-slate-800 p-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") setInput("");
+              }}
+              aria-label="Type your message"
               placeholder={status !== "authenticated" ? "Login jaruri hai..." : "संदेश भेजें... / Type message..."}
               disabled={loading || status !== "authenticated"}
+              maxLength={500}
               className="flex-1 bg-slate-700 text-white px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
-              onClick={() => handleSend()}
-              disabled={loading || status !== "authenticated"}
+              type="submit"
+              disabled={loading || status !== "authenticated" || !input.trim()}
               className="bg-emerald-700 hover:bg-emerald-800 text-white p-2.5 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
               aria-label="Send message"
             >
               <Send size={18} />
             </button>
-          </div>
-        </div>
+          </form>
+        </section>
       )}
     </div>
   );

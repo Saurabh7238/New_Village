@@ -25,6 +25,8 @@ export default function DevelopmentPage() {
   const [filterYear, setFilterYear] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
   const [filterScheme, setFilterScheme] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,9 +57,39 @@ export default function DevelopmentPage() {
   const visibleProjects = projects.filter((project) =>
     (!filterYear || project.financialYear === filterYear) &&
     (!filterMonth || project.registeredOn?.startsWith(filterMonth)) &&
-    (!filterScheme || project.scheme === filterScheme)
+    (!filterScheme || project.scheme === filterScheme) &&
+    (!filterStatus || project.status === filterStatus) &&
+    [project.title, project.scheme, project.focusedArea, project.implementingAgency, project.location?.address, project.wardNo]
+      .some((value) => String(value || "").toLowerCase().includes(searchQuery.trim().toLowerCase()))
   );
   const groupedData = viewType === "scheme" ? groupByScheme(visibleProjects) : viewType === "ward" ? groupByWard(visibleProjects) : {};
+
+  const downloadCSV = () => {
+    const headers = ["Activity", "Scheme", "Financial year", "Ward", "Status", "Progress (%)", "Sanctioned amount", "Amount spent", "Address"];
+    const rows = visibleProjects.map((project) => [
+      project.title,
+      project.scheme,
+      project.financialYear,
+      project.wardNo,
+      project.status,
+      project.physicalProgress,
+      project.sanctionedAmount,
+      project.amountSpent,
+      project.location?.address,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => {
+        const safeValue = String(value ?? "").replace(/^[=+\-@]/, "'$&");
+        return `"${safeValue.replaceAll('"', '""')}"`;
+      }).join(","))
+      .join("\r\n");
+    const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `development-projects-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return <LoadingSpinner message="Loading Development Projects..." />;
@@ -71,6 +103,35 @@ export default function DevelopmentPage() {
           <p className={`text-lg ${isDark ? "text-gray-300" : "text-gray-700"}`}>
             Transparency in Infrastructure Development - Real-time tracking of all ongoing and completed projects
           </p>
+        </div>
+
+        <div className={`${isDark ? "bg-gray-800" : "bg-white"} mb-6 flex flex-wrap items-center gap-3 rounded-lg p-4 shadow`}>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search project, ward, area, agency..."
+            aria-label="Search development projects"
+            className={`min-w-[220px] flex-1 rounded-lg border px-3 py-2 ${isDark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-300"}`}
+          />
+          <label className="flex items-center gap-2 text-sm font-semibold">
+            <span>Status</span>
+            <select
+              value={filterStatus}
+              onChange={(event) => setFilterStatus(event.target.value)}
+              className={`rounded-lg border px-3 py-2 ${isDark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-300"}`}
+            >
+              <option value="">All statuses</option>
+              {DEVELOPMENT_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+            </select>
+          </label>
+          <button onClick={downloadCSV} className="rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white hover:bg-blue-800">
+            Download CSV
+          </button>
+          <button onClick={() => window.print()} className="rounded-lg border border-gray-400 px-4 py-2 font-semibold hover:bg-gray-100 dark:hover:bg-gray-700">
+            Print / Save PDF
+          </button>
+          <span className="text-sm opacity-75">{visibleProjects.length} projects</span>
         </div>
 
         {/* View Toggle */}
@@ -196,6 +257,7 @@ export default function DevelopmentPage() {
                 ))}
               </tbody>
             </table>
+            {visibleProjects.length === 0 && <p className="p-8 text-center">No projects match these filters.</p>}
           </div>
         ) : viewType === "map" ? (
           <div>

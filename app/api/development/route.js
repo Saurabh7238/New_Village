@@ -107,7 +107,26 @@ export async function POST(request) {
     let savedProject;
 
     if (id) {
-      savedProject = await Development.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
+      const existingProject = await Development.findById(id);
+      if (!existingProject) {
+        return NextResponse.json({ message: 'Project not found.' }, { status: 404 });
+      }
+
+      const changes = ['status', 'physicalProgress', 'amountSpent']
+        .filter((field) => Object.hasOwn(payload, field) && (field === 'status'
+          ? existingProject[field] !== payload[field]
+          : Number(existingProject[field]) !== Number(payload[field])))
+        .map((field) => ({
+          field,
+          from: existingProject[field],
+          to: payload[field]
+        }));
+      const update = {
+        ...payload,
+        lastUpdatedOn: new Date(),
+        ...(changes.length ? { $push: { updateHistory: { $each: [{ changes }], $slice: -200 } } } : {})
+      };
+      savedProject = await Development.findByIdAndUpdate(id, update, { new: true, runValidators: true });
       if (!savedProject) {
         return NextResponse.json({ message: 'Project not found.' }, { status: 404 });
       }

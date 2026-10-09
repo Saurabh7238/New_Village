@@ -24,6 +24,10 @@ const ChatSchema = new mongoose.Schema(
     service: String,
     ward: Number,
     ticket: String,
+    flowStep: {
+      type: String,
+      enum: ["service", "ward", "complete"],
+    },
   },
   { timestamps: true }
 );

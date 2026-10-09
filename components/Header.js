@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Bell, Moon, Sun, Phone } from "lucide-react";
+import { Bell, Moon, Sun, Phone, Menu as MenuIcon, X } from "lucide-react";
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
 import { TYPE_LABELS } from "@/lib/notificationConstants";
@@ -199,13 +199,13 @@ export default function Header() {
     ? "bg-slate-950/95 dark:bg-slate-950/95 backdrop-blur shadow-lg shadow-slate-950/10"
     : "bg-slate-950 dark:bg-slate-950";
   const menuItemBaseClass =
-    "flex w-full items-center rounded-lg bg-slate-100 px-2.5 py-2.5 text-left text-xs sm:text-sm font-semibold transition-colors dark:bg-slate-700";
+    "flex w-full items-center rounded-lg px-2.5 py-2.5 text-left text-xs sm:text-sm font-semibold transition-colors";
   const menuItemActiveClass =
-    "bg-emerald-600 text-white dark:bg-emerald-600";
+    "bg-emerald-700 text-white ring-2 ring-emerald-300 dark:bg-emerald-600 dark:ring-emerald-500";
   const menuItemVisitedClass =
-    "bg-amber-100 text-amber-900 ring-1 ring-amber-300 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-800/70";
+    "bg-amber-100 text-amber-950 ring-1 ring-amber-300 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-800/70";
   const menuItemInactiveClass =
-    "text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200";
+    "bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200";
   const isAuthenticated = status === "authenticated";
   // Service requests are operational alerts for administrators. Keep them on
   // admin pages so a citizen submission never appears in the public/homepage
@@ -374,12 +374,14 @@ export default function Header() {
               setShowNotifications(false);
               setOpen(!open);
             }}
-            className="rounded-md bg-white px-2.5 py-2 text-sm font-semibold whitespace-nowrap text-teal-800 shadow transition hover:bg-teal-50 sm:px-4 sm:text-base"
+            className="grid h-10 w-10 place-items-center rounded-md bg-white text-teal-800 shadow transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500"
             aria-expanded={open}
             aria-controls="main-menu"
             aria-label={open ? langLabels.close : langLabels.menu}
           >
-            {open ? langLabels.close : langLabels.menu}
+            {open
+              ? <X className="h-5 w-5" aria-hidden="true" />
+              : <MenuIcon className="h-5 w-5" aria-hidden="true" />}
           </button>
 
           <AnimatePresence>
@@ -416,6 +418,7 @@ export default function Header() {
                               <Link
                                 key={subHref}
                                 href={subHref}
+                                aria-current={pathname === subHref ? "page" : undefined}
                                 className={`${menuItemBaseClass} text-sm ${
                                   pathname === subHref
                                     ? menuItemActiveClass
@@ -439,6 +442,7 @@ export default function Header() {
                       // Regular menu items
                       <Link
                         href={href}
+                        aria-current={pathname === href ? "page" : undefined}
                         className={`${menuItemBaseClass} ${
                           pathname === href
                             ? menuItemActiveClass
@@ -490,7 +494,7 @@ export default function Header() {
                           signOut({ callbackUrl: "/?logout=true" });
                           setOpen(false);
                         }}
-                        className={`${menuItemBaseClass} text-red-700 hover:bg-red-50 hover:text-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200`}
+                        className={`${menuItemBaseClass} bg-slate-100 text-red-700 hover:bg-red-50 hover:text-red-800 dark:bg-slate-700 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200`}
                       >
                         Logout
                       </button>

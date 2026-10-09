@@ -3,15 +3,24 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { formatDate, formatCurrency, calculateDaysRemaining, getStatusBgClass } from "@/lib/developmentDisplay";
 import { useTheme } from "@/app/theme-provider";
 import DevelopmentMap from "@/components/DevelopmentMap";
 
 export default function DevelopmentDetailPage({ params }) {
   const { isDark } = useTheme();
+  const { data: session, status: sessionStatus } = useSession();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [photoUpdates, setPhotoUpdates] = useState([]);
+  const [approvedReports, setApprovedReports] = useState([]);
+  const [qrCode, setQrCode] = useState("");
+  const [reportCategory, setReportCategory] = useState("Stalled work");
+  const [reportDescription, setReportDescription] = useState("");
+  const [reportMessage, setReportMessage] = useState("");
+  const [submittingReport, setSubmittingReport] = useState(false);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -20,6 +29,24 @@ export default function DevelopmentDetailPage({ params }) {
       const data = await res.json();
       const foundProject = Array.isArray(data) ? data[0] : data;
       setProject(foundProject);
+      if (foundProject?._id) {
+        const [updatesResponse, reportsResponse, qrResponse] = await Promise.all([
+          fetch(`/api/development/${foundProject._id}/updates`),
+          fetch(`/api/development-reports?projectId=${foundProject._id}`),
+          fetch(`/api/qrcode/generate?type=development&id=${foundProject._id}`),
+        ]);
+        if (!updatesResponse.ok || !reportsResponse.ok || !qrResponse.ok) {
+          throw new Error("Some project transparency details could not be loaded.");
+        }
+        const [updates, reports, qr] = await Promise.all([
+          updatesResponse.json(),
+          reportsResponse.json(),
+          qrResponse.json(),
+        ]);
+        setPhotoUpdates(updates);
+        setApprovedReports(reports);
+        setQrCode(qr.qrCode);
+      }
     } catch (error) {
       console.error("Error fetching project:", error);
     } finally {
@@ -50,7 +77,32 @@ export default function DevelopmentDetailPage({ params }) {
   const photos = [
     ...(project.beforePhoto ? [{ src: project.beforePhoto, label: "Before" }] : []),
     ...(project.afterPhoto ? [{ src: project.afterPhoto, label: "After" }] : []),
+    ...photoUpdates.map((update) => ({
+      src: update.photo,
+      label: `${formatDate(update.updateDate)} — ${update.description}`,
+    })),
   ];
+
+  const submitReport = async (event) => {
+    event.preventDefault();
+    setReportMessage("");
+    setSubmittingReport(true);
+    try {
+      const response = await fetch("/api/development-reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: project._id, category: reportCategory, description: reportDescription }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Could not submit report.");
+      setReportDescription("");
+      setReportMessage("Thank you. Your report has been sent to the Panchayat for review.");
+    } catch (error) {
+      setReportMessage(error.message);
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
 
   const daysRemaining = calculateDaysRemaining(project.expectedCompletion);
   const budgetUtilization = project.sanctionedAmount > 0 ? ((project.amountSpent / project.sanctionedAmount) * 100).toFixed(1) : 0;
@@ -132,7 +184,43 @@ export default function DevelopmentDetailPage({ params }) {
                     <p className={textMutedClass}>{formatDate(project.startDate)}</p>
                     <p className="text-sm mt-1">{formatCurrency(project.sanctionedAmount)} sanctioned</p>
                   </div>
+                  {project.updateHistory?.length > 0 && (
+                    <div className={`mt-6 border-t ${borderClass} pt-5`}>
+                      <h3 className="mb-3 font-bold">Progress and finance history</h3>
+                      <ol className="space-y-3">
+                        {[...project.updateHistory].reverse().map((entry, index) => (
+                          <li key={`${entry.updatedAt}-${index}`} className={`border-l-2 border-green-600 pl-4 ${textMutedClass}`}>
+                            <p className="font-semibold">{formatDate(entry.updatedAt)}</p>
+                            {entry.changes?.map((change) => (
+                              <p key={change.field}>
+                                {change.field === "physicalProgress" ? "Progress" : change.field === "amountSpent" ? "Amount spent" : "Status"}:{" "}
+                                {change.field === "amountSpent" ? formatCurrency(change.from) : change.from}
+                                {" → "}
+                                {change.field === "amountSpent" ? formatCurrency(change.to) : change.to}
+                                {change.field === "physicalProgress" ? "%" : ""}
+                              </p>
+                            ))}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                 </div>
+
+                {photoUpdates.length > 0 && (
+                  <section className={`${bgClass} mb-8 rounded-lg p-6 shadow-lg`}>
+                    <h2 className="mb-4 text-xl font-bold">Dated site photo updates</h2>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {photoUpdates.map((update) => (
+                        <article key={update._id}>
+                          <Image src={update.photo} alt={update.description} width={640} height={400} unoptimized className="h-52 w-full rounded-lg object-cover" />
+                          <p className="mt-2 font-semibold">{formatDate(update.updateDate)}</p>
+                          <p className={textMutedClass}>{update.description}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                )}
 
                 <div className="flex items-start gap-4">
                   <div className={`w-12 h-12 rounded-full ${project.status === "Ongoing" || project.status === "Completed" ? "bg-blue-600" : "bg-gray-400"} text-white flex items-center justify-center font-bold flex-shrink-0`}>
@@ -311,8 +399,53 @@ export default function DevelopmentDetailPage({ params }) {
                 All information on this project is public and available for transparency under RTI Act 2005.
               </p>
             </div>
+            {qrCode && (
+              <div className={`${bgClass} mt-6 rounded-lg p-6 text-center shadow-lg`}>
+                <h3 className="mb-3 text-lg font-bold">Share this project</h3>
+                <Image src={qrCode} alt="QR code linking to this project" width={180} height={180} unoptimized className="mx-auto" />
+                <a href={qrCode} download={`project-${project._id}-qr.png`} className="mt-3 inline-block font-semibold text-green-700 hover:underline dark:text-green-300">Download QR code</a>
+              </div>
+            )}
           </div>
         </div>
+
+        <section className={`${bgClass} mt-8 rounded-lg p-6 shadow-lg`}>
+          <h2 className="mb-2 text-xl font-bold">Report a concern about this project</h2>
+          <p className={`mb-4 text-sm ${textMutedClass}`}>Reports are reviewed by the Panchayat before they appear publicly. Your identity is not shown with approved reports.</p>
+          {sessionStatus === "authenticated" ? (
+            <form onSubmit={submitReport} className="space-y-4">
+              <label className="block font-semibold">
+                Concern type
+                <select value={reportCategory} onChange={(event) => setReportCategory(event.target.value)} className={`mt-1 w-full rounded-lg border px-3 py-2 ${isDark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-300"}`}>
+                  {["Stalled work", "Quality concern", "Safety concern", "Incorrect project information", "Other"].map((category) => <option key={category}>{category}</option>)}
+                </select>
+              </label>
+              <label className="block font-semibold">
+                Details
+                <textarea value={reportDescription} onChange={(event) => setReportDescription(event.target.value)} minLength={10} maxLength={1000} rows={4} required className={`mt-1 w-full rounded-lg border px-3 py-2 ${isDark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-300"}`} placeholder="Describe the concern (10–1,000 characters)" />
+              </label>
+              <button type="submit" disabled={submittingReport} className="rounded-lg bg-green-700 px-5 py-2 font-semibold text-white disabled:opacity-50">{submittingReport ? "Submitting..." : "Submit for review"}</button>
+              {reportMessage && <p role="status" className="text-sm">{reportMessage}</p>}
+            </form>
+          ) : (
+            <button onClick={() => signIn(undefined, { callbackUrl: window.location.href })} className="rounded-lg bg-green-700 px-5 py-2 font-semibold text-white">
+              Sign in to report a concern
+            </button>
+          )}
+          {approvedReports.length > 0 && (
+            <div className={`mt-6 border-t ${borderClass} pt-5`}>
+              <h3 className="mb-3 font-bold">Reviewed resident reports</h3>
+              <ul className="space-y-3">
+                {approvedReports.map((report) => (
+                  <li key={report._id} className={`rounded-lg p-4 ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+                    <p className="font-semibold">{report.category} · {formatDate(report.createdAt)}</p>
+                    <p className={textMutedClass}>{report.description}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

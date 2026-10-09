@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { DEVELOPMENT_SCHEMES, DEVELOPMENT_STATUSES, getStatusBgClass, formatDate, formatCurrency } from "@/lib/developmentDisplay";
 import { useTheme } from "@/app/theme-provider";
@@ -53,6 +54,11 @@ export default function DevelopmentAdmin() {
   const [filterYear, setFilterYear] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [photoUpdates, setPhotoUpdates] = useState([]);
+  const [updatePhoto, setUpdatePhoto] = useState("");
+  const [updatePhotoDescription, setUpdatePhotoDescription] = useState("");
+  const [updatePhotoDate, setUpdatePhotoDate] = useState(new Date().toISOString().slice(0, 10));
+  const [savingPhotoUpdate, setSavingPhotoUpdate] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -72,6 +78,11 @@ export default function DevelopmentAdmin() {
   const handlePhotoUpload = (e, photoType) => {
     const file = e.target.files[0];
     if (file) {
+      if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) {
+        setMessage("Choose an image smaller than 10 MB.");
+        e.target.value = "";
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result;
@@ -171,9 +182,65 @@ export default function DevelopmentAdmin() {
     });
     setBeforePhotoPreview(project.beforePhoto);
     setAfterPhotoPreview(project.afterPhoto);
+    setPhotoUpdates([]);
+    setUpdatePhoto("");
+    setUpdatePhotoDescription("");
+    setUpdatePhotoDate(new Date().toISOString().slice(0, 10));
+    fetch(`/api/development/${project._id}/updates`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load photo updates.");
+        setPhotoUpdates(await response.json());
+      })
+      .catch((error) => {
+        console.error("Error loading project photo updates:", error);
+        setMessage(error.message);
+      });
     window.requestAnimationFrame(() => {
       document.getElementById("development-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  };
+
+  const handleUpdatePhotoSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 1024 * 1024) {
+      setMessage("Project update photos must be JPEG, PNG, or WebP and 1 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => setUpdatePhoto(String(reader.result));
+    reader.onerror = () => setMessage("Could not read the selected photo.");
+    reader.readAsDataURL(file);
+  };
+
+  const handleAddPhotoUpdate = async (event) => {
+    event.preventDefault();
+    if (!formData.id || !updatePhoto) {
+      setMessage("Select a photo before adding an update.");
+      return;
+    }
+    setSavingPhotoUpdate(true);
+    try {
+      const response = await fetch(`/api/development/${formData.id}/updates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photo: updatePhoto, description: updatePhotoDescription, updateDate: updatePhotoDate }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Could not save project photo update.");
+      setPhotoUpdates((current) => [data, ...current]);
+      setUpdatePhoto("");
+      setUpdatePhotoDescription("");
+      setUpdatePhotoDate(new Date().toISOString().slice(0, 10));
+      event.target.reset();
+      setMessage("Dated project photo update added.");
+    } catch (error) {
+      console.error("Error saving project photo update:", error);
+      setMessage(error.message);
+    } finally {
+      setSavingPhotoUpdate(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -409,12 +476,17 @@ Print this report and display in Gram Sabha meetings for transparency and social
               Documents Uploaded: {stats.withDocuments}/{stats.totalProjects}
             </p>
           </div>
-          <button
-            onClick={handleGenerateReport}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold"
-          >
-            📄 Generate Report
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/admin/development/reports" className="rounded-lg bg-amber-600 px-5 py-2 font-semibold text-white hover:bg-amber-700">
+              Review resident reports
+            </Link>
+            <button
+              onClick={handleGenerateReport}
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold"
+            >
+              📄 Generate Report
+            </button>
+          </div>
         </div>
 
         <div id="development-editor" className={`${bgClass} scroll-mt-24 p-8 rounded-lg shadow-lg mb-8`}>
@@ -922,6 +994,43 @@ Print this report and display in Gram Sabha meetings for transparency and social
               </button>
             </div>
           </form>
+          {formData.id && (
+            <section className="mt-8 border-t border-gray-300 pt-6 dark:border-gray-600">
+              <h3 className="mb-2 text-xl font-bold">Dated progress photo updates</h3>
+              <p className={`mb-4 text-sm ${labelClass}`}>Photos are stored in the existing database; use JPEG, PNG, or WebP up to 1 MB.</p>
+              <form onSubmit={handleAddPhotoUpdate} className="grid gap-4 md:grid-cols-2">
+                <label className={`font-semibold ${labelClass}`}>
+                  Update date
+                  <input type="date" value={updatePhotoDate} onChange={(event) => setUpdatePhotoDate(event.target.value)} required className={`mt-1 w-full rounded-lg border px-3 py-2 ${inputClass}`} />
+                </label>
+                <label className={`font-semibold ${labelClass}`}>
+                  Progress photo
+                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleUpdatePhotoSelect} required className={`mt-1 w-full rounded-lg border px-3 py-2 ${inputClass}`} />
+                </label>
+                <label className={`font-semibold ${labelClass} md:col-span-2`}>
+                  Update description
+                  <textarea value={updatePhotoDescription} onChange={(event) => setUpdatePhotoDescription(event.target.value)} maxLength={500} required rows={2} className={`mt-1 w-full rounded-lg border px-3 py-2 ${inputClass}`} />
+                </label>
+                {updatePhoto && <Image src={updatePhoto} alt="Selected progress update" width={160} height={120} unoptimized className="h-28 w-40 rounded-lg object-cover" />}
+                <div className="md:col-span-2">
+                  <button disabled={savingPhotoUpdate} className="rounded-lg bg-green-700 px-5 py-2 font-semibold text-white disabled:opacity-50">
+                    {savingPhotoUpdate ? "Saving..." : "Add dated photo update"}
+                  </button>
+                </div>
+              </form>
+              {photoUpdates.length > 0 && (
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {photoUpdates.map((update) => (
+                    <article key={update._id} className="rounded-lg border border-gray-300 p-3 dark:border-gray-600">
+                      <Image src={update.photo} alt={update.description} width={320} height={200} unoptimized className="h-40 w-full rounded object-cover" />
+                      <p className="mt-2 text-sm font-semibold">{new Date(update.updateDate).toLocaleDateString("en-IN")}</p>
+                      <p className="text-sm">{update.description}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </div>
 
         <div className={`${bgClass} p-8 rounded-lg shadow-lg`}>

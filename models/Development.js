@@ -146,6 +146,14 @@ const DevelopmentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  updateHistory: [{
+    updatedAt: { type: Date, default: Date.now },
+    changes: [{
+      field: { type: String, required: true },
+      from: { type: mongoose.Schema.Types.Mixed },
+      to: { type: mongoose.Schema.Types.Mixed }
+    }]
+  }],
   displayOrder: {
     type: Number,
     default: 999

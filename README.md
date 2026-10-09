@@ -11,6 +11,10 @@ copy .env.example .env.local
 
 Edit `.env.local` with your MongoDB Atlas URI and a `NEXTAUTH_SECRET` (32+ random characters).
 
+### Village map
+
+The `/map` page uses the Google Maps JavaScript API. Set `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in `.env.local` and in deployment environment variables. Enable the Maps JavaScript API, restrict the key to the site's HTTP referrers, and review Google Maps Platform billing and pricing before use. The displayed Chiutahara polygon is illustrative only and must be replaced with verified boundary coordinates for official use.
+
 ### Weather feature environment variables
 
 The project includes a small weather badge that depends on OpenWeatherMap. Add the following to `.env.local`:
@@ -28,6 +32,10 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Chatbot support tickets
+
+Signed-in residents can submit a chatbot request, then use the confirmation card's **Track this ticket** link or the **Copy ticket** action. Chatbot tickets are saved separately from formal grievance queries and can be checked at `/chat/track`. Admins can review and update their statuses from **Admin Panel → Chatbot Support Tickets**. Ticket status changes are stored in the configured MongoDB database; no paid chatbot or ticketing service is required.
 
 ## Push to GitHub (safe workflow)
 

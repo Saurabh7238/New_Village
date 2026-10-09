@@ -112,6 +112,25 @@ The seed will create projects with:
 3. **Mobile** (375px): Grid showing 1 column, buttons stack vertically
 4. ✅ All readable, no overflow, map accessible
 
+## 11. Public Project Discovery and Exports
+
+1. Go to **http://localhost:3000/development**.
+2. Search by project title, ward, address, scheme, focused area, or agency.
+3. Combine search with year, month, scheme, and status filters; confirm the count and visible projects update.
+4. Download CSV and verify it contains only the currently filtered projects.
+5. Use **Print / Save PDF** to print the displayed results using the browser.
+
+## 12. Project History, Resident Reports, and Photo Updates
+
+1. Edit a project in the admin page and change progress, status, or amount spent. Save and check the project detail page's history.
+2. On the edit form, add a dated JPEG, PNG, or WebP progress photo (maximum 1 MB) with a short description.
+3. Open the public project detail page and verify the dated update is listed and available in its photo carousel.
+4. Sign in as a resident and submit a project concern. It must remain private until an admin approves it.
+5. In **Admin → Development Projects & Reports → Review resident reports**, approve or reject the report. Only approved reports should appear publicly.
+6. Scan or download the project's QR code and confirm it opens that project's detail page.
+
+These additions use browser print/CSV generation, the existing `qrcode` package, and the app's configured MongoDB storage. They do not require paid APIs. Database and hosting plans still have their own storage and usage limits; progress photos are capped to 1 MB each.
+
 ## Manual Testing (Without Seed)
 
 If you don't use seed data, manually add a project:

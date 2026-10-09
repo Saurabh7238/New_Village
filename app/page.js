@@ -144,6 +144,18 @@ export default function HomePage() {
     return () => clearInterval(reviewInterval);
   }, []);
 
+  useEffect(() => {
+    if (reviews.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const carouselInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        setActiveReviewIndex((current) => (current + 1) % reviews.length);
+      }
+    }, 5000);
+
+    return () => clearInterval(carouselInterval);
+  }, [reviews.length]);
+
   const submitReview = async (e) => {
     e.preventDefault();
     if (authStatus !== "authenticated") {
@@ -559,10 +571,6 @@ export default function HomePage() {
                 </article>
               ))}
             </div>
-            <p className="mb-5 rounded-lg bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
-              Population figures are from the 2011 Census. Other figures shown here are static portal information and should be checked against current official Panchayat records.
-            </p>
-
             <div className="grid gap-3 lg:grid-cols-2">
               <section className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                 <h3 className="mb-3 text-sm font-bold text-slate-900 dark:text-white">🏘️ {t.overview}</h3>
