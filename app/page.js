@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, BellRing, BadgeCheck, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, MessageCircle, Route, School, Search, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, MessageCircle, Route, School, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 // Ensure you have this file: ../components/ServiceCard.jsx
 import ServiceCard from "../components/ServiceCard"; 
 import LoginRequiredModal from "@/components/LoginRequiredModal";
@@ -31,6 +31,20 @@ const FEATURED_INFRA_TYPES = [
   "Primary Health Center",
   "Water Pump",
 ];
+
+const FEATURED_SERVICE_HREFS = [
+  "/grievance",
+  "/birth",
+  "/death",
+  "/appointments",
+];
+
+const FEATURED_SERVICE_ICONS = {
+  "/grievance": HelpCircle,
+  "/birth": FileText,
+  "/death": FileText,
+  "/appointments": CalendarDays,
+};
 
 const DEFAULT_SLIDES = [
   { title: "Village Services", imageUrl: "/slide.png", alt: "Village services banner", href: "/grievance" },
@@ -65,6 +79,7 @@ export default function HomePage() {
   const [activeReviewIndex, setActiveReviewIndex] = useState(0);
   const [serviceSearch, setServiceSearch] = useState("");
   const [serviceCategory, setServiceCategory] = useState("All services");
+  const [showAllServices, setShowAllServices] = useState(false);
   const [infrastructureCounts, setInfrastructureCounts] = useState(null);
   const [infrastructureLoadFailed, setInfrastructureLoadFailed] = useState(false);
   const highlightsRef = useRef(null);
@@ -428,7 +443,7 @@ export default function HomePage() {
                 <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Quick access</p>
                 <h2 id="popular-services-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white">Popular services</h2>
               </div>
-              <Link href="#services" className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300">Browse all services ↓</Link>
+              <Link href="#services" onClick={() => setShowAllServices(true)} className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300">View all services ↓</Link>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {quickLinks.map(({ title, hindi, href, icon: Icon }) => (
@@ -504,47 +519,76 @@ export default function HomePage() {
           </section>
 
           <section id="services" className="py-2 sm:py-4">
-            <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-700 dark:text-teal-400">Citizen portal</p>
                 <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-              {t.services}
-            </h2>
+                  {t.services}
+                </h2>
               </div>
+              <button
+                type="button"
+                aria-expanded={showAllServices}
+                aria-controls="all-services-directory"
+                onClick={() => setShowAllServices((visible) => !visible)}
+                className="inline-flex min-h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-teal-300 dark:hover:bg-teal-950/40"
+              >
+                {showAllServices ? "Show featured services" : "View all services"}
+                <ChevronRight className={`h-4 w-4 transition-transform ${showAllServices ? "rotate-90" : ""}`} aria-hidden="true" />
+              </button>
             </div>
-            <div className="mb-4 flex flex-col gap-3 md:flex-row">
-              <label className="relative block flex-1">
-                <span className="sr-only">Search services</span>
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-                <input type="search" value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Search services / सेवाएं खोजें" className="min-h-11 w-full rounded-xl border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
-              </label>
-              <div role="group" aria-label="Filter services by category" className="flex gap-2 overflow-x-auto pb-1">
-                {serviceCategories.map((category) => (
-                  <button key={category} type="button" aria-pressed={serviceCategory === category} onClick={() => setServiceCategory(category)} className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold ${
-                    serviceCategory === category
-                      ? "border-teal-800 bg-teal-800 text-white dark:border-teal-300 dark:bg-teal-300 dark:text-teal-950"
-                      : "border-slate-300 bg-white text-slate-700 hover:border-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                    }`}>{language === "hi"
-                      ? ({ "All services": "सभी सेवाएं", Requests: "अनुरोध", Certificates: "प्रमाणपत्र", "Village information": "गांव की जानकारी" }[category])
-                      : category}</button>
-                ))}
-              </div>
+            <ul className="grid gap-x-10 divide-y divide-slate-100 dark:divide-slate-800 md:grid-cols-2 md:divide-y-0">
+              {services.filter((service) => FEATURED_SERVICE_HREFS.includes(service.href)).map((service) => {
+                const ServiceIcon = FEATURED_SERVICE_ICONS[service.href] || FileText;
+                return (
+                  <li key={service.href} className="border-b border-slate-100 dark:border-slate-800 md:last:border-b-0">
+                    <Link href={service.href} className="group flex min-h-14 items-center gap-3 py-3 text-slate-800 transition hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-100 dark:hover:text-teal-300">
+                      <ServiceIcon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-teal-700 dark:text-slate-500 dark:group-hover:text-teal-300" aria-hidden="true" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium">{service.title}</span>
+                        <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{service.hindi}</span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-teal-700 dark:group-hover:text-teal-300" aria-hidden="true" />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            <div id="all-services-directory" hidden={!showAllServices} className="mt-5 border-t border-slate-200 pt-5 dark:border-slate-700">
+                <div className="mb-4 flex flex-col gap-3 md:flex-row">
+                  <label className="relative block flex-1">
+                    <span className="sr-only">Search services</span>
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                    <input type="search" value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Search services / सेवाएं खोजें" className="min-h-11 w-full rounded-xl border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+                  </label>
+                  <div role="group" aria-label="Filter services by category" className="flex gap-2 overflow-x-auto pb-1">
+                    {serviceCategories.map((category) => (
+                      <button key={category} type="button" aria-pressed={serviceCategory === category} onClick={() => setServiceCategory(category)} className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold ${
+                        serviceCategory === category
+                          ? "border-teal-800 bg-teal-800 text-white dark:border-teal-300 dark:bg-teal-300 dark:text-teal-950"
+                          : "border-slate-300 bg-white text-slate-700 hover:border-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        }`}>{language === "hi"
+                          ? ({ "All services": "सभी सेवाएं", Requests: "अनुरोध", Certificates: "प्रमाणपत्र", "Village information": "गांव की जानकारी" }[category])
+                          : category}</button>
+                    ))}
+                  </div>
+                </div>
+                {visibleServices.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {visibleServices.map((service, index) => (
+                      <ServiceCard
+                        key={service.href}
+                        title={service.title}
+                        hindi={service.hindi}
+                        href={service.href}
+                        index={index}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">No services match your search. Try a different word or category.</p>
+                )}
             </div>
-            {visibleServices.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {visibleServices.map((s, i) => (
-                <ServiceCard
-                  key={s.href}
-                  title={s.title}
-                  hindi={s.hindi}
-                  href={s.href}
-                  index={i}
-                />
-              ))}
-              </div>
-            ) : (
-              <p className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">No services match your search. Try a different word or category.</p>
-            )}
           </section>
 
           <section aria-labelledby="infrastructure-heading" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-7">
