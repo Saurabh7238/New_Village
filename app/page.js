@@ -474,7 +474,7 @@ export default function HomePage() {
                 <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
               {t.services}
             </h2>
-              </div><p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">Find a service, start a request, explore village information, or track an existing query.</p>
+              </div>
             </div>
             <div className="mb-4 flex flex-col gap-3 md:flex-row">
               <label className="relative block flex-1">

@@ -331,7 +331,7 @@ export default function ChatWidget() {
               placeholder={status !== "authenticated" ? "Login jaruri hai..." : "संदेश भेजें... / Type message..."}
               disabled={loading || status !== "authenticated"}
               maxLength={500}
-              className="flex-1 bg-slate-700 text-white px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-white text-slate-900 dark:bg-slate-700 dark:text-white px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-500 dark:placeholder-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               type="submit"
