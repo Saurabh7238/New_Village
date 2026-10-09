@@ -2,12 +2,12 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, BellRing, BadgeCheck, ChevronRight, FileText, HelpCircle, MessageCircle, Phone, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowRight, BellRing, BadgeCheck, ChevronLeft, ChevronRight, FileText, HelpCircle, MessageCircle, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 // Ensure you have this file: ../components/ServiceCard.jsx
 import ServiceCard from "../components/ServiceCard"; 
 import LoginRequiredModal from "@/components/LoginRequiredModal";
@@ -26,6 +26,9 @@ export default function HomePage() {
   const [visitCount, setVisitCount] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
   const [homeSettingsLoaded, setHomeSettingsLoaded] = useState(false);
+  const [latestNotices, setLatestNotices] = useState([]);
+  const [noticesLoading, setNoticesLoading] = useState(true);
+  const [noticesError, setNoticesError] = useState(false);
   const [homeSettings, setHomeSettings] = useState({
     popupEnabled: true,
     popupTitle: "Important Update",
@@ -42,7 +45,9 @@ export default function HomePage() {
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [showLoginWarning, setShowLoginWarning] = useState(false);
   const [activeReviewIndex, setActiveReviewIndex] = useState(0);
-
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [serviceCategory, setServiceCategory] = useState("All services");
+  const highlightsRef = useRef(null);
   const loadReviews = () => {
     fetch("/api/reviews")
       .then((res) => (res.ok ? res.json() : []))
@@ -112,22 +117,32 @@ export default function HomePage() {
     loadHomeSettings();
   }, []);
 
+  useEffect(() => {
+    const loadLatestNotices = async () => {
+      try {
+        const response = await fetch("/api/notifications?page=1&limit=3");
+        const data = await response.json();
+        if (!response.ok || !data.success || !Array.isArray(data.notifications)) {
+          throw new Error("Could not load latest notices.");
+        }
+        setLatestNotices(data.notifications);
+      } catch (error) {
+        console.error("Failed to load latest homepage notices:", error);
+        setNoticesError(true);
+      } finally {
+        setNoticesLoading(false);
+      }
+    };
+
+    loadLatestNotices();
+  }, []);
+
   // Reviews: load on mount and refresh every 15s for real-time updates
   useEffect(() => {
     loadReviews();
     const reviewInterval = setInterval(loadReviews, 15000);
     return () => clearInterval(reviewInterval);
   }, []);
-
-  useEffect(() => {
-    if (reviews.length <= 1) return;
-
-    const carouselInterval = setInterval(() => {
-      setActiveReviewIndex((current) => (current + 1) % reviews.length);
-    }, 4000);
-
-    return () => clearInterval(carouselInterval);
-  }, [reviews.length]);
 
   const submitReview = async (e) => {
     e.preventDefault();
@@ -261,21 +276,26 @@ export default function HomePage() {
   const t = labels[language];
 
   const services = [
-    { title: "Raise Query", hindi: "शिकायत दर्ज करें", href: "/grievance" },
-    { title: "Track Query", hindi: "शिकायत ट्रैक करें", href: "/track" },
-    { title: "Birth Certificates", hindi: "जन्म प्रमाण पत्र", href: "/birth" },
-    { title: "Death Certificates", hindi: "मृत्यु प्रमाण पत्र", href: "/death" },
-    { title: "Aadhaar Create / Update", hindi: "आधार बनवाएं / अपडेट करें", href: "/aadhar" },
-    { title: "Voter List", hindi: "मतदाता सूची", href: "/voter" },
-    { title: "Gram Budget", hindi: "ग्राम बजट", href: "/budget" },
-    { title: "Panchayat Funds", hindi: "पंचायत निधि", href: "/funds" },
-    { title: "Development Projects", hindi: "विकास परियोजनाएं", href: "/development" },
-    { title: "Panchayat Members", hindi: "पंचायत सदस्य", href: "/members" },
-    { title: "Appointments", hindi: "नियुक्तियां", href: "/appointments" },
-    { title: "Gallery", hindi: "गैलरी", href: "/gallery" },
-    { title: "Map", hindi: "मानचित्र", href: "/map" },
-    { title: "Rivers, Roads & Lights", hindi: "नदियां, सड़कें और लाइटें", href: "/infrastructure" },
+    { title: "Raise Query", hindi: "शिकायत दर्ज करें", href: "/grievance", category: "Requests" },
+    { title: "Track Query", hindi: "शिकायत ट्रैक करें", href: "/track", category: "Requests" },
+    { title: "Birth Certificates", hindi: "जन्म प्रमाण पत्र", href: "/birth", category: "Certificates" },
+    { title: "Death Certificates", hindi: "मृत्यु प्रमाण पत्र", href: "/death", category: "Certificates" },
+    { title: "Aadhaar Create / Update", hindi: "आधार बनवाएं / अपडेट करें", href: "/aadhar", category: "Certificates" },
+    { title: "Voter List", hindi: "मतदाता सूची", href: "/voter", category: "Village information" },
+    { title: "Gram Budget", hindi: "ग्राम बजट", href: "/budget", category: "Village information" },
+    { title: "Panchayat Funds", hindi: "पंचायत निधि", href: "/funds", category: "Village information" },
+    { title: "Development Projects", hindi: "विकास परियोजनाएं", href: "/development", category: "Village information" },
+    { title: "Panchayat Members", hindi: "पंचायत सदस्य", href: "/members", category: "Village information" },
+    { title: "Appointments", hindi: "नियुक्तियां", href: "/appointments", category: "Requests" },
+    { title: "Gallery", hindi: "गैलरी", href: "/gallery", category: "Village information" },
+    { title: "Map", hindi: "मानचित्र", href: "/map", category: "Village information" },
+    { title: "Rivers, Roads & Lights", hindi: "नदियां, सड़कें और लाइटें", href: "/infrastructure", category: "Village information" },
   ];
+  const serviceCategories = ["All services", "Requests", "Certificates", "Village information"];
+  const visibleServices = services.filter((service) =>
+    (serviceCategory === "All services" || service.category === serviceCategory) &&
+    `${service.title} ${service.hindi}`.toLowerCase().includes(serviceSearch.trim().toLowerCase())
+  );
 
   const images = homeSettings.slides.map((slide) => ({
     ...slide,
@@ -283,6 +303,22 @@ export default function HomePage() {
     alt: slide.alt || slide.title || "Village highlight",
     href: slide.href || "/",
   }));
+
+  const scrollHighlights = (direction) => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    highlightsRef.current?.scrollBy({
+      left: direction * Math.max(260, highlightsRef.current.clientWidth * 0.75),
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
+  };
+
+  const quickLinks = [
+    { title: "Track a request", hindi: "अपनी शिकायत ट्रैक करें", href: "/track", icon: HelpCircle },
+    { title: "Voter list", hindi: "मतदाता सूची", href: "/voter", icon: BadgeCheck },
+    { title: "Development projects", hindi: "विकास कार्य", href: "/development", icon: ArrowRight },
+    { title: "Budget & funds", hindi: "बजट और निधि", href: "/budget", icon: FileText },
+    { title: "All notices", hindi: "सभी सूचनाएं देखें", href: "/notifications", icon: BellRing },
+  ];
 
   return (
     <div className="relative isolate overflow-hidden">
@@ -313,57 +349,110 @@ export default function HomePage() {
 
         {/* Main Content */}
         <div className="space-y-5 pb-5 transition-colors duration-300 sm:space-y-7">
-          <section className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-5 py-7 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-10 sm:py-9 lg:px-16">
-            <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .55 }} className="relative mx-auto max-w-4xl">
-              <span className="inline-flex items-center gap-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[.14em] text-teal-800 dark:border-teal-800 dark:bg-teal-950/60 dark:text-teal-200"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" />Digital village services</span>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white sm:text-4xl lg:text-5xl">
-              {t.welcome}
-            </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
-              {t.description}
-            </p>
-            <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/grievance" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/grievance", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="group inline-flex items-center justify-center gap-2 rounded-md bg-teal-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-teal-800 focus:outline-none focus:ring-4 focus:ring-teal-200 dark:focus:ring-teal-900">Raise a request <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Link><Link href="/track" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/track", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:text-teal-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">Track your request <ChevronRight className="h-4 w-4" /></Link></div>
-            <p className="mt-4 flex items-center justify-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300"><ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />Simple, secure access to Panchayat services</p>
-            </motion.div>
-          </section>
-
-          <section className="relative overflow-hidden rounded-2xl bg-slate-950 py-3 text-white shadow-lg shadow-slate-900/10">
-            <motion.div
-              className="whitespace-nowrap"
-              animate={{ x: ["100%", "-100%"] }}
-              transition={{ repeat: Infinity, ease: "linear", duration: 20 }}
-            >
-              <p className="inline-block text-sm font-medium tracking-wide px-4">
-                {t.slogan}
-              </p>
-            </motion.div>
-          </section>
-
-          <section aria-label="Village highlights" className="overflow-hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-4">
-            <div className="relative w-full">
-              <motion.div
-                className="flex gap-3"
-                animate={{ x: ["0%", "-100%"] }}
-                transition={{ ease: "linear", duration: 20, repeat: Infinity }}
-              >
-                {[...images, ...images].map((slide, idx) => (
-                  <Link
-                    key={`${slide.imageUrl}-${idx}`}
-                    href={slide.href || "/"}
-                    className="relative block h-32 w-52 shrink-0 overflow-hidden rounded-2xl shadow-md transition-transform duration-300 hover:scale-[1.02] sm:h-40 sm:w-64"
-                  >
-                    <Image
-                      src={slide.imageUrl}
-                      alt={slide.alt || `Chiutahara village highlight ${idx + 1}`}
-                      width={448}
-                      height={288}
-                      className="h-full w-full object-cover object-center"
-                      sizes="(max-width: 640px) 52vw, 16rem"
-                    />
+          <section className="overflow-hidden rounded-3xl border border-teal-950/10 bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-800 text-white shadow-xl shadow-teal-950/10">
+            <div>
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .45 }} className="flex flex-col items-start px-5 py-8 sm:px-9 sm:py-10 lg:px-12 lg:py-14">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[.14em] text-teal-50">
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />Digital village services
+                </span>
+                <h1 className="mt-5 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+                  {t.welcome}
+                </h1>
+                <p className="mt-4 max-w-xl text-base leading-7 text-teal-50/90 sm:text-lg">
+                  {t.description}
+                </p>
+                <div className="mt-7 flex w-full flex-col gap-3 min-[420px]:w-auto min-[420px]:flex-row">
+                  <Link href="/grievance" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/grievance", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-teal-900 shadow-sm transition hover:-translate-y-0.5 hover:bg-teal-50 focus-visible:outline-white">
+                    Raise a request <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
-                ))}
+                  <Link href="/track" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/track", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/15 focus-visible:outline-white">
+                    Track your request <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </div>
+                <p className="mt-5 flex items-center gap-2 text-xs font-medium text-teal-50/90"><ShieldCheck className="h-4 w-4 text-emerald-200" />Simple, secure access to Panchayat services</p>
               </motion.div>
             </div>
+          </section>
+
+          <section aria-labelledby="popular-services-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Quick access</p>
+                <h2 id="popular-services-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white">Popular services</h2>
+              </div>
+              <Link href="#services" className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300">Browse all services ↓</Link>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {quickLinks.map(({ title, hindi, href, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="group flex min-h-20 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-white hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-slate-900"
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold text-slate-900 group-hover:text-teal-800 dark:text-white dark:group-hover:text-teal-300">{title}</span>
+                    <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{hindi}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section aria-label="Panchayat motto" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100 sm:px-6">
+            {t.slogan}
+          </section>
+
+          <section aria-labelledby="latest-notices-heading" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Stay informed</p>
+                <h2 id="latest-notices-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">Latest notices</h2>
+              </div>
+              <Link href="/notifications" className="inline-flex items-center gap-1 text-sm font-bold text-teal-800 hover:underline dark:text-teal-300">
+                View all notices <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+            {noticesLoading ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400" role="status">Loading notices…</p>
+            ) : noticesError ? (
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Notices are temporarily unavailable. <Link href="/notifications" className="font-semibold text-teal-800 underline dark:text-teal-300">Open the notice board</Link>.
+              </p>
+            ) : latestNotices.length === 0 ? (
+              <p className="text-sm text-slate-600 dark:text-slate-300">There are no current notices. Check the notice board for updates.</p>
+            ) : (
+              <ul className="grid gap-3 md:grid-cols-3">
+                {latestNotices.map((notice) => (
+                  <li key={notice.id} className="min-w-0">
+                    <Link href={`/notifications/${notice.id}`} className="group block h-full rounded-xl border border-slate-200 p-4 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md dark:border-slate-700 dark:hover:border-teal-700 dark:hover:bg-slate-800">
+                      <span className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-teal-800 dark:text-teal-300">
+                          <BellRing className="h-4 w-4 shrink-0" aria-hidden="true" />
+                          {String(notice.category || notice.type || "Notice").replaceAll("_", " ")}
+                        </span>
+                        {notice.priority && (
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                            notice.priority === "urgent" || notice.priority === "high"
+                              ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200"
+                              : notice.priority === "medium"
+                                ? "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+                                : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                          }`}>{notice.priority}</span>
+                        )}
+                      </span>
+                      <span className="mt-2 block font-bold text-slate-900 dark:text-white">{notice.title}</span>
+                      <span className="mt-1 line-clamp-2 block text-sm text-slate-600 dark:text-slate-300">{notice.description}</span>
+                      <time dateTime={notice.issueDate || notice.createdAt} className="mt-3 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {new Date(notice.issueDate || notice.createdAt).toLocaleDateString(language === "hi" ? "hi-IN" : "en-IN")}
+                      </time>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           <section id="services" className="py-2 sm:py-4">
@@ -373,10 +462,29 @@ export default function HomePage() {
                 <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
               {t.services}
             </h2>
-              </div><p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">Choose a service to begin an application, find local information, or track an existing request.</p>
+              </div><p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">Find a service, start a request, explore village information, or track an existing query.</p>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {services.map((s, i) => (
+            <div className="mb-4 flex flex-col gap-3 md:flex-row">
+              <label className="relative block flex-1">
+                <span className="sr-only">Search services</span>
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                <input type="search" value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Search services / सेवाएं खोजें" className="min-h-11 w-full rounded-xl border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </label>
+              <div role="group" aria-label="Filter services by category" className="flex gap-2 overflow-x-auto pb-1">
+                {serviceCategories.map((category) => (
+                  <button key={category} type="button" aria-pressed={serviceCategory === category} onClick={() => setServiceCategory(category)} className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold ${
+                    serviceCategory === category
+                      ? "border-teal-800 bg-teal-800 text-white dark:border-teal-300 dark:bg-teal-300 dark:text-teal-950"
+                      : "border-slate-300 bg-white text-slate-700 hover:border-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    }`}>{language === "hi"
+                      ? ({ "All services": "सभी सेवाएं", Requests: "अनुरोध", Certificates: "प्रमाणपत्र", "Village information": "गांव की जानकारी" }[category])
+                      : category}</button>
+                ))}
+              </div>
+            </div>
+            {visibleServices.length > 0 ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {visibleServices.map((s, i) => (
                 <ServiceCard
                   key={s.href}
                   title={s.title}
@@ -385,7 +493,50 @@ export default function HomePage() {
                   index={i}
                 />
               ))}
+              </div>
+            ) : (
+              <p className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">No services match your search. Try a different word or category.</p>
+            )}
+          </section>
+
+          <section aria-labelledby="highlights-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Discover Chiutahara</p>
+                <h2 id="highlights-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white">Village highlights</h2>
+              </div>
+              {images.length > 1 && (
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => scrollHighlights(-1)} aria-label="Scroll village highlights left" className="grid h-10 w-10 place-items-center rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-600 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button type="button" onClick={() => scrollHighlights(1)} aria-label="Scroll village highlights right" className="grid h-10 w-10 place-items-center rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-600 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
+            <div ref={highlightsRef} role="region" aria-label="Village highlight photos; scroll horizontally to browse" tabIndex={0} className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600">
+              {images.map((slide, idx) => (
+                <Link
+                  key={`${slide.imageUrl}-${idx}`}
+                  href={slide.href || "/"}
+                  className="group relative h-40 w-[78vw] max-w-80 shrink-0 snap-start overflow-hidden rounded-xl bg-slate-200 shadow-sm focus-visible:outline focus-visible:outline-4 focus-visible:outline-teal-500 sm:h-48 sm:w-72"
+                >
+                  <Image
+                    src={slide.imageUrl}
+                    alt={slide.alt || `Chiutahara village highlight ${idx + 1}`}
+                    fill
+                    sizes="(max-width: 640px) 78vw, 18rem"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent px-4 pb-3 pt-10 text-sm font-bold text-white">
+                    {slide.title || slide.alt || `Village highlight ${idx + 1}`}
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Swipe or use the arrows to browse.</p>
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white px-5 py-7 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-8 sm:py-8">
@@ -394,84 +545,60 @@ export default function HomePage() {
             </h2>
 
             {/* Key Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div className="p-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">{t.population}</p>
-                <p className="text-2xl font-bold text-blue-600">1,768</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t.male}: 795 | {t.female}: 973</p>
-              </div>
-              <div className="p-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">{t.households}</p>
-                <p className="text-2xl font-bold text-green-600">269</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Code: 195584</p>
-              </div>
-              <div className="p-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">{t.schools}</p>
-                <p className="text-2xl font-bold text-purple-600">3</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t.educationPriority}</p>
-              </div>
-              <div className="p-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold">{t.wardMembers}</p>
-                <p className="text-2xl font-bold text-orange-600">12</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t.electedRepresentatives}</p>
-              </div>
+            <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {[
+                { label: t.population, value: "1,768", note: `${t.male}: 795 · ${t.female}: 973`, color: "text-blue-700 dark:text-blue-300" },
+                { label: t.households, value: "269", note: "Code: 195584", color: "text-emerald-700 dark:text-emerald-300" },
+                { label: t.schools, value: "3", note: t.educationPriority, color: "text-violet-700 dark:text-violet-300" },
+                { label: t.wardMembers, value: "12", note: t.electedRepresentatives, color: "text-amber-700 dark:text-amber-300" },
+              ].map((stat) => (
+                <article key={stat.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
+                  <p className="text-xs font-semibold leading-5 text-slate-600 dark:text-slate-300">{stat.label}</p>
+                  <p className={`mt-1 text-2xl font-extrabold ${stat.color}`}>{stat.value}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{stat.note}</p>
+                </article>
+              ))}
             </div>
+            <p className="mb-5 rounded-lg bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
+              Population figures are from the 2011 Census. Other figures shown here are static portal information and should be checked against current official Panchayat records.
+            </p>
 
-            {/* Gram Panchayat Overview */}
-            <div className="mb-4 border-y border-sky-200/80 py-5 dark:border-slate-700">
-              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏘️ {t.overview}</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.state}:</strong> Uttar Pradesh</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.district}:</strong> Azamgarh</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.block}:</strong> Lalganj</p>
+            <div className="grid gap-3 lg:grid-cols-2">
+              <section className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                <h3 className="mb-3 text-sm font-bold text-slate-900 dark:text-white">🏘️ {t.overview}</h3>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                  <div><dt className="text-slate-500 dark:text-slate-400">{t.state}</dt><dd className="font-semibold">Uttar Pradesh</dd></div>
+                  <div><dt className="text-slate-500 dark:text-slate-400">{t.district}</dt><dd className="font-semibold">Azamgarh</dd></div>
+                  <div><dt className="text-slate-500 dark:text-slate-400">{t.block}</dt><dd className="font-semibold">Lalganj</dd></div>
+                  <div><dt className="text-slate-500 dark:text-slate-400">{t.gramPanchayat}</dt><dd className="font-semibold">Chiutahara</dd></div>
+                </dl>
+                <p className="mt-3 text-xs leading-5 text-slate-600 dark:text-slate-300">{t.villageDescription}</p>
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300"><strong>{t.villagesServed}:</strong> Chiutahara, Lauhara, Malikan</p>
+              </section>
+
+              <details className="group rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                <summary className="cursor-pointer list-none text-sm font-bold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-white">
+                  <span className="flex items-center justify-between gap-3">🏛️ {t.localGovernance} & {t.politicalRepresentatives}<ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" aria-hidden="true" /></span>
+                </summary>
+                <div className="mt-4 space-y-3 border-t border-slate-200 pt-3 text-xs dark:border-slate-700">
+                  <p><span className="font-semibold">{t.assembly}:</span> Lalganj Constituency</p>
+                  <p><span className="font-semibold">{t.parliament}:</span> Lalganj Constituency</p>
+                  <p><span className="font-semibold">{t.subDistrict}:</span> Lalganj</p>
+                  <p><span className="font-semibold">{t.mla}:</span> Shri Bechai Saroj (Samajwadi Party)</p>
+                  <p><span className="font-semibold">{t.mp}:</span> Daroga Prasad Saroj (Samajwadi Party)</p>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.gramPanchayat}:</strong> Chiutahara</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400"><strong>{t.villagesServed}:</strong> 3</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Chiutahara, Lauhara, Malikan</p>
+              </details>
+
+              <details className="group rounded-xl border border-slate-200 p-4 dark:border-slate-700 lg:col-span-2">
+                <summary className="cursor-pointer list-none text-sm font-bold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-white">
+                  <span className="flex items-center justify-between gap-3">🙏 {t.culturalHeritage}, {t.famousFor} & {t.postalLocation}<ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" aria-hidden="true" /></span>
+                </summary>
+                <div className="mt-4 grid gap-4 border-t border-slate-200 pt-3 text-xs leading-5 dark:border-slate-700 md:grid-cols-3">
+                  <div><p className="mb-1 font-semibold">{t.famousFor}</p><p><strong>Hanuman Mandir</strong> — {t.templeDescription}</p><p className="mt-2">{t.beliefsDescription}</p></div>
+                  <div><p className="mb-1 font-semibold">{t.culturalHeritage}</p><p><strong>{t.traditionalDress}:</strong> Dhoti Kurta</p><p><strong>{t.traditionalFood}:</strong> Dal Chawal</p><p><strong>{t.traditionalOrnaments}:</strong> Bichhiya</p></div>
+                  <div><p className="mb-1 font-semibold">{t.postalLocation}</p><p><strong>{t.pincode}:</strong> 276203</p><p><strong>{t.postalAreaCode}:</strong> 276123</p></div>
                 </div>
-              </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><strong>{t.sarpanch}:</strong> </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400"><em>{t.villageDescription}</em></p>
-            </div>
-
-            {/* Governance & Admin */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🏛️ {t.localGovernance}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">{t.assembly}:</span> Lalganj Constituency</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">{t.parliament}:</span> Lalganj Constituency</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">{t.subDistrict}:</span> Lalganj</p>
-              </div>
-              <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">🗳️ {t.politicalRepresentatives}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2"><span className="font-semibold">{t.mla}:</span> Shri Bechai Saroj (Samajwadi Party)</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><span className="font-semibold">{t.mp}:</span> Daroga Prasad Saroj (Samajwadi Party)</p>
-              </div>
-            </div>
-
-            {/* Cultural Heritage & Famous For */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙏 {t.famousFor}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>Hanuman Mandir</strong> - {t.templeDescription}</p>
-              </div>
-              <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🎨 {t.culturalHeritage}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>{t.traditionalDress}:</strong> Dhoti Kurta<br/><strong>{t.traditionalFood}:</strong> Dal Chawal<br/><strong>{t.traditionalOrnaments}:</strong> Bichhiya</p>
-              </div>
-              <div className="p-3">
-                <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">📮 {t.postalLocation}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>{t.pincode}:</strong> 276203</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400"><strong>{t.postalAreaCode}:</strong> 276123</p>
-              </div>
-            </div>
-
-            {/* Beliefs & Customs */}
-            <div className="border-t border-sky-200/80 pt-5 dark:border-slate-700">
-              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">🙌 {t.beliefsCustoms}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">{t.beliefsDescription}</p>
+              </details>
             </div>
           </section>
 
@@ -519,20 +646,29 @@ export default function HomePage() {
                 </div>
 
                 {reviews.length > 1 && (
-                  <div className="mt-3 flex items-center justify-center gap-2">
-                    {reviews.map((review, index) => (
-                      <button
-                        key={`${review.id}-dot`}
-                        type="button"
-                        aria-label={`Show review ${index + 1}`}
-                        onClick={() => setActiveReviewIndex(index)}
-                        className={`h-2.5 w-2.5 rounded-full transition-all ${
-                          activeReviewIndex === index
-                            ? "bg-emerald-600 dark:bg-emerald-400"
-                            : "bg-slate-300 dark:bg-slate-600"
-                        }`}
-                      />
-                    ))}
+                  <div className="mt-3 flex items-center justify-center gap-3">
+                    <button type="button" aria-label="Previous review" onClick={() => setActiveReviewIndex((current) => (current - 1 + reviews.length) % reviews.length)} className="grid h-9 w-9 place-items-center rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-700">
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      {reviews.map((review, index) => (
+                        <button
+                          key={`${review.id}-dot`}
+                          type="button"
+                          aria-label={`Show review ${index + 1}`}
+                          aria-current={activeReviewIndex === index ? "true" : undefined}
+                          onClick={() => setActiveReviewIndex(index)}
+                          className={`h-2.5 w-2.5 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600 ${
+                            activeReviewIndex === index
+                              ? "bg-emerald-600 dark:bg-emerald-400"
+                              : "bg-slate-300 dark:bg-slate-600"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <button type="button" aria-label="Next review" onClick={() => setActiveReviewIndex((current) => (current + 1) % reviews.length)} className="grid h-9 w-9 place-items-center rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-700">
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -625,6 +761,18 @@ export default function HomePage() {
             allowFullScreen
             referrerPolicy="no-referrer-when-downgrade"
           />
+          <div className="grid gap-3 border-t border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:px-6">
+            <div>
+              <h3 className="flex items-center gap-2 font-bold text-slate-900 dark:text-white"><MessageCircle className="h-4 w-4 text-teal-700 dark:text-teal-300" aria-hidden="true" />{t.contactTitle}</h3>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t.contactMessage}</p>
+            </div>
+            <a href={t.whatsappLink} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800 focus-visible:ring-2 focus-visible:ring-emerald-500">
+              <MessageCircle className="h-4 w-4" aria-hidden="true" />{t.whatsapp}
+            </a>
+            <Link href="/grievance" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); } }} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:border-teal-500 hover:text-teal-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:text-teal-300">
+              Raise a request <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
         </section>
 
         <section className="rounded-2xl border border-white/70 bg-white/65 py-3 text-center shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-800/75">
