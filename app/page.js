@@ -7,12 +7,30 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, BellRing, BadgeCheck, ChevronLeft, ChevronRight, FileText, HelpCircle, MessageCircle, Search, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowRight, BellRing, BadgeCheck, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, MessageCircle, Route, School, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 // Ensure you have this file: ../components/ServiceCard.jsx
 import ServiceCard from "../components/ServiceCard"; 
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { useLanguage } from "@/app/language-provider";
 import { sanitizePublicReviews } from "@/lib/reviewVisibility";
+import {
+  countByInfraType,
+  getInfraCategoryByType,
+} from "@/lib/infrastructureDisplay";
+
+const INFRA_TYPE_ICONS = {
+  Road: Route,
+  "Primary School": School,
+  "Primary Health Center": Hospital,
+  "Water Pump": Droplets,
+};
+
+const FEATURED_INFRA_TYPES = [
+  "Road",
+  "Primary School",
+  "Primary Health Center",
+  "Water Pump",
+];
 
 const DEFAULT_SLIDES = [
   { title: "Village Services", imageUrl: "/slide.png", alt: "Village services banner", href: "/grievance" },
@@ -47,6 +65,8 @@ export default function HomePage() {
   const [activeReviewIndex, setActiveReviewIndex] = useState(0);
   const [serviceSearch, setServiceSearch] = useState("");
   const [serviceCategory, setServiceCategory] = useState("All services");
+  const [infrastructureCounts, setInfrastructureCounts] = useState(null);
+  const [infrastructureLoadFailed, setInfrastructureLoadFailed] = useState(false);
   const highlightsRef = useRef(null);
   const loadReviews = () => {
     fetch("/api/reviews")
@@ -135,6 +155,22 @@ export default function HomePage() {
     };
 
     loadLatestNotices();
+  }, []);
+
+  useEffect(() => {
+    const loadInfrastructure = async () => {
+      try {
+        const response = await fetch("/api/infrastructure");
+        if (!response.ok) throw new Error("Failed to load village infrastructure.");
+        const data = await response.json();
+        setInfrastructureCounts(countByInfraType(Array.isArray(data) ? data : []));
+      } catch (error) {
+        console.error("Failed to load homepage infrastructure:", error);
+        setInfrastructureLoadFailed(true);
+      }
+    };
+
+    loadInfrastructure();
   }, []);
 
   // Reviews: load on mount and refresh every 15s for real-time updates
@@ -509,6 +545,44 @@ export default function HomePage() {
             ) : (
               <p className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">No services match your search. Try a different word or category.</p>
             )}
+          </section>
+
+          <section aria-labelledby="infrastructure-heading" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-7">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-700">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Village information</p>
+                <h2 id="infrastructure-heading" className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">Village infrastructure</h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Explore public facilities and development across the village.</p>
+              </div>
+              <Link href="/infrastructure" className="inline-flex min-h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-teal-300 dark:hover:bg-teal-950/40">
+                View all infrastructure <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+            <ul className="grid gap-x-10 divide-y divide-slate-100 dark:divide-slate-800 md:grid-cols-2 md:divide-y-0">
+              {FEATURED_INFRA_TYPES.map((type) => {
+                const category = getInfraCategoryByType(type);
+                if (!category) return null;
+                const TypeIcon = INFRA_TYPE_ICONS[type] || Route;
+                const count = infrastructureCounts?.[type];
+
+                return (
+                  <li key={type} className="border-b border-slate-100 dark:border-slate-800 md:last:border-b-0">
+                    <Link href={`/infrastructure/${category.slug}`} className="group flex min-h-14 items-center gap-3 py-3 text-slate-800 transition hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-100 dark:hover:text-teal-300">
+                      <TypeIcon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-teal-700 dark:text-slate-500 dark:group-hover:text-teal-300" aria-hidden="true" />
+                      <span className="min-w-0 flex-1 text-sm font-medium">{category.hubLabel}</span>
+                      <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                        {infrastructureLoadFailed
+                          ? "Count unavailable"
+                          : count === undefined
+                            ? "Loading…"
+                            : `${count} ${count === 1 ? "item" : "items"}`}
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-teal-700 dark:group-hover:text-teal-300" aria-hidden="true" />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
 
           <section aria-labelledby="highlights-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
