@@ -7,9 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, MessageCircle, Route, School, Search, ShieldCheck, Sparkles, X } from "lucide-react";
-// Ensure you have this file: ../components/ServiceCard.jsx
-import ServiceCard from "../components/ServiceCard"; 
+import { ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, MessageCircle, Route, School, ShieldCheck, Sparkles, X } from "lucide-react";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { useLanguage } from "@/app/language-provider";
 import { sanitizePublicReviews } from "@/lib/reviewVisibility";
@@ -31,20 +29,6 @@ const FEATURED_INFRA_TYPES = [
   "Primary Health Center",
   "Water Pump",
 ];
-
-const FEATURED_SERVICE_HREFS = [
-  "/grievance",
-  "/birth",
-  "/death",
-  "/appointments",
-];
-
-const FEATURED_SERVICE_ICONS = {
-  "/grievance": HelpCircle,
-  "/birth": FileText,
-  "/death": FileText,
-  "/appointments": CalendarDays,
-};
 
 const DEFAULT_SLIDES = [
   { title: "Village Services", imageUrl: "/slide.png", alt: "Village services banner", href: "/grievance" },
@@ -77,9 +61,6 @@ export default function HomePage() {
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [showLoginWarning, setShowLoginWarning] = useState(false);
   const [activeReviewIndex, setActiveReviewIndex] = useState(0);
-  const [serviceSearch, setServiceSearch] = useState("");
-  const [serviceCategory, setServiceCategory] = useState("All services");
-  const [showAllServices, setShowAllServices] = useState(false);
   const [infrastructureCounts, setInfrastructureCounts] = useState(null);
   const [infrastructureLoadFailed, setInfrastructureLoadFailed] = useState(false);
   const highlightsRef = useRef(null);
@@ -338,28 +319,6 @@ export default function HomePage() {
 
   const t = labels[language];
 
-  const services = [
-    { title: "Raise Query", hindi: "शिकायत दर्ज करें", href: "/grievance", category: "Requests" },
-    { title: "Track Query", hindi: "शिकायत ट्रैक करें", href: "/track", category: "Requests" },
-    { title: "Birth Certificates", hindi: "जन्म प्रमाण पत्र", href: "/birth", category: "Certificates" },
-    { title: "Death Certificates", hindi: "मृत्यु प्रमाण पत्र", href: "/death", category: "Certificates" },
-    { title: "Aadhaar Create / Update", hindi: "आधार बनवाएं / अपडेट करें", href: "/aadhar", category: "Certificates" },
-    { title: "Voter List", hindi: "मतदाता सूची", href: "/voter", category: "Village information" },
-    { title: "Gram Budget", hindi: "ग्राम बजट", href: "/budget", category: "Village information" },
-    { title: "Panchayat Funds", hindi: "पंचायत निधि", href: "/funds", category: "Village information" },
-    { title: "Development Projects", hindi: "विकास परियोजनाएं", href: "/development", category: "Village information" },
-    { title: "Panchayat Members", hindi: "पंचायत सदस्य", href: "/members", category: "Village information" },
-    { title: "Appointments", hindi: "नियुक्तियां", href: "/appointments", category: "Requests" },
-    { title: "Gallery", hindi: "गैलरी", href: "/gallery", category: "Village information" },
-    { title: "Map", hindi: "मानचित्र", href: "/map", category: "Village information" },
-    { title: "Rivers, Roads & Lights", hindi: "नदियां, सड़कें और लाइटें", href: "/infrastructure", category: "Village information" },
-  ];
-  const serviceCategories = ["All services", "Requests", "Certificates", "Village information"];
-  const visibleServices = services.filter((service) =>
-    (serviceCategory === "All services" || service.category === serviceCategory) &&
-    `${service.title} ${service.hindi}`.toLowerCase().includes(serviceSearch.trim().toLowerCase())
-  );
-
   const images = homeSettings.slides.map((slide) => ({
     ...slide,
     imageUrl: slide.imageUrl || "/slide.png",
@@ -556,79 +515,6 @@ export default function HomePage() {
                 ))}
               </ul>
             )}
-          </section>
-
-          <section id="services" className="py-2 sm:py-4">
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-700 dark:text-teal-400">Citizen portal</p>
-                <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-                  {t.services}
-                </h2>
-              </div>
-              <button
-                type="button"
-                aria-expanded={showAllServices}
-                aria-controls="all-services-directory"
-                onClick={() => setShowAllServices((visible) => !visible)}
-                className="inline-flex min-h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-teal-300 dark:hover:bg-teal-950/40"
-              >
-                {showAllServices ? "Show featured services" : "View all services"}
-                <ChevronRight className={`h-4 w-4 transition-transform ${showAllServices ? "rotate-90" : ""}`} aria-hidden="true" />
-              </button>
-            </div>
-            <ul className="grid gap-x-10 divide-y divide-slate-100 dark:divide-slate-800 md:grid-cols-2 md:divide-y-0">
-              {services.filter((service) => FEATURED_SERVICE_HREFS.includes(service.href)).map((service) => {
-                const ServiceIcon = FEATURED_SERVICE_ICONS[service.href] || FileText;
-                return (
-                  <li key={service.href} className="border-b border-slate-100 dark:border-slate-800 md:last:border-b-0">
-                    <Link href={service.href} className="group flex min-h-14 items-center gap-3 py-3 text-slate-800 transition hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-100 dark:hover:text-teal-300">
-                      <ServiceIcon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-teal-700 dark:text-slate-500 dark:group-hover:text-teal-300" aria-hidden="true" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-medium">{service.title}</span>
-                        <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{service.hindi}</span>
-                      </span>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-teal-700 dark:group-hover:text-teal-300" aria-hidden="true" />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-            <div id="all-services-directory" hidden={!showAllServices} className="mt-5 border-t border-slate-200 pt-5 dark:border-slate-700">
-                <div className="mb-4 flex flex-col gap-3 md:flex-row">
-                  <label className="relative block flex-1">
-                    <span className="sr-only">Search services</span>
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-                    <input type="search" value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Search services / सेवाएं खोजें" className="min-h-11 w-full rounded-xl border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
-                  </label>
-                  <div role="group" aria-label="Filter services by category" className="flex gap-2 overflow-x-auto pb-1">
-                    {serviceCategories.map((category) => (
-                      <button key={category} type="button" aria-pressed={serviceCategory === category} onClick={() => setServiceCategory(category)} className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold ${
-                        serviceCategory === category
-                          ? "border-teal-800 bg-teal-800 text-white dark:border-teal-300 dark:bg-teal-300 dark:text-teal-950"
-                          : "border-slate-300 bg-white text-slate-700 hover:border-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                        }`}>{language === "hi"
-                          ? ({ "All services": "सभी सेवाएं", Requests: "अनुरोध", Certificates: "प्रमाणपत्र", "Village information": "गांव की जानकारी" }[category])
-                          : category}</button>
-                    ))}
-                  </div>
-                </div>
-                {visibleServices.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {visibleServices.map((service, index) => (
-                      <ServiceCard
-                        key={service.href}
-                        title={service.title}
-                        hindi={service.hindi}
-                        href={service.href}
-                        index={index}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">No services match your search. Try a different word or category.</p>
-                )}
-            </div>
           </section>
 
           <section aria-labelledby="infrastructure-heading" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-7">
