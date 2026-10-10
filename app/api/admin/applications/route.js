@@ -3,7 +3,7 @@ import connectDB from '@/lib/dbConnect';
 import Application from '@/models/Application';
 import CitizenNotification from '@/models/CitizenNotification';
 import ServiceNotification from '@/models/ServiceNotification';
-import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/lib/adminAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 import { emitApplicationUpdated, emitDocumentRequested } from '@/lib/socketEmitter';
 import CitizenDocument from '@/models/CitizenDocument';
@@ -24,7 +24,7 @@ function validateDocuments(documents) {
 }
 
 export async function GET() {
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
 
   await connectDB();
@@ -39,7 +39,7 @@ export async function GET() {
 }
 
 export async function PUT(request) {
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
 
   try {
@@ -122,7 +122,7 @@ export async function PUT(request) {
 }
 
 export async function DELETE(request) {
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
 
   try {

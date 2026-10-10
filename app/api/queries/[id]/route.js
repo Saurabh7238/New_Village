@@ -3,7 +3,7 @@ import Query from '@/models/Query';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
 import { checkSlaBreach } from '@/lib/escalationRules';
-import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/lib/adminAuth';
 import ServiceNotification from '@/models/ServiceNotification';
 import CitizenNotification from '@/models/CitizenNotification';
 import QueryMessage from '@/models/QueryMessage';
@@ -12,7 +12,7 @@ import { writeAuditLog } from '@/lib/writeAuditLog';
 export async function GET(request, { params }) {
   await connectDB();
 
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) {
     return NextResponse.json(
       { message: 'Unauthorized' },
@@ -62,7 +62,7 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   await connectDB();
 
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) {
     return NextResponse.json(
       { message: 'Unauthorized' },
@@ -146,7 +146,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(_request, { params }) {
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
 
   if (!params.id || !mongoose.Types.ObjectId.isValid(params.id)) {

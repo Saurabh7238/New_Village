@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import VoterData from "@/models/VoterData";
-import { requireServiceManagerSession } from "@/lib/adminAuth";
+import { requireAdminSession } from "@/lib/adminAuth";
 import { serializeVoter } from "@/lib/voterSerialization";
 
 const VALID_TYPES = ["vidhan-sabha", "lok-sabha", "gram-panchayat"];
@@ -40,7 +40,7 @@ function normalizeStr(val) {
 export async function POST(request) {
   await dbConnect();
 
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
@@ -157,7 +157,7 @@ export async function POST(request) {
 export async function DELETE(request) {
   await dbConnect();
 
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
@@ -229,7 +229,7 @@ export async function DELETE(request) {
 export async function PUT(request) {
   await dbConnect();
 
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
@@ -327,3 +327,4 @@ export async function PUT(request) {
     return NextResponse.json({ error: "Failed to update voter" }, { status: 500 });
   }
 }
+

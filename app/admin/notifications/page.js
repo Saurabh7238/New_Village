@@ -65,7 +65,7 @@ export default function AdminNotificationsPage() {
 
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
-    if (status !== 'authenticated' || !['admin', 'subadmin'].includes(session?.user?.role)) return;
+    if (status !== 'authenticated' || session?.user?.role !== 'admin') return;
 
     try {
       setLoading(true);
@@ -94,7 +94,7 @@ export default function AdminNotificationsPage() {
 
   // Initial fetch on mount
   useEffect(() => {
-    if (status === 'authenticated' && ['admin', 'subadmin'].includes(session?.user?.role)) {
+    if (status === 'authenticated' && session?.user?.role === 'admin') {
       fetchNotifications();
     }
   }, [status, session?.user?.role, fetchNotifications]);
@@ -302,7 +302,7 @@ export default function AdminNotificationsPage() {
 
   // Auth protection
   if (status === 'loading') return <div className="p-8 text-center">Loading...</div>;
-  if (status === 'unauthenticated' || !['admin', 'subadmin'].includes(session?.user?.role)) {
+  if (status === 'unauthenticated' || session?.user?.role !== 'admin') {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500">
         Access Denied. Admin access required.

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import Member from '@/models/Member';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
-import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/lib/adminAuth';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { normalizePhone } from '@/lib/phoneValidation';
@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 export async function POST(request) {
   await connectDB();
 
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
   }
@@ -141,7 +141,7 @@ export async function GET() {
 export async function DELETE(request) {
   await connectDB();
 
-  const session = await requireServiceManagerSession();
+  const session = await requireAdminSession();
   if (!session) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
   }

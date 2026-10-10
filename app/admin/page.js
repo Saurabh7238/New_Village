@@ -14,7 +14,7 @@ export default function AdminPanel() {
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
-    if (status !== 'authenticated' || !['admin', 'subadmin'].includes(session?.user?.role)) return;
+    if (status !== 'authenticated' || session?.user?.role !== 'admin') return;
     const load = () => fetch('/api/service-notifications').then((response) => response.ok ? response.json() : null).then((data) => setServiceCounts(data?.byService || {})).catch(() => setServiceCounts({}));
     load();
     const interval = setInterval(load, 15000);
@@ -28,7 +28,7 @@ export default function AdminPanel() {
     return <div className="p-8 text-center text-slate-600 dark:text-slate-300">Loading...</div>;
   }
 
-  if (status === "unauthenticated" || !['admin', 'subadmin'].includes(session?.user?.role)) {
+  if (status === "unauthenticated" || session?.user?.role !== "admin") {
     return (
       <div className="flex min-h-[calc(100vh-11rem)] items-center justify-center bg-slate-50 p-8 text-red-600 dark:bg-slate-950 dark:text-red-300">
         Access Denied. You must be an admin to view this page.
@@ -44,16 +44,14 @@ export default function AdminPanel() {
           title="Admin Panel"
           description="Manage citizen services, content, records, and Panchayat operations."
           actions={<>
-            {session?.user?.role === 'admin' && (
-              <Button
-                variant="secondary"
-                onClick={() => setShowAnalytics(!showAnalytics)}
-                className="min-h-10"
-              >
-                <BarChart3 className="w-4 h-4" />
-                Analytics
-              </Button>
-            )}
+            <Button
+              variant="secondary"
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className="min-h-10"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Analytics
+            </Button>
             <Button variant="danger" onClick={() => signOut({ callbackUrl: "/?logout=true" })}>
               Sign Out
             </Button>
@@ -104,32 +102,15 @@ export default function AdminPanel() {
             <Link href="/admin/chats" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               💬 Live Chats
             </Link>
-            {session?.user?.role === 'admin' && (
-              <>
-                <Link href="/admin/home" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-                  🏠 Home Settings
-                </Link>
-                <Link href="/admin/reviews" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-                  ⭐ Reviews
-                </Link>
-                <Link href="/admin/activity-log" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-                  Activity Log
-                </Link>
-              </>
-            )}
-            {session?.user?.role === 'admin' && (
-              <>
-                <Link href="/admin/service-changes" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30">
-                  Pending Service Approvals
-                </Link>
-                <Link href="/admin/users" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-                  👤 Citizen Directory & Sub-admins
-                </Link>
-                <Link href="/admin/subadmins" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-                  Manage Sub-admin Access
-                </Link>
-              </>
-            )}
+            <Link href="/admin/home" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
+              🏠 Home Settings
+            </Link>
+            <Link href="/admin/reviews" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
+              ⭐ Reviews
+            </Link>
+            <Link href="/admin/activity-log" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
+              Activity Log
+            </Link>
             <Link href="/admin/gallery" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               🖼️ Gallery
             </Link>
@@ -142,11 +123,12 @@ export default function AdminPanel() {
             <Link href="/admin/infrastructure" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               🏗️ Infrastructure
             </Link>
-            {session?.user?.role === 'admin' && (
-              <Link href="/admin/documents" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-                📁 Citizen Documents
-              </Link>
-            )}
+            <Link href="/admin/documents" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
+              📁 Citizen Documents
+            </Link>
+            <Link href="/admin/users" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
+              👤 Citizen Directory
+            </Link>
             <Link href="/admin/voters" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               🗳️ Voters
             </Link>
