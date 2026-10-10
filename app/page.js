@@ -67,7 +67,6 @@ export default function HomePage() {
   const [infrastructureLoadFailed, setInfrastructureLoadFailed] = useState(false);
   const [adminStats, setAdminStats] = useState(null);
   const [adminStatsLoadFailed, setAdminStatsLoadFailed] = useState(false);
-  const highlightsRef = useRef(null);
   const loadReviews = () => {
     fetch("/api/reviews")
       .then((res) => (res.ok ? res.json() : []))
@@ -358,13 +357,25 @@ export default function HomePage() {
     href: slide.href || "/",
   }));
 
-  const scrollHighlights = (direction) => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    highlightsRef.current?.scrollBy({
-      left: direction * Math.max(260, highlightsRef.current.clientWidth * 0.75),
-      behavior: reducedMotion ? "auto" : "smooth",
-    });
-  };
+  const renderHighlightSlide = (slide, index, duplicate = false) => (
+    <Link
+      key={`${duplicate ? "loop-" : ""}${slide.imageUrl}-${index}`}
+      href={slide.href || "/"}
+      tabIndex={duplicate ? -1 : undefined}
+      className="group relative h-40 w-[78vw] max-w-80 shrink-0 overflow-hidden rounded-xl bg-slate-200 shadow-sm focus-visible:outline focus-visible:outline-4 focus-visible:outline-teal-500 sm:h-48 sm:w-72 lg:w-[calc(50%-0.375rem)]"
+    >
+      <Image
+        src={slide.imageUrl}
+        alt={slide.alt || `Chiutahara village highlight ${index + 1}`}
+        fill
+        sizes="(max-width: 640px) 78vw, 18rem"
+        className="object-cover transition-transform duration-300 group-hover:scale-105"
+      />
+      <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent px-4 pb-3 pt-10 text-sm font-bold text-white">
+        {slide.title || slide.alt || `Village highlight ${index + 1}`}
+      </span>
+    </Link>
+  );
 
   const quickLinks = [
     { title: "Track a request", hindi: "अपनी शिकायत ट्रैक करें", href: "/track", icon: HelpCircle },
@@ -472,6 +483,26 @@ export default function HomePage() {
             </div>
           </section>
 
+          <section aria-label="Village photos" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+            <div role="region" aria-label="Village photos; continuously scrolling" className="overflow-hidden pb-2">
+              <motion.div
+                className="flex w-max"
+                animate={{ x: ["-25%", "0%"] }}
+                transition={{ duration: 30, ease: "linear", repeat: Infinity }}
+              >
+                {Array.from({ length: 4 }, (_, groupIndex) => (
+                  <div
+                    key={`slide-group-${groupIndex}`}
+                    aria-hidden={groupIndex > 0 ? "true" : undefined}
+                    className="flex w-max shrink-0 gap-3 pr-3"
+                  >
+                    {images.map((slide, idx) => renderHighlightSlide(slide, idx, groupIndex > 0))}
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+          </section>
+
           <section aria-labelledby="governance-updates-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div className="mb-4">
               <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Meetings & decisions</p>
@@ -545,46 +576,6 @@ export default function HomePage() {
                 </ul>
               </div>
             )}
-          </section>
-
-          <section aria-labelledby="highlights-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Discover Chiutahara</p>
-                <h2 id="highlights-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white">Village highlights</h2>
-              </div>
-              {images.length > 1 && (
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => scrollHighlights(-1)} aria-label="Scroll village highlights left" className="grid h-10 w-10 place-items-center rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-600 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button type="button" onClick={() => scrollHighlights(1)} aria-label="Scroll village highlights right" className="grid h-10 w-10 place-items-center rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-600 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </div>
-              )}
-            </div>
-            <div ref={highlightsRef} role="region" aria-label="Village highlight photos; scroll horizontally to browse" tabIndex={0} className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600">
-              {images.map((slide, idx) => (
-                <Link
-                  key={`${slide.imageUrl}-${idx}`}
-                  href={slide.href || "/"}
-                  className="group relative h-40 w-[78vw] max-w-80 shrink-0 snap-start overflow-hidden rounded-xl bg-slate-200 shadow-sm focus-visible:outline focus-visible:outline-4 focus-visible:outline-teal-500 sm:h-48 sm:w-72"
-                >
-                  <Image
-                    src={slide.imageUrl}
-                    alt={slide.alt || `Chiutahara village highlight ${idx + 1}`}
-                    fill
-                    sizes="(max-width: 640px) 78vw, 18rem"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent px-4 pb-3 pt-10 text-sm font-bold text-white">
-                    {slide.title || slide.alt || `Village highlight ${idx + 1}`}
-                  </span>
-                </Link>
-              ))}
-            </div>
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Swipe or use the arrows to browse.</p>
           </section>
 
           <section aria-labelledby="latest-notices-heading" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
