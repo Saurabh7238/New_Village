@@ -342,6 +342,27 @@ export default function HomePage() {
     { title: "All notices", hindi: "सभी सूचनाएं देखें", href: "/notifications", icon: BellRing },
   ];
 
+  const adminMetrics = [
+    { label: "Pending applications", value: "48", detail: "Across services", tone: "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300" },
+    { label: "Certificates issued", value: "126", detail: "This month", tone: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" },
+    { label: "Grievances resolved", value: "91%", detail: "Closure rate", tone: "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300" },
+    { label: "Upcoming meetings", value: "06", detail: "Scheduled this week", tone: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300" },
+  ];
+
+  const adminQueue = [
+    { title: "Birth certificates", count: 18, status: "Pending verification" },
+    { title: "Death certificates", count: 9, status: "Awaiting approval" },
+    { title: "Grievances", count: 13, status: "In progress" },
+    { title: "Appointments", count: 7, status: "Scheduled" },
+  ];
+
+  const adminActions = [
+    { label: "Add notice", href: "/admin/notifications" },
+    { label: "Review applications", href: "/admin" },
+    { label: "View citizen queries", href: "/grievance" },
+    { label: "Open reports", href: "/infrastructure" },
+  ];
+
   return (
     <div className="relative isolate overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 border-b border-slate-200/70 bg-white/60 dark:border-slate-800 dark:bg-slate-900/40" />
@@ -396,13 +417,94 @@ export default function HomePage() {
             </div>
           </section>
 
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Governance dashboard</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">Administrative overview</h2>
+              </div>
+              <Link href="/admin" className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300">Open admin panel</Link>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {adminMetrics.map((metric) => (
+                <div key={metric.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
+                  <div className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${metric.tone}`}>
+                    {metric.label}
+                  </div>
+                  <div className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white">{metric.value}</div>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{metric.detail}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Office queue</h3>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Live status</span>
+                </div>
+                <div className="space-y-3">
+                  {adminQueue.map((item) => (
+                    <div key={item.title} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/80">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{item.status}</p>
+                      </div>
+                      <span className="inline-flex min-w-10 justify-center rounded-full bg-teal-100 px-2 py-1 text-sm font-bold text-teal-800 dark:bg-teal-950 dark:text-teal-300">
+                        {item.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Quick admin actions</h3>
+                <div className="mt-3 space-y-2">
+                  {adminActions.map((action) => (
+                    <Link key={action.label} href={action.href} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-800 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:border-teal-700 dark:hover:text-teal-300">
+                      <span>{action.label}</span>
+                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section aria-labelledby="governance-updates-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+            <div className="mb-4">
+              <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Meetings & decisions</p>
+              <h2 id="governance-updates-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">Gram Sabha & governance updates</h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Find official meeting notices, administrative orders, and village development updates.</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {[
+                { title: "Meeting notices", description: "Check published Gram Sabha schedules and meeting announcements.", href: "/notifications", icon: CalendarDays },
+                { title: "Orders & circulars", description: "Read official notices and administrative updates.", href: "/notifications", icon: FileText },
+                { title: "Development review", description: "Review village projects and infrastructure progress.", href: "/development", icon: Route },
+              ].map(({ title, description, href, icon: Icon }) => (
+                <Link key={title} href={href} className="group flex min-h-28 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-teal-300 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-teal-700 dark:hover:bg-slate-900">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-bold text-slate-900 group-hover:text-teal-800 dark:text-white dark:group-hover:text-teal-300">{title}</span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-600 dark:text-slate-300">{description}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
           <section aria-labelledby="popular-services-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Quick access</p>
                 <h2 id="popular-services-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white">Popular services</h2>
               </div>
-              <Link href="#services" onClick={() => setShowAllServices(true)} className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300">View all services ↓</Link>
+              <Link href="/notifications" className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300">Official notices <ArrowRight className="ml-1 inline h-4 w-4" aria-hidden="true" /></Link>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {quickLinks.map(({ title, hindi, href, icon: Icon }) => (
