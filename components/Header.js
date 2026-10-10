@@ -23,7 +23,7 @@ export default function Header() {
   const [serviceUnreadCount, setServiceUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
   const [largeText, setLargeText] = useState(false);
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
   const notificationRef = useRef(null);
   const menuButtonRef = useRef(null);
   const menuPanelRef = useRef(null);
@@ -39,11 +39,8 @@ export default function Header() {
     null;
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
-    updateViewport();
-    mediaQuery.addEventListener("change", updateViewport);
-    return () => mediaQuery.removeEventListener("change", updateViewport);
+    const welcomeTimeout = window.setTimeout(() => setShowWelcomeMessage(false), 6000);
+    return () => window.clearTimeout(welcomeTimeout);
   }, []);
 
   useEffect(() => {
@@ -244,18 +241,17 @@ export default function Header() {
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
       <div className="overflow-hidden border-b border-white/10 bg-slate-900">
-        {isMobileViewport ? (
-            <div className="py-1.5 text-center text-xs font-semibold tracking-wide text-slate-200">
+        {showWelcomeMessage ? (
+          <div className="py-1.5 text-center text-xs font-semibold tracking-wide text-slate-200">
             Welcome to Chiutahara Portal
           </div>
         ) : (
-          <motion.div
-            className="py-1.5 text-xs font-semibold tracking-wide whitespace-nowrap text-slate-200"
-            animate={{ x: ["100%", "-100%"] }}
-            transition={{ ease: "linear", duration: 15, repeat: Infinity }}
-          >
-            Welcome to Chiutahara Portal - Efficient Governance for Every Citizen
-          </motion.div>
+          <div className="py-1.5 text-xs font-semibold tracking-wide text-slate-200">
+            <div className="panchayat-motto-track flex w-max whitespace-nowrap">
+              <span className="px-8">Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen</span>
+              <span aria-hidden="true" className="px-8">Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen</span>
+            </div>
+          </div>
         )}
       </div>
 

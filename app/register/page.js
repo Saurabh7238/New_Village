@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/language-provider";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
   const { labels } = useLanguage();
@@ -21,6 +22,8 @@ export default function RegisterPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -195,30 +198,54 @@ export default function RegisterPage() {
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
               {labels.password}
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
-              placeholder="Enter password (min 6 characters)"
-              required
-            />
+            <div className="relative mt-1">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 pr-11 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
+                placeholder="Enter password (min 6 characters)"
+                autoComplete="new-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                className="absolute inset-y-0 right-0 inline-flex items-center px-3 text-slate-500 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-400 dark:hover:text-teal-300"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+              </button>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
               {labels.confirmPassword}
             </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
-              placeholder="Confirm your password"
-              required
-            />
+            <div className="relative mt-1">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 pr-11 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
+                placeholder="Confirm your password"
+                autoComplete="new-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((visible) => !visible)}
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                aria-pressed={showConfirmPassword}
+                className="absolute inset-y-0 right-0 inline-flex items-center px-3 text-slate-500 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-400 dark:hover:text-teal-300"
+              >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+              </button>
+            </div>
           </div>
 
           {error && (
