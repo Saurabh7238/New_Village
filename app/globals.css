@@ -6,6 +6,31 @@
 
 /* your own styles below this */
 
+@keyframes panchayat-motto-scroll-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+.panchayat-motto-track {
+  animation: panchayat-motto-scroll-right 24s linear infinite;
+}
+
+.panchayat-motto-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panchayat-motto-track {
+    animation: none;
+    justify-content: center;
+    width: 100%;
+    transform: none;
+  }
+
+  .panchayat-motto-track span[aria-hidden="true"] {
+    display: none;
+  }
+}
 
 :root {
   --background: #f6f8fb;

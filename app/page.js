@@ -61,8 +61,12 @@ export default function HomePage() {
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [showLoginWarning, setShowLoginWarning] = useState(false);
   const [activeReviewIndex, setActiveReviewIndex] = useState(0);
+  const [showAllServices, setShowAllServices] = useState(false);
+  const [showAllServiceStats, setShowAllServiceStats] = useState(false);
   const [infrastructureCounts, setInfrastructureCounts] = useState(null);
   const [infrastructureLoadFailed, setInfrastructureLoadFailed] = useState(false);
+  const [adminStats, setAdminStats] = useState(null);
+  const [adminStatsLoadFailed, setAdminStatsLoadFailed] = useState(false);
   const highlightsRef = useRef(null);
   const loadReviews = () => {
     fetch("/api/reviews")
@@ -167,6 +171,34 @@ export default function HomePage() {
     };
 
     loadInfrastructure();
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+    const loadAdminStats = async () => {
+      try {
+        const response = await fetch("/api/homepage-stats", { cache: "no-store" });
+        if (!response.ok) throw new Error("Failed to load governance statistics.");
+        const data = await response.json();
+        if (isActive) {
+          setAdminStats(data);
+          setAdminStatsLoadFailed(false);
+        }
+      } catch (error) {
+        console.error("Failed to load homepage governance statistics:", error);
+        if (isActive) {
+          setAdminStats(null);
+          setAdminStatsLoadFailed(true);
+        }
+      }
+    };
+
+    loadAdminStats();
+    const statsInterval = setInterval(loadAdminStats, 30000);
+    return () => {
+      isActive = false;
+      clearInterval(statsInterval);
+    };
   }, []);
 
   // Reviews: load on mount and refresh every 15s for real-time updates
@@ -342,25 +374,48 @@ export default function HomePage() {
     { title: "All notices", hindi: "सभी सूचनाएं देखें", href: "/notifications", icon: BellRing },
   ];
 
+  const allServices = [
+    { title: "Raise a query", hindi: "शिकायत दर्ज करें", href: "/grievance" },
+    { title: "Track a query", hindi: "शिकायत ट्रैक करें", href: "/track" },
+    { title: "Birth certificates", hindi: "जन्म प्रमाण पत्र", href: "/birth" },
+    { title: "Death certificates", hindi: "मृत्यु प्रमाण पत्र", href: "/death" },
+    { title: "Aadhaar services", hindi: "आधार सेवाएं", href: "/aadhar" },
+    { title: "Appointments", hindi: "नियुक्तियां", href: "/appointments" },
+    { title: "Voter list", hindi: "मतदाता सूची", href: "/voter" },
+    { title: "Gram budget", hindi: "ग्राम बजट", href: "/budget" },
+    { title: "Panchayat funds", hindi: "पंचायत निधि", href: "/funds" },
+    { title: "Development projects", hindi: "विकास परियोजनाएं", href: "/development" },
+    { title: "Panchayat members", hindi: "पंचायत सदस्य", href: "/members" },
+    { title: "Village infrastructure", hindi: "ग्राम अवसंरचना", href: "/infrastructure" },
+    { title: "Gallery", hindi: "गैलरी", href: "/gallery" },
+    { title: "Village map", hindi: "गांव का मानचित्र", href: "/map" },
+  ];
+
+  const statsValue = (value) => adminStatsLoadFailed ? "Unavailable" : adminStats ? value : "Loading…";
   const adminMetrics = [
-    { label: "Pending applications", value: "48", detail: "Across services", tone: "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300" },
-    { label: "Certificates issued", value: "126", detail: "This month", tone: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" },
-    { label: "Grievances resolved", value: "91%", detail: "Closure rate", tone: "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300" },
-    { label: "Upcoming meetings", value: "06", detail: "Scheduled this week", tone: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300" },
+    { label: "Applications needing action", value: statsValue(adminStats?.metrics.actionableApplications), detail: "Awaiting admin action", tone: "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300" },
+    { label: "Certificates approved", value: statsValue(adminStats?.metrics.approvedCertificates), detail: "Birth and death certificates", tone: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" },
+    { label: "Grievances resolved", value: adminStats?.metrics.grievanceResolutionRate == null ? (adminStatsLoadFailed ? "Unavailable" : adminStats ? "—" : "Loading…") : `${adminStats.metrics.grievanceResolutionRate}%`, detail: "Resolved or closed", tone: "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300" },
+    { label: "Upcoming appointments", value: statsValue(adminStats?.metrics.upcomingAppointments), detail: "Approved and scheduled", tone: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300" },
   ];
 
   const adminQueue = [
-    { title: "Birth certificates", count: 18, status: "Pending verification" },
-    { title: "Death certificates", count: 9, status: "Awaiting approval" },
-    { title: "Grievances", count: 13, status: "In progress" },
-    { title: "Appointments", count: 7, status: "Scheduled" },
+    { title: "Birth certificates", count: statsValue(adminStats?.queue.birthCertificateQueue), status: "Awaiting admin action" },
+    { title: "Death certificates", count: statsValue(adminStats?.queue.deathCertificateQueue), status: "Awaiting admin action" },
+    { title: "Grievances", count: statsValue(adminStats?.queue.openQueries), status: "Open requests" },
+    { title: "Appointments", count: statsValue(adminStats?.queue.pendingAppointments), status: "Awaiting response" },
   ];
 
-  const adminActions = [
-    { label: "Add notice", href: "/admin/notifications" },
-    { label: "Review applications", href: "/admin" },
-    { label: "View citizen queries", href: "/grievance" },
-    { label: "Open reports", href: "/infrastructure" },
+  const additionalServiceStats = [
+    { title: "Citizen queries", count: statsValue(adminStats?.services.totalQueries), detail: "Total submitted" },
+    { title: "Aadhaar services", count: statsValue(adminStats?.services.aadhaarRequests), detail: "Awaiting admin action" },
+    { title: "Voter service requests", count: statsValue(adminStats?.services.voterRequests), detail: "Awaiting admin action" },
+    { title: "Voter list", count: statsValue(adminStats?.services.voterRecords), detail: "Records available" },
+    { title: "Gram budget", count: statsValue(adminStats?.services.budgets), detail: "Budget entries" },
+    { title: "Panchayat funds", count: statsValue(adminStats?.services.funds), detail: "Fund entries" },
+    { title: "Development projects", count: statsValue(adminStats?.services.developmentProjects), detail: "Registered projects" },
+    { title: "Village infrastructure", count: statsValue(adminStats?.services.infrastructureAssets), detail: "Registered assets" },
+    { title: "Official notices", count: statsValue(adminStats?.services.publishedNotices), detail: "Currently published" },
   ];
 
   return (
@@ -417,94 +472,44 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Governance dashboard</p>
-                <h2 className="mt-1 text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">Administrative overview</h2>
-              </div>
-              <Link href="/admin" className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300">Open admin panel</Link>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {adminMetrics.map((metric) => (
-                <div key={metric.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
-                  <div className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${metric.tone}`}>
-                    {metric.label}
-                  </div>
-                  <div className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white">{metric.value}</div>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{metric.detail}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Office queue</h3>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Live status</span>
-                </div>
-                <div className="space-y-3">
-                  {adminQueue.map((item) => (
-                    <div key={item.title} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/80">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{item.status}</p>
-                      </div>
-                      <span className="inline-flex min-w-10 justify-center rounded-full bg-teal-100 px-2 py-1 text-sm font-bold text-teal-800 dark:bg-teal-950 dark:text-teal-300">
-                        {item.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Quick admin actions</h3>
-                <div className="mt-3 space-y-2">
-                  {adminActions.map((action) => (
-                    <Link key={action.label} href={action.href} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-800 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:border-teal-700 dark:hover:text-teal-300">
-                      <span>{action.label}</span>
-                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
           <section aria-labelledby="governance-updates-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div className="mb-4">
               <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Meetings & decisions</p>
               <h2 id="governance-updates-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">Gram Sabha & governance updates</h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Find official meeting notices, administrative orders, and village development updates.</p>
             </div>
-            <div className="grid gap-3 md:grid-cols-3">
+            <ul className="grid gap-x-10 divide-y divide-slate-100 dark:divide-slate-800 md:grid-cols-2 md:divide-y-0">
               {[
-                { title: "Meeting notices", description: "Check published Gram Sabha schedules and meeting announcements.", href: "/notifications", icon: CalendarDays },
-                { title: "Orders & circulars", description: "Read official notices and administrative updates.", href: "/notifications", icon: FileText },
-                { title: "Development review", description: "Review village projects and infrastructure progress.", href: "/development", icon: Route },
-              ].map(({ title, description, href, icon: Icon }) => (
-                <Link key={title} href={href} className="group flex min-h-28 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-teal-300 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-teal-700 dark:hover:bg-slate-900">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <span>
-                    <span className="block text-sm font-bold text-slate-900 group-hover:text-teal-800 dark:text-white dark:group-hover:text-teal-300">{title}</span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-600 dark:text-slate-300">{description}</span>
-                  </span>
-                </Link>
+                { title: "Gram Sabha & meeting notices", href: "/notifications", icon: CalendarDays },
+                { title: "Official orders & circulars", href: "/notifications", icon: FileText },
+                { title: "Village development updates", href: "/development", icon: Route },
+              ].map(({ title, href, icon: Icon }) => (
+                <li key={title} className="border-b border-slate-100 dark:border-slate-800">
+                  <Link href={href} className="group flex min-h-14 items-center gap-3 py-3 text-slate-800 transition hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-100 dark:hover:text-teal-300">
+                    <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-teal-700 dark:text-slate-500 dark:group-hover:text-teal-300" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 text-sm font-medium">{title}</span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-teal-700 dark:group-hover:text-teal-300" aria-hidden="true" />
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
 
-          <section aria-labelledby="popular-services-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+          <section id="services" aria-labelledby="popular-services-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Quick access</p>
                 <h2 id="popular-services-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white">Popular services</h2>
               </div>
-              <Link href="/notifications" className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300">Official notices <ArrowRight className="ml-1 inline h-4 w-4" aria-hidden="true" /></Link>
+              <a
+                href="#services"
+                aria-expanded={showAllServices}
+                aria-controls="all-services-directory"
+                onClick={() => setShowAllServices((visible) => !visible)}
+                className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300"
+              >
+                {showAllServices ? "Show fewer services ↑" : "View all services ↓"}
+              </a>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {quickLinks.map(({ title, hindi, href, icon: Icon }) => (
@@ -523,6 +528,23 @@ export default function HomePage() {
                 </Link>
               ))}
             </div>
+            {showAllServices && (
+              <div id="all-services-directory" className="mt-5 border-t border-slate-200 pt-4 dark:border-slate-700">
+                <ul className="grid gap-x-10 divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-2 lg:grid-cols-3">
+                  {allServices.map((service) => (
+                    <li key={service.href} className="border-b border-slate-100 dark:border-slate-800">
+                      <Link href={service.href} className="flex min-h-14 items-center justify-between gap-3 py-3 text-slate-800 transition hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-100 dark:hover:text-teal-300">
+                        <span>
+                          <span className="block text-sm font-medium">{service.title}</span>
+                          <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{service.hindi}</span>
+                        </span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
 
           <section aria-labelledby="highlights-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
@@ -563,10 +585,6 @@ export default function HomePage() {
               ))}
             </div>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Swipe or use the arrows to browse.</p>
-          </section>
-
-          <section aria-label="Panchayat motto" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100 sm:px-6">
-            {t.slogan}
           </section>
 
           <section aria-labelledby="latest-notices-heading" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
@@ -713,6 +731,71 @@ export default function HomePage() {
                   <div><p className="mb-1 font-semibold">{t.postalLocation}</p><p><strong>{t.pincode}:</strong> 276203</p><p><strong>{t.postalAreaCode}:</strong> 276123</p></div>
                 </div>
               </details>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Governance dashboard</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">Administrative overview</h2>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+              {adminMetrics.map((metric) => (
+                <div key={metric.label} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-2.5 sm:p-3 lg:p-4 dark:border-slate-700 dark:bg-slate-800/70">
+                  <div className={`inline-flex max-w-full rounded-full px-2 py-1 text-[9px] font-bold leading-tight tracking-wide sm:text-[10px] ${metric.tone}`}>
+                    {metric.label}
+                  </div>
+                  <div className="mt-2 text-2xl font-extrabold text-slate-900 sm:mt-3 sm:text-3xl dark:text-white">{metric.value}</div>
+                  <p className="mt-1 text-[10px] leading-tight text-slate-500 sm:text-xs dark:text-slate-400">{metric.detail}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Office queue</h3>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {adminQueue.map((item) => (
+                  <div key={item.title} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/80">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.status}</p>
+                    </div>
+                    <span className="inline-flex min-w-10 justify-center rounded-full bg-teal-100 px-2 py-1 text-sm font-bold text-teal-800 dark:bg-teal-950 dark:text-teal-300">
+                      {item.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                aria-expanded={showAllServiceStats}
+                aria-controls="additional-service-stats"
+                onClick={() => setShowAllServiceStats((expanded) => !expanded)}
+                className="mt-3 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-teal-800 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-teal-300"
+              >
+                {showAllServiceStats ? "Show fewer service stats" : "View all service stats"}
+                <ChevronRight className={`h-4 w-4 transition-transform ${showAllServiceStats ? "rotate-90" : ""}`} aria-hidden="true" />
+              </button>
+              {showAllServiceStats && (
+                <div id="additional-service-stats" className="mt-3 grid gap-3 border-t border-slate-200 pt-3 sm:grid-cols-2 lg:grid-cols-3 dark:border-slate-700">
+                  {additionalServiceStats.map((item) => (
+                    <div key={item.title} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/80">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{item.detail}</p>
+                      </div>
+                      <span className="inline-flex min-w-10 justify-center rounded-full bg-teal-100 px-2 py-1 text-sm font-bold text-teal-800 dark:bg-teal-950 dark:text-teal-300">
+                        {item.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
 
