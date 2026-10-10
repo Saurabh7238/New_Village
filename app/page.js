@@ -362,7 +362,7 @@ export default function HomePage() {
       key={`${duplicate ? "loop-" : ""}${slide.imageUrl}-${index}`}
       href={slide.href || "/"}
       tabIndex={duplicate ? -1 : undefined}
-      className="group relative h-40 w-[78vw] max-w-80 shrink-0 overflow-hidden rounded-xl bg-slate-200 shadow-sm focus-visible:outline focus-visible:outline-4 focus-visible:outline-teal-500 sm:h-48 sm:w-72 lg:w-[calc(50%-0.375rem)]"
+      className="group relative h-40 w-[78vw] max-w-80 shrink-0 overflow-hidden rounded-xl bg-slate-200 shadow-sm focus-visible:outline focus-visible:outline-4 focus-visible:outline-teal-500 sm:h-48 sm:w-72"
     >
       <Image
         src={slide.imageUrl}
