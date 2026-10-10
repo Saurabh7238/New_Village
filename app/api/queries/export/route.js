@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import Query from '@/models/Query';
 import connectDB from '@/lib/dbConnect';
 import * as XLSX from 'xlsx';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireServiceManagerSession } from '@/lib/adminAuth';
 
 export async function POST(request) {
   await connectDB();
 
-  const session = await requireAdminSession();
+  const session = await requireServiceManagerSession();
   if (!session) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
   }

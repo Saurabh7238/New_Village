@@ -42,7 +42,7 @@ export default function AdminAppointmentsPage() {
   }, [page, search, showArchived, statusFilter]);
 
   useEffect(() => {
-    if (authStatus === 'authenticated' && session?.user?.role === 'admin') fetchAppointments();
+    if (authStatus === 'authenticated' && ['admin', 'subadmin'].includes(session?.user?.role)) fetchAppointments();
   }, [authStatus, session?.user?.role, fetchAppointments]);
 
   const changeLocal = (id, field, value) =>
@@ -116,7 +116,7 @@ export default function AdminAppointmentsPage() {
   };
 
   if (authStatus === 'loading') return <div className="p-8 text-center">Loading…</div>;
-  if (authStatus === 'unauthenticated' || session?.user?.role !== 'admin') {
+  if (authStatus === 'unauthenticated' || !['admin', 'subadmin'].includes(session?.user?.role)) {
     return <div className="min-h-screen p-8 text-center text-red-600">Access denied.</div>;
   }
 

@@ -1,11 +1,11 @@
 import dbConnect from '@/lib/dbConnect';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireServiceManagerSession } from '@/lib/adminAuth';
 import Application from '@/models/Application';
 import Query from '@/models/Query';
 
 export async function PATCH(req) {
   try {
-    const session = await requireAdminSession();
+    const session = await requireServiceManagerSession();
     if (!session) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }

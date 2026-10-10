@@ -13,7 +13,7 @@ export async function GET() {
   const session = await requireAuthenticatedSession();
   if (!session) return NextResponse.json({ message: 'Please sign in.' }, { status: 401 });
   await connectDB();
-  const isAdmin = session.user.role === 'admin';
+  const isAdmin = ['admin', 'subadmin'].includes(session.user.role);
   const filter = isAdmin
     // The admin bell is only for new citizen submissions. An admin's own
     // reply/update must never reappear as a notification-bell item.
@@ -49,7 +49,7 @@ export async function PATCH(request) {
   if (!session) return NextResponse.json({ message: 'Please sign in.' }, { status: 401 });
   const { id, relatedId, relatedType } = await request.json();
   await connectDB();
-  const isAdmin = session.user.role === 'admin';
+  const isAdmin = ['admin', 'subadmin'].includes(session.user.role);
   const filter = id ? { _id: id } : relatedId ? { relatedId, relatedType } : { relatedType };
   if (!id && !relatedType) return NextResponse.json({ message: 'Notification target is required.' }, { status: 400 });
   if (!isAdmin && !id && !relatedId) return NextResponse.json({ message: 'Notification target is required.' }, { status: 400 });

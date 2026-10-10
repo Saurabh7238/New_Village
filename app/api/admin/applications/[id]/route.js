@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
 import Application from '@/models/Application';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireServiceManagerSession } from '@/lib/adminAuth';
 
 export async function GET(_request, { params }) {
-  const session = await requireAdminSession();
+  const session = await requireServiceManagerSession();
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
   if (!mongoose.Types.ObjectId.isValid(params.id)) return NextResponse.json({ message: 'Invalid application ID.' }, { status: 400 });
 

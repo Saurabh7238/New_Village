@@ -31,11 +31,11 @@ function AdminApplicationsContent() {
   };
 
   useEffect(() => {
-    if (authStatus === 'authenticated' && session?.user?.role === 'admin') loadApplications();
+    if (authStatus === 'authenticated' && ['admin', 'subadmin'].includes(session?.user?.role)) loadApplications();
   }, [authStatus, session?.user?.role]);
 
   useEffect(() => {
-    if (authStatus === 'authenticated' && session?.user?.role === 'admin') {
+    if (authStatus === 'authenticated' && ['admin', 'subadmin'].includes(session?.user?.role)) {
       fetch('/api/service-notifications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -143,7 +143,7 @@ function AdminApplicationsContent() {
     return <div className="p-8 text-center text-slate-600 dark:text-slate-300">Loading...</div>;
   }
 
-  if (session?.user?.role !== 'admin') {
+  if (!['admin', 'subadmin'].includes(session?.user?.role)) {
     return (
       <div className="p-8 text-center text-red-600">Access denied.</div>
     );

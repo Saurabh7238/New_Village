@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import ImageModel from '@/models/Image';
 import mongoose from 'mongoose';
+import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { writeAuditLog } from '@/lib/writeAuditLog';
 
 // --- GET Function: Fetch images (with optional image_data) ---
 export async function GET(request) {
@@ -73,14 +75,19 @@ export async function GET(request) {
 // --- DELETE Function: Delete image record from MongoDB ---
 export async function DELETE(request) {
   try {
+    const session = await requireServiceManagerSession();
+    if (!session) {
+      return NextResponse.json({ success: false, message: 'Admin access required.' }, { status: 403 });
+    }
+
     await dbConnect();
     
     // We expect the MongoDB document ID (_id) from the client
     const { imageId } = await request.json(); 
 
-    if (!imageId) {
+    if (!mongoose.Types.ObjectId.isValid(imageId)) {
       return NextResponse.json(
-        { success: false, message: 'Missing imageId for deletion.' },
+        { success: false, message: 'A valid imageId is required for deletion.' },
         { status: 400 }
       );
     }
@@ -94,6 +101,14 @@ export async function DELETE(request) {
             { status: 404 }
         );
     }
+
+    await writeAuditLog({
+      session,
+      action: 'Gallery image deleted',
+      entityType: 'gallery-image',
+      entityId: String(imageId),
+      details: { imageId: String(imageId) },
+    });
 
     return NextResponse.json(
       { 

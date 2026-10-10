@@ -3,13 +3,13 @@ import connectDB from '@/lib/dbConnect';
 import Appointment from '@/models/Appointment';
 import CitizenNotification from '@/models/CitizenNotification';
 import ServiceNotification from '@/models/ServiceNotification';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireServiceManagerSession } from '@/lib/adminAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 
 const STATUSES = ['Pending', 'Approved', 'Rejected', 'Rescheduled', 'Cancelled', 'Completed'];
 
 export async function GET(request) {
-  const session = await requireAdminSession();
+  const session = await requireServiceManagerSession();
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
   try {
     await connectDB();
@@ -34,7 +34,7 @@ export async function GET(request) {
 }
 
 export async function PUT(request) {
-  const session = await requireAdminSession();
+  const session = await requireServiceManagerSession();
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
   try {
     const { id, status, adminRemarks, scheduledDate, scheduledTime, appointmentDate, appointmentTime } = await request.json();
@@ -78,7 +78,7 @@ export async function PUT(request) {
 }
 
 export async function DELETE(request) {
-  const session = await requireAdminSession();
+  const session = await requireServiceManagerSession();
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
 
   try {
@@ -115,7 +115,7 @@ export async function DELETE(request) {
 }
 
 export async function PATCH(request) {
-  const session = await requireAdminSession();
+  const session = await requireServiceManagerSession();
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
   try {
     const { id } = await request.json();

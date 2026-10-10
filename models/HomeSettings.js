@@ -34,6 +34,10 @@ const HomeSettingsSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    galleryProtectionEnabled: {
+      type: Boolean,
+      default: false,
+    },
     slides: {
       type: [SlideSchema],
       default: [

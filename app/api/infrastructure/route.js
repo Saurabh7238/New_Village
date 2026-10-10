@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import Infrastructure from '@/models/Infrastructure'; 
 import mongoose from 'mongoose';
 import connectDB from '@/lib/dbConnect';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireServiceManagerSession } from '@/lib/adminAuth';
 
 // Handler for POST (Create) and PUT (Update) requests
 export async function POST(request) {
     await connectDB();
 
-    const session = await requireAdminSession();
+    const session = await requireServiceManagerSession();
     if (!session) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
@@ -73,7 +73,7 @@ export async function GET() {
 export async function DELETE(request) {
     await connectDB();
 
-    const session = await requireAdminSession();
+    const session = await requireServiceManagerSession();
     if (!session) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }

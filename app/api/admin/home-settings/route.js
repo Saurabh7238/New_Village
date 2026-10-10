@@ -14,6 +14,7 @@ export async function GET() {
         popupTitle: 'Important Update',
         popupMessage: 'Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.',
         popupLink: '',
+        galleryProtectionEnabled: false,
         slides: [
           {
             title: 'Village Services',
@@ -77,6 +78,10 @@ export async function POST(req) {
       ],
     };
 
+    if (typeof payload.galleryProtectionEnabled === 'boolean') {
+      update.galleryProtectionEnabled = payload.galleryProtectionEnabled;
+    }
+
     const settings = await HomeSettings.findOneAndUpdate(
       { name: 'default' },
       update,
@@ -87,5 +92,31 @@ export async function POST(req) {
   } catch (error) {
     console.error('Error saving home settings:', error);
     return Response.json({ error: 'Failed to save home settings' }, { status: 500 });
+  }
+}
+
+export async function PATCH(req) {
+  try {
+    const session = await requireAdminSession();
+    if (!session) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const payload = await req.json();
+    if (typeof payload.galleryProtectionEnabled !== 'boolean') {
+      return Response.json({ error: 'A gallery protection setting is required.' }, { status: 400 });
+    }
+
+    await dbConnect();
+    const settings = await HomeSettings.findOneAndUpdate(
+      { name: 'default' },
+      { $set: { galleryProtectionEnabled: payload.galleryProtectionEnabled } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    ).lean();
+
+    return Response.json({ success: true, galleryProtectionEnabled: settings.galleryProtectionEnabled });
+  } catch (error) {
+    console.error('Error updating gallery protection setting:', error);
+    return Response.json({ error: 'Failed to update gallery protection setting.' }, { status: 500 });
   }
 }

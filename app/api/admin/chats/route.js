@@ -1,8 +1,7 @@
 import dbConnect from "@/lib/dbConnect";
 import Chat from "@/models/Chat";
 import User from "@/models/User";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireServiceManagerSession } from "@/lib/adminAuth";
 
 function normalizeUserDetail(user) {
   if (!user) return null;
@@ -21,8 +20,8 @@ function normalizeUserDetail(user) {
 
 export async function GET(req) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== "admin") {
+    const session = await requireServiceManagerSession();
+    if (!session) {
       return Response.json(
         { error: "Unauthorized. Admin access only." },
         { status: 403 }
@@ -93,8 +92,8 @@ export async function GET(req) {
 
 export async function DELETE(req) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== "admin") {
+    const session = await requireServiceManagerSession();
+    if (!session) {
       return Response.json(
         { error: "Unauthorized. Admin access only." },
         { status: 403 }
@@ -128,8 +127,8 @@ export async function DELETE(req) {
 
 export async function POST(req) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== "admin") {
+    const session = await requireServiceManagerSession();
+    if (!session) {
       return Response.json(
         { error: "Unauthorized. Admin access only." },
         { status: 403 }

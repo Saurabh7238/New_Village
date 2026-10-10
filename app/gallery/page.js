@@ -11,8 +11,19 @@ const GalleryPage = () => {
     const t = TRANSLATIONS.gallery[language];
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [galleryProtectionEnabled, setGalleryProtectionEnabled] = useState(false);
+    const [loadingProtection, setLoadingProtection] = useState(true);
 
     useEffect(() => {
+        fetch('/api/admin/home-settings')
+            .then(res => {
+                if (!res.ok) throw new Error(`Failed to load gallery settings: ${res.status}`);
+                return res.json();
+            })
+            .then(data => setGalleryProtectionEnabled(Boolean(data.settings?.galleryProtectionEnabled)))
+            .catch(error => console.error("Failed to load gallery settings:", error))
+            .finally(() => setLoadingProtection(false));
+
         fetch('/api/images')
             .then(res => {
                 if (!res.ok) {
@@ -40,7 +51,7 @@ const GalleryPage = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    if (loading) {
+    if (loading || loadingProtection) {
         return <LoadingSpinner message={t.loading} />;
     }
 
@@ -51,7 +62,11 @@ const GalleryPage = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
             <h1 className="text-4xl font-bold text-center mb-10 text-blue-700 dark:text-blue-400">{t.title}</h1>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <div
+                className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto ${galleryProtectionEnabled ? "select-none" : ""}`}
+                onContextMenu={galleryProtectionEnabled ? (event) => event.preventDefault() : undefined}
+                onDragStart={galleryProtectionEnabled ? (event) => event.preventDefault() : undefined}
+            >
                 {images.map((img, index) => {
                     const altText = img.title || `Gallery ${index + 1}`;
                     return (
@@ -59,6 +74,7 @@ const GalleryPage = () => {
                             key={img._id || index} 
                             image={img}
                             altText={altText}
+                            protectedGallery={galleryProtectionEnabled}
                         />
                     );
                 })}
@@ -68,7 +84,7 @@ const GalleryPage = () => {
 };
 
 // Lazy load image data on demand
-const LazyImageCard = ({ image, altText }) => {
+const LazyImageCard = ({ image, altText, protectedGallery }) => {
     const [imageSrc, setImageSrc] = useState(null);
     const [loaded, setLoaded] = useState(false);
 
@@ -93,8 +109,8 @@ const LazyImageCard = ({ image, altText }) => {
 
     return (
         <div 
-            className="relative group cursor-pointer overflow-hidden rounded-lg shadow-lg"
-            onClick={() => imageSrc && window.open(imageSrc, "_blank")}
+            className={`relative group overflow-hidden rounded-lg shadow-lg ${protectedGallery ? "cursor-default" : "cursor-pointer"}`}
+            onClick={() => !protectedGallery && imageSrc && window.open(imageSrc, "_blank")}
         >
             {!loaded ? (
                 <div className="w-full h-48 bg-gray-300 animate-pulse" />
@@ -106,11 +122,19 @@ const LazyImageCard = ({ image, altText }) => {
                         width={300}
                         height={200}
                         unoptimized
+                        draggable={!protectedGallery}
                         className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-30 flex items-end p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <p className="text-white text-sm font-semibold truncate">{altText}</p>
                     </div>
+                    {protectedGallery && (
+                        <div aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center overflow-hidden">
+                            <span className="rotate-[-25deg] whitespace-nowrap text-lg font-bold tracking-widest text-white/35 drop-shadow-md">
+                                GRAM PANCHAYAT CHIUTAHARA
+                            </span>
+                        </div>
+                    )}
                 </>
             ) : (
                 <div className="w-full h-48 bg-gray-300 flex items-center justify-center">

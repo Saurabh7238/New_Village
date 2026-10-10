@@ -16,13 +16,59 @@ export default function AdminGalleryPage() {
   const [uploading, setUploading] = useState(false);
   const [fileName, setFileName] = useState("No file chosen");
   const [editingImage, setEditingImage] = useState(null);
+  const [galleryProtectionEnabled, setGalleryProtectionEnabled] = useState(false);
+  const [loadingProtection, setLoadingProtection] = useState(true);
+  const [savingProtection, setSavingProtection] = useState(false);
+  const [protectionMessage, setProtectionMessage] = useState("");
 
   useEffect(() => {
     fetch("/api/images")
       .then((res) => res.json())
       .then((data) => setImages(Array.isArray(data) ? data : data.images || []))
       .catch((err) => { console.error("Error:", err); setImages([]); });
+
   }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    if (session?.user?.role !== "admin") {
+      setLoadingProtection(false);
+      return;
+    }
+
+    fetch("/api/admin/home-settings")
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to load gallery protection setting.");
+        return res.json();
+      })
+      .then((data) => setGalleryProtectionEnabled(Boolean(data.settings?.galleryProtectionEnabled)))
+      .catch((error) => {
+        console.error("Failed to load gallery protection setting:", error);
+        setProtectionMessage("Could not load the current protection setting.");
+      })
+      .finally(() => setLoadingProtection(false));
+  }, [status, session?.user?.role]);
+
+  const updateGalleryProtection = async (enabled) => {
+    setSavingProtection(true);
+    setProtectionMessage("");
+    try {
+      const res = await fetch("/api/admin/home-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ galleryProtectionEnabled: enabled }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update gallery protection.");
+      setGalleryProtectionEnabled(data.galleryProtectionEnabled);
+      setProtectionMessage(data.galleryProtectionEnabled ? "Gallery deterrents enabled." : "Gallery deterrents disabled.");
+    } catch (error) {
+      console.error("Failed to update gallery protection:", error);
+      setProtectionMessage(error.message || "Failed to update gallery protection.");
+    } finally {
+      setSavingProtection(false);
+    }
+  };
 
   const resetImageForm = () => {
     setSelectedFile(null);
@@ -99,7 +145,7 @@ export default function AdminGalleryPage() {
   };
 
   if (status === "loading") return <div className="p-8 text-center">Loading...</div>;
-  if (status === "unauthenticated" || session?.user?.role !== "admin") return <div className="min-h-screen flex items-center justify-center text-red-500">Access Denied</div>;
+  if (status === "unauthenticated" || !["admin", "subadmin"].includes(session?.user?.role)) return <div className="min-h-screen flex items-center justify-center text-red-500">Access Denied</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
@@ -108,6 +154,28 @@ export default function AdminGalleryPage() {
           <h1 className="text-4xl font-bold text-indigo-700 dark:text-yellow-400">Manage Gallery</h1>
           <button onClick={() => signOut({ callbackUrl: "/?logout=true" })} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Sign Out</button>
         </div>
+
+        {session?.user?.role === "admin" && <section className="mb-8 rounded-lg border bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-start gap-3">
+            <input
+              id="gallery-protection"
+              type="checkbox"
+              checked={galleryProtectionEnabled}
+              onChange={(event) => updateGalleryProtection(event.target.checked)}
+              disabled={loadingProtection || savingProtection}
+              className="mt-1 h-4 w-4"
+            />
+            <div>
+              <label htmlFor="gallery-protection" className="font-semibold">Enable gallery image-saving deterrents</label>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                When enabled, visitors cannot open gallery images in a new tab, use the right-click menu, or drag images from the gallery.
+                This cannot prevent operating-system screenshots, screen photos, or access through browser developer tools.
+              </p>
+              {loadingProtection && <p className="mt-2 text-sm">Loading current setting...</p>}
+              {protectionMessage && <p role="status" className="mt-2 text-sm">{protectionMessage}</p>}
+            </div>
+          </div>
+        </section>}
 
         <form onSubmit={handleUpload} className={`mb-8 space-y-4 p-4 border rounded-lg ${editingImage ? 'bg-indigo-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}`}>
           <h3 className="text-xl font-semibold text-indigo-700 dark:text-yellow-400">{editingImage ? `Editing: ${editingImage.title}` : "Upload New Image"}</h3>

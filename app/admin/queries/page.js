@@ -75,7 +75,7 @@ export default function AdminQueriesPage() {
 
   // Load immediately; subsequent polls refresh the table without blocking it.
   useEffect(() => {
-    if (authStatus !== "authenticated" || session?.user?.role !== "admin") return;
+    if (authStatus !== "authenticated" || !["admin", "subadmin"].includes(session?.user?.role)) return;
 
     fetchQueries();
     const interval = setInterval(() => fetchQueries({ background: true }), 30000);
@@ -219,7 +219,7 @@ export default function AdminQueriesPage() {
     return <div className="p-8 text-center">Loading...</div>;
   }
 
-  if (authStatus === "unauthenticated" || session?.user?.role !== "admin") {
+  if (authStatus === "unauthenticated" || !["admin", "subadmin"].includes(session?.user?.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900 text-red-500">
         Access Denied

@@ -138,7 +138,7 @@ export default function QueryDetailPage() {
     return <div className="p-8 text-center">Loading...</div>;
   }
 
-  if (authStatus === "unauthenticated" || session?.user?.role !== "admin") {
+  if (authStatus === "unauthenticated" || !["admin", "subadmin"].includes(session?.user?.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900 text-red-500">
         Access Denied

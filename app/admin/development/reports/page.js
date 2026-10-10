@@ -17,7 +17,7 @@ export default function DevelopmentReportsPage() {
   }, []);
 
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.role === "admin") {
+    if (status === "authenticated" && ["admin", "subadmin"].includes(session?.user?.role)) {
       loadReports().catch((loadError) => setError(loadError.message));
     }
   }, [loadReports, session?.user?.role, status]);
@@ -39,7 +39,7 @@ export default function DevelopmentReportsPage() {
   };
 
   if (status === "loading") return <main className="p-8 text-center">Loading...</main>;
-  if (status !== "authenticated" || session?.user?.role !== "admin") {
+  if (status !== "authenticated" || !["admin", "subadmin"].includes(session?.user?.role)) {
     return <main className="p-8 text-center text-red-700">Admin access required.</main>;
   }
 

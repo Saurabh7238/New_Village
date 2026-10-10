@@ -39,7 +39,7 @@ export default function AdminChats() {
 
   // Fetch list of chats
   useEffect(() => {
-    if (status !== "authenticated" || session?.user?.role !== "admin") return;
+    if (status !== "authenticated" || !["admin", "subadmin"].includes(session?.user?.role)) return;
 
     fetchList(searchTerm);
     const interval = setInterval(() => fetchList(searchTerm), 3000);
@@ -51,7 +51,7 @@ export default function AdminChats() {
     return <div className="p-8 text-center">Loading...</div>;
   }
 
-  if (status === "unauthenticated" || session?.user?.role !== "admin") {
+  if (status === "unauthenticated" || !["admin", "subadmin"].includes(session?.user?.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900 text-red-500">
         Access Denied. You must be an admin to view this page.

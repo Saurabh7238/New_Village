@@ -33,7 +33,7 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 10;
 
-    const isAdmin = session?.user?.role === 'admin';
+    const isAdmin = ['admin', 'subadmin'].includes(session?.user?.role);
     const filter = {};
 
     if (!isAdmin) {

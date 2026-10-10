@@ -116,7 +116,7 @@ export default function AdminFundsPage() {
   };
 
   if (status === "loading") return <div className="p-8 text-center">Loading...</div>;
-  if (status === "unauthenticated" || session?.user?.role !== "admin") return <div className="min-h-screen flex items-center justify-center text-red-500">Access Denied</div>;
+  if (status === "unauthenticated" || !["admin", "subadmin"].includes(session?.user?.role)) return <div className="min-h-screen flex items-center justify-center text-red-500">Access Denied</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">

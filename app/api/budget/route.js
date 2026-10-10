@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/dbConnect";
 import Budget from "@/models/Budget";
 import { BUDGET_STATUSES } from "@/lib/budgetDisplay";
-import { requireAdminSession } from "@/lib/adminAuth";
+import { requireServiceManagerSession } from "@/lib/adminAuth";
 import { writeAuditLog } from "@/lib/writeAuditLog";
 
 function computeBalance(totalAllocation, amountReceived) {
@@ -73,7 +73,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  if (!(await requireAdminSession())) {
+  if (!(await requireServiceManagerSession())) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
   await connectDB();
@@ -109,10 +109,10 @@ export async function POST(request) {
       if (!savedItem) {
         return NextResponse.json({ message: "Budget record not found." }, { status: 404 });
       }
-      await writeAuditLog({ session: await requireAdminSession(), action: "Budget updated", details: { budgetId: savedItem._id.toString(), schemeName: savedItem.schemeName } });
+      await writeAuditLog({ session: await requireServiceManagerSession(), action: "Budget updated", details: { budgetId: savedItem._id.toString(), schemeName: savedItem.schemeName } });
     } else {
       savedItem = await new Budget(payload).save();
-      await writeAuditLog({ session: await requireAdminSession(), action: "Budget created", details: { budgetId: savedItem._id.toString(), schemeName: savedItem.schemeName } });
+      await writeAuditLog({ session: await requireServiceManagerSession(), action: "Budget created", details: { budgetId: savedItem._id.toString(), schemeName: savedItem.schemeName } });
       savedItem = savedItem.toObject();
       delete savedItem.documentData;
     }
@@ -125,7 +125,7 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  if (!(await requireAdminSession())) {
+  if (!(await requireServiceManagerSession())) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
   await connectDB();
@@ -142,7 +142,7 @@ export async function DELETE(request) {
     if (!deletedItem) {
       return NextResponse.json({ message: "Budget record not found." }, { status: 404 });
     }
-    await writeAuditLog({ session: await requireAdminSession(), action: "Budget deleted", details: { budgetId: deletedItem._id.toString(), schemeName: deletedItem.schemeName } });
+    await writeAuditLog({ session: await requireServiceManagerSession(), action: "Budget deleted", details: { budgetId: deletedItem._id.toString(), schemeName: deletedItem.schemeName } });
 
     return NextResponse.json({ message: "Budget record deleted successfully" }, { status: 200 });
   } catch (error) {

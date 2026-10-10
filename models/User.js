@@ -7,7 +7,7 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, trim: true, lowercase: true, unique: true, sparse: true },
   phone: { type: String, required: true, unique: true },
   password: { type: String, select: false }, // Optional for OTP-based registration
-  role: { type: String, enum: ["citizen", "user", "staff", "admin"], default: "citizen", index: true },
+  role: { type: String, enum: ["citizen", "user", "staff", "subadmin", "admin"], default: "citizen", index: true },
   uniqueId: { type: String, unique: true }, // The Generated ID
   isVerified: { type: Boolean, default: false },
   village: { type: String, trim: true, default: "" },
