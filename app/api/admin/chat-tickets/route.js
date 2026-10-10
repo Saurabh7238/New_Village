@@ -2,13 +2,13 @@ import mongoose from "mongoose";
 import ChatTicket from "@/models/ChatTicket";
 import User from "@/models/User";
 import dbConnect from "@/lib/dbConnect";
-import { requireServiceManagerSession } from "@/lib/adminAuth";
+import { requireAdminSession } from "@/lib/adminAuth";
 
 const TICKET_STATUSES = ["Open", "In Progress", "Resolved", "Closed"];
 
 export async function GET() {
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) return Response.json({ error: "Admin access required." }, { status: 403 });
 
     await dbConnect();
@@ -29,7 +29,7 @@ export async function GET() {
 
 export async function PATCH(request) {
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) return Response.json({ error: "Admin access required." }, { status: 403 });
 
     const { id, status } = await request.json();

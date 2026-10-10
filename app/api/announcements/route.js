@@ -1,5 +1,5 @@
 import dbConnect from '@/lib/dbConnect';
-import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/lib/adminAuth';
 import Announcement from '@/models/Announcement';
 
 export async function GET(req) {
@@ -30,7 +30,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }

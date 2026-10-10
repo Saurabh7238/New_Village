@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/dbConnect";
 import Fund from "@/models/Fund";
 import { FUND_STATUSES } from "@/lib/fundsDisplay";
-import { requireServiceManagerSession } from "@/lib/adminAuth";
+import { requireAdminSession } from "@/lib/adminAuth";
 
 function computeBalance(totalAllocation, amountReceived) {
   return (Number(totalAllocation) || 0) - (Number(amountReceived) || 0);
@@ -75,7 +75,7 @@ export async function POST(request) {
   await connectDB();
 
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
@@ -127,7 +127,7 @@ export async function DELETE(request) {
   await connectDB();
 
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }

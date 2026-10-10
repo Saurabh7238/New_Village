@@ -27,7 +27,7 @@ export default function AdminChatTicketsPage() {
   }, []);
 
   useEffect(() => {
-    if (authStatus === "authenticated" && ["admin", "subadmin"].includes(session?.user?.role)) loadTickets();
+    if (authStatus === "authenticated" && session?.user?.role === "admin") loadTickets();
   }, [authStatus, loadTickets, session?.user?.role]);
 
   const updateStatus = async (id, nextStatus) => {
@@ -47,7 +47,7 @@ export default function AdminChatTicketsPage() {
   };
 
   if (authStatus === "loading" || loading) return <main className="p-8 text-center">Loading tickets…</main>;
-  if (authStatus !== "authenticated" || !["admin", "subadmin"].includes(session?.user?.role)) return <main className="p-8 text-center text-red-700">Admin access required.</main>;
+  if (authStatus !== "authenticated" || session?.user?.role !== "admin") return <main className="p-8 text-center text-red-700">Admin access required.</main>;
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-white">

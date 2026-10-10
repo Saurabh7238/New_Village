@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import dbConnect from '@/lib/dbConnect';
 import Development from '@/models/Development';
 import DevelopmentUpdate from '@/models/DevelopmentUpdate';
-import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/lib/adminAuth';
 
 const MAX_PHOTO_BYTES = 1024 * 1024;
 const PHOTO_PATTERN = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+=*)$/;
@@ -31,7 +31,7 @@ export async function GET(_request, { params }) {
 
 export async function POST(request, { params }) {
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
 
     const { id } = await params;

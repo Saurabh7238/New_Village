@@ -4,7 +4,7 @@ import QueryCounter from '@/models/QueryCounter';
 import connectDB from '@/lib/dbConnect';
 import { checkQueryRateLimit } from '@/lib/rateLimit';
 import { isAbusive, generateQueryId, getAutoAssignedOfficer } from '@/lib/queryDisplay';
-import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/lib/adminAuth';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import User from '@/models/User';
 import CitizenNotification from '@/models/CitizenNotification';
@@ -143,7 +143,7 @@ export async function GET(request) {
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
 
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     const isAdmin = !!session;
 
     if (!isAdmin) {

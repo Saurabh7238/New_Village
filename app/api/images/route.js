@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import ImageModel from '@/models/Image';
 import mongoose from 'mongoose';
-import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/lib/adminAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 
 // --- GET Function: Fetch images (with optional image_data) ---
@@ -75,7 +75,7 @@ export async function GET(request) {
 // --- DELETE Function: Delete image record from MongoDB ---
 export async function DELETE(request) {
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) {
       return NextResponse.json({ success: false, message: 'Admin access required.' }, { status: 403 });
     }

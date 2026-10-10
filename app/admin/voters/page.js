@@ -62,7 +62,7 @@ export default function AdminVotersPage() {
         setLoading(false);
       }
     };
-    if (status === "authenticated" && ["admin", "subadmin"].includes(session?.user?.role)) {
+    if (status === "authenticated" && session?.user?.role === "admin") {
       loadVoters();
     }
     setSelectedVoterIds([]);
@@ -136,7 +136,7 @@ export default function AdminVotersPage() {
   };
 
   if (status === "loading") return <div className="p-8 text-center">Loading...</div>;
-  if (status === "unauthenticated" || !["admin", "subadmin"].includes(session?.user?.role)) {
+  if (status === "unauthenticated" || session?.user?.role !== "admin") {
     return (
       <div className="min-h-screen p-8 text-center text-red-600">
         Access denied. You must be an admin.

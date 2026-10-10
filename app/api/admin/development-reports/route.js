@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/dbConnect';
 import DevelopmentReport from '@/models/DevelopmentReport';
-import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/lib/adminAuth';
 
 export async function GET() {
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
 
     await dbConnect();
@@ -25,7 +25,7 @@ export async function GET() {
 
 export async function PATCH(request) {
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
 
     const { id, status } = await request.json();

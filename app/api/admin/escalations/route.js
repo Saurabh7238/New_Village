@@ -1,12 +1,12 @@
 import dbConnect from '@/lib/dbConnect';
-import { requireServiceManagerSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/lib/adminAuth';
 import Escalation from '@/models/Escalation';
 import Query from '@/models/Query';
 import { emitEscalationAlert } from '@/lib/socketEmitter';
 
 export async function POST(req) {
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -52,7 +52,7 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
-    const session = await requireServiceManagerSession();
+    const session = await requireAdminSession();
     if (!session) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }

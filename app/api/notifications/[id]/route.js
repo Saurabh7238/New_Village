@@ -14,7 +14,7 @@ export async function GET(_request, { params }) {
     await dbConnect();
     const session = await getServerSession(authOptions);
     const viewerId = session?.user?.id;
-    const isAdmin = ['admin', 'subadmin'].includes(session?.user?.role);
+    const isAdmin = session?.user?.role === 'admin';
     const visibilityFilter = isAdmin ? { _id: id } : { _id: id, status: 'published' };
     let notification;
 
