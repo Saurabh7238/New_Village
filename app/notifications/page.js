@@ -41,9 +41,9 @@ export default function NotificationsPage() {
 
   // Fetch notifications when filters or page changes
   useEffect(() => {
-    const fetchNotifications = async () => {
+    const fetchNotifications = async (showLoading = false) => {
       try {
-        setLoading(true);
+        if (showLoading) setLoading(true);
         setError(null);
 
         const params = new URLSearchParams();
@@ -75,11 +75,11 @@ export default function NotificationsPage() {
         setError('Error loading notifications. Please try again.');
         setNotifications([]);
       } finally {
-        setLoading(false);
+        if (showLoading) setLoading(false);
       }
     };
 
-    fetchNotifications();
+    fetchNotifications(true);
 
     const refreshInterval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(refreshInterval);
@@ -109,6 +109,8 @@ export default function NotificationsPage() {
     };
 
     fetchTypeCounts();
+    const countInterval = setInterval(fetchTypeCounts, 30000);
+    return () => clearInterval(countInterval);
   }, []);
 
   const handleFilterChange = (filterName, value) => {
