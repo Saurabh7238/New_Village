@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import {
   LEVEL_LABELS,
   PRIORITY_LABELS,
@@ -24,26 +25,30 @@ export default function NotificationDetailPage() {
 
   useEffect(() => {
     if (params.id) {
-      fetchNotification(params.id);
+      fetchNotification(params.id, true);
+      const refreshInterval = setInterval(() => fetchNotification(params.id), 30000);
+      return () => clearInterval(refreshInterval);
     }
   }, [params.id]);
 
-  const fetchNotification = async (id) => {
+  const fetchNotification = async (id, showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await fetch(`/api/notifications/${id}`);
       const data = await res.json();
 
       if (data.success) {
         setNotification(data.notification);
+        setError('');
       } else {
+        setNotification(null);
         setError(data.message || 'Notification not found');
       }
     } catch (err) {
       console.error('Fetch error:', err);
-      setError('Error loading notification');
+      if (showLoading) setError('Error loading notification');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -56,15 +61,7 @@ export default function NotificationDetailPage() {
     document.body.removeChild(link);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-20 pb-10">
-        <div className="max-w-4xl mx-auto px-4">
-          <p className="text-center text-gray-500 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSpinner message="Loading notification..." />;
 
   if (error || !notification) {
     return (

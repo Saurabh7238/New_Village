@@ -152,6 +152,8 @@ export default function HomePage() {
     };
 
     loadLatestNotices();
+    const noticeInterval = setInterval(loadLatestNotices, 30000);
+    return () => clearInterval(noticeInterval);
   }, []);
 
   useEffect(() => {

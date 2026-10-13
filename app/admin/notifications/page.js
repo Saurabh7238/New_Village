@@ -24,9 +24,17 @@ import {
   getLevelLabel,
   getStatusLabel,
   formatDate,
+  formatDateTime,
   formatFileSize,
   getIconForFileType,
 } from '@/lib/notificationDisplay';
+
+function toLocalDateTimeInput(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 16);
+}
 
 export default function AdminNotificationsPage() {
   const { data: session, status } = useSession();
@@ -92,16 +100,10 @@ export default function AdminNotificationsPage() {
     }
   }, [filters, session?.user?.role, status]);
 
-  // Initial fetch on mount
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role === 'admin') {
-      fetchNotifications();
-    }
-  }, [status, session?.user?.role, fetchNotifications]);
-
-  // Re-fetch when filters change
   useEffect(() => {
     fetchNotifications();
+    const refreshInterval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(refreshInterval);
   }, [fetchNotifications]);
 
   const showMessage = (msg, type) => {
@@ -184,6 +186,12 @@ export default function AdminNotificationsPage() {
         ...formData,
         title: trimmedTitle,
         description: trimmedDescription,
+        validTill: formData.validTill
+          ? new Date(`${formData.validTill}T23:59:59.999`).toISOString()
+          : null,
+        scheduledPublishDate: formData.scheduledPublishDate
+          ? new Date(formData.scheduledPublishDate).toISOString()
+          : null,
       };
 
       const res = await fetch(endpoint, {
@@ -229,7 +237,7 @@ export default function AdminNotificationsPage() {
       status: notification.status,
       category: notification.category || 'announcement',
       scheduledPublishDate: notification.scheduledPublishDate
-        ? notification.scheduledPublishDate.replace('Z', '').replace('T', ' ')
+        ? toLocalDateTimeInput(notification.scheduledPublishDate)
         : '',
     });
     setUploadedFiles(notification.documents || []);
@@ -437,7 +445,7 @@ export default function AdminNotificationsPage() {
 
               {/* Valid Till */}
               <div>
-                <label className="block text-sm font-medium mb-2">Valid Till (Optional)</label>
+                <label className="block text-sm font-medium mb-2">Valid Till (Optional, expires at end of day)</label>
                 <input
                   type="date"
                   name="validTill"
@@ -508,7 +516,7 @@ export default function AdminNotificationsPage() {
                   onChange={handleInputChange}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
                 />
-                <p className="text-xs text-gray-500 mt-1">Leave empty for immediate publishing</p>
+                <p className="text-xs text-gray-500 mt-1">Leave empty for immediate publishing. Scheduled notices publish automatically at this time.</p>
               </div>
 
               {/* File Upload */}
@@ -694,7 +702,14 @@ export default function AdminNotificationsPage() {
                             {CATEGORY_LABELS[notif.category]}
                           </span>
                         </td>
-                        <td className="p-3 text-sm">{formatDate(notif.issueDate)}</td>
+                        <td className="p-3 text-sm">
+                          {notif.scheduledPublishDate && notif.status === 'scheduled' ? (
+                            <span>
+                              Scheduled
+                              <span className="block text-xs text-gray-500">{formatDateTime(notif.scheduledPublishDate)}</span>
+                            </span>
+                          ) : formatDate(notif.issueDate)}
+                        </td>
                         <td className="p-3 space-x-2">
                           <Link href={`/notifications/${notif.id}`} className="text-green-600 hover:text-green-800 text-sm font-medium">
                             View
@@ -740,7 +755,10 @@ export default function AdminNotificationsPage() {
                           <strong>Category:</strong> {CATEGORY_LABELS[notif.category]}
                         </div>
                         <div>
-                          <strong>Date:</strong> {formatDate(notif.issueDate)}
+                          <strong>{notif.scheduledPublishDate && notif.status === 'scheduled' ? 'Scheduled:' : 'Date:'}</strong>{' '}
+                          {notif.scheduledPublishDate && notif.status === 'scheduled'
+                            ? formatDateTime(notif.scheduledPublishDate)
+                            : formatDate(notif.issueDate)}
                         </div>
                       </div>
                       <div className="flex gap-2 pt-2">

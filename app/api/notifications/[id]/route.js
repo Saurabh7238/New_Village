@@ -5,6 +5,7 @@ import dbConnect from '@/lib/dbConnect';
 import NotificationBoard from '@/models/NotificationBoard';
 import NotificationDocument from '@/models/NotificationDocument';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { syncNotificationLifecycle } from '@/lib/notificationLifecycle';
 
 export async function GET(_request, { params }) {
   try {
@@ -12,15 +13,26 @@ export async function GET(_request, { params }) {
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ success: false, message: 'Invalid notification ID.' }, { status: 400 });
 
     await dbConnect();
+    const now = new Date();
+    await syncNotificationLifecycle(now);
     const session = await getServerSession(authOptions);
     const viewerId = session?.user?.id;
     const isAdmin = session?.user?.role === 'admin';
-    const visibilityFilter = isAdmin ? { _id: id } : { _id: id, status: 'published' };
+    const visibilityFilter = isAdmin
+      ? { _id: id }
+      : {
+          _id: id,
+          status: 'published',
+          $and: [
+            { $or: [{ scheduledPublishDate: null }, { scheduledPublishDate: { $lte: now } }] },
+            { $or: [{ validTill: null }, { validTill: { $gt: now } }] },
+          ],
+        };
     let notification;
 
     if (viewerId && !isAdmin && mongoose.Types.ObjectId.isValid(viewerId)) {
       notification = await NotificationBoard.findOneAndUpdate(
-        { _id: id, status: 'published', viewedBy: { $ne: viewerId } },
+        { ...visibilityFilter, viewedBy: { $ne: viewerId } },
         { $addToSet: { viewedBy: viewerId }, $inc: { viewCount: 1 } },
         { new: true, projection: { viewedBy: 0 } },
       ).lean();

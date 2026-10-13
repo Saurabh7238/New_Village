@@ -5,15 +5,24 @@ import NotificationBoard from '@/models/NotificationBoard';
 import NotificationDocument from '@/models/NotificationDocument';
 import mongoose from 'mongoose';
 import { authOptions } from '../auth/[...nextauth]/route';
+import { syncNotificationLifecycle } from '@/lib/notificationLifecycle';
 
 async function getSession() {
   return await getServerSession(authOptions);
+}
+
+function getNotificationStatus(status, scheduledPublishDate, now = new Date()) {
+  if (status === 'published' && scheduledPublishDate > now) return 'scheduled';
+  if (status === 'scheduled' && scheduledPublishDate <= now) return 'published';
+  return status || 'draft';
 }
 
 // --- GET (FETCH ALL NOTIFICATIONS) ---
 export async function GET(request) {
   try {
     await dbConnect();
+    const now = new Date();
+    await syncNotificationLifecycle(now);
     const { searchParams } = new URL(request.url);
 
     // Public notification reads must not fail when no auth session exists.
@@ -38,7 +47,6 @@ export async function GET(request) {
 
     if (!isAdmin) {
       // Public users only see published and not-expired notifications
-      const now = new Date();
       filter.status = 'published';
 
       // scheduledPublishDate: must be null or in the past
@@ -147,6 +155,20 @@ export async function POST(request) {
     await dbConnect();
     const body = await request.json();
     const { type, level, title, description, issueDate, validTill, priority, status, category, scheduledPublishDate } = body;
+    const issueDateValue = issueDate ? new Date(issueDate) : new Date();
+    const validTillValue = validTill ? new Date(validTill) : null;
+    const scheduledPublishDateValue = scheduledPublishDate ? new Date(scheduledPublishDate) : null;
+
+    if (
+      Number.isNaN(issueDateValue.getTime()) ||
+      (validTillValue && Number.isNaN(validTillValue.getTime())) ||
+      (scheduledPublishDateValue && Number.isNaN(scheduledPublishDateValue.getTime()))
+    ) {
+      return NextResponse.json(
+        { success: false, message: 'Please provide valid notification dates.' },
+        { status: 400 }
+      );
+    }
 
     if (!type || !level || !title || !description) {
       return NextResponse.json(
@@ -169,16 +191,22 @@ export async function POST(request) {
       );
     }
 
-    if (validTill && issueDate && new Date(validTill) < new Date(issueDate)) {
+    if (validTillValue && validTillValue < issueDateValue) {
       return NextResponse.json(
         { success: false, message: 'Valid Till date must be after Issue Date' },
         { status: 400 }
       );
     }
 
-    if (scheduledPublishDate && new Date(scheduledPublishDate) < new Date()) {
+    if (scheduledPublishDateValue && scheduledPublishDateValue < new Date()) {
       return NextResponse.json(
         { success: false, message: 'Scheduled Publish Date must be in the future' },
+        { status: 400 }
+      );
+    }
+    if (status === 'scheduled' && !scheduledPublishDateValue) {
+      return NextResponse.json(
+        { success: false, message: 'A publish date is required for scheduled notifications.' },
         { status: 400 }
       );
     }
@@ -188,12 +216,12 @@ export async function POST(request) {
       level,
       title,
       description,
-      issueDate: issueDate ? new Date(issueDate) : new Date(),
-      validTill: validTill ? new Date(validTill) : null,
+      issueDate: issueDateValue,
+      validTill: validTillValue,
       priority: priority || 'medium',
-      status: status || 'draft',
+      status: getNotificationStatus(status, scheduledPublishDateValue),
       category: category || 'announcement',
-      scheduledPublishDate: scheduledPublishDate ? new Date(scheduledPublishDate) : null,
+      scheduledPublishDate: scheduledPublishDateValue,
       createdBy: session.user.id,
     });
 
@@ -243,6 +271,20 @@ export async function PUT(request) {
 
     const body = await request.json();
     const { title, description, level, priority, status, issueDate, validTill, category, scheduledPublishDate } = body;
+    const issueDateValue = issueDate ? new Date(issueDate) : undefined;
+    const validTillValue = validTill ? new Date(validTill) : null;
+    const scheduledPublishDateValue = scheduledPublishDate ? new Date(scheduledPublishDate) : null;
+
+    if (
+      (issueDateValue && Number.isNaN(issueDateValue.getTime())) ||
+      (validTillValue && Number.isNaN(validTillValue.getTime())) ||
+      (scheduledPublishDateValue && Number.isNaN(scheduledPublishDateValue.getTime()))
+    ) {
+      return NextResponse.json(
+        { success: false, message: 'Please provide valid notification dates.' },
+        { status: 400 }
+      );
+    }
 
     if (!title || !description) {
       return NextResponse.json(
@@ -265,16 +307,27 @@ export async function PUT(request) {
       );
     }
 
-    if (validTill && issueDate && new Date(validTill) < new Date(issueDate)) {
+    if (validTillValue && issueDateValue && validTillValue < issueDateValue) {
       return NextResponse.json(
         { success: false, message: 'Valid Till date must be after Issue Date' },
         { status: 400 }
       );
     }
 
-    if (scheduledPublishDate && new Date(scheduledPublishDate) < new Date()) {
+    if (scheduledPublishDateValue && scheduledPublishDateValue < new Date()) {
+      const existingNotification = await NotificationBoard.findById(id).select('scheduledPublishDate').lean();
+      const unchangedSchedule = existingNotification?.scheduledPublishDate
+        && new Date(existingNotification.scheduledPublishDate).getTime() === scheduledPublishDateValue.getTime();
+      if (!unchangedSchedule) {
+        return NextResponse.json(
+          { success: false, message: 'Scheduled Publish Date must be in the future' },
+          { status: 400 }
+        );
+      }
+    }
+    if (status === 'scheduled' && !scheduledPublishDateValue) {
       return NextResponse.json(
-        { success: false, message: 'Scheduled Publish Date must be in the future' },
+        { success: false, message: 'A publish date is required for scheduled notifications.' },
         { status: 400 }
       );
     }
@@ -286,11 +339,11 @@ export async function PUT(request) {
         description,
         level,
         priority,
-        status,
         category,
-        issueDate: issueDate ? new Date(issueDate) : undefined,
-        validTill: validTill ? new Date(validTill) : null,
-        scheduledPublishDate: scheduledPublishDate ? new Date(scheduledPublishDate) : null,
+        issueDate: issueDateValue,
+        validTill: validTillValue,
+        status: getNotificationStatus(status, scheduledPublishDateValue),
+        scheduledPublishDate: scheduledPublishDateValue,
       },
       { new: true, runValidators: true }
     );

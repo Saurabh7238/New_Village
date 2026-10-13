@@ -10,6 +10,7 @@ import Infrastructure from '@/models/Infrastructure';
 import NotificationBoard from '@/models/NotificationBoard';
 import VoterData from '@/models/VoterData';
 import { INFRA_TYPES } from '@/lib/infrastructureDisplay';
+import { syncNotificationLifecycle } from '@/lib/notificationLifecycle';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ export async function GET() {
     await connectDB();
 
     const now = new Date();
+    await syncNotificationLifecycle(now);
     const [
       applicationCounts,
       queryCounts,
