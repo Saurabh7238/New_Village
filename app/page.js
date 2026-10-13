@@ -9,12 +9,10 @@ import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, MessageCircle, Route, School, ShieldCheck, Sparkles, X } from "lucide-react";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
+import DottedSpinner from "@/components/DottedSpinner";
 import { useLanguage } from "@/app/language-provider";
 import { sanitizePublicReviews } from "@/lib/reviewVisibility";
-import {
-  countByInfraType,
-  getInfraCategoryByType,
-} from "@/lib/infrastructureDisplay";
+import { getInfraCategoryByType } from "@/lib/infrastructureDisplay";
 
 const INFRA_TYPE_ICONS = {
   Road: Route,
@@ -157,22 +155,6 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const loadInfrastructure = async () => {
-      try {
-        const response = await fetch("/api/infrastructure");
-        if (!response.ok) throw new Error("Failed to load village infrastructure.");
-        const data = await response.json();
-        setInfrastructureCounts(countByInfraType(Array.isArray(data) ? data : []));
-      } catch (error) {
-        console.error("Failed to load homepage infrastructure:", error);
-        setInfrastructureLoadFailed(true);
-      }
-    };
-
-    loadInfrastructure();
-  }, []);
-
-  useEffect(() => {
     let isActive = true;
     const loadAdminStats = async () => {
       try {
@@ -181,12 +163,16 @@ export default function HomePage() {
         const data = await response.json();
         if (isActive) {
           setAdminStats(data);
+          setInfrastructureCounts(data.infrastructureCounts);
+          setInfrastructureLoadFailed(false);
           setAdminStatsLoadFailed(false);
         }
       } catch (error) {
         console.error("Failed to load homepage governance statistics:", error);
         if (isActive) {
           setAdminStats(null);
+          setInfrastructureCounts(null);
+          setInfrastructureLoadFailed(true);
           setAdminStatsLoadFailed(true);
         }
       }
@@ -402,11 +388,15 @@ export default function HomePage() {
     { title: "Village map", hindi: "गांव का मानचित्र", href: "/map" },
   ];
 
-  const statsValue = (value) => adminStatsLoadFailed ? "Unavailable" : adminStats ? value : "Loading…";
+  const statsValue = (value) => adminStatsLoadFailed
+    ? "Unavailable"
+    : adminStats
+      ? value
+      : <DottedSpinner size="sm" label="Loading statistics" />;
   const adminMetrics = [
     { label: "Applications needing action", value: statsValue(adminStats?.metrics.actionableApplications), detail: "Awaiting admin action", tone: "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300" },
     { label: "Certificates approved", value: statsValue(adminStats?.metrics.approvedCertificates), detail: "Birth and death certificates", tone: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" },
-    { label: "Grievances resolved", value: adminStats?.metrics.grievanceResolutionRate == null ? (adminStatsLoadFailed ? "Unavailable" : adminStats ? "—" : "Loading…") : `${adminStats.metrics.grievanceResolutionRate}%`, detail: "Resolved or closed", tone: "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300" },
+    { label: "Grievances resolved", value: adminStats?.metrics.grievanceResolutionRate == null ? (adminStatsLoadFailed ? "Unavailable" : adminStats ? "—" : statsValue(null)) : `${adminStats.metrics.grievanceResolutionRate}%`, detail: "Resolved or closed", tone: "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300" },
     { label: "Upcoming appointments", value: statsValue(adminStats?.metrics.upcomingAppointments), detail: "Approved and scheduled", tone: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300" },
   ];
 
@@ -589,7 +579,7 @@ export default function HomePage() {
               </Link>
             </div>
             {noticesLoading ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400" role="status">Loading notices…</p>
+              <DottedSpinner size="sm" label="Loading notices" />
             ) : noticesError ? (
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 Notices are temporarily unavailable. <Link href="/notifications" className="font-semibold text-teal-800 underline dark:text-teal-300">Open the notice board</Link>.
@@ -655,7 +645,7 @@ export default function HomePage() {
                         {infrastructureLoadFailed
                           ? "Count unavailable"
                           : count === undefined
-                            ? "Loading…"
+                            ? <DottedSpinner size="sm" label="Loading infrastructure count" />
                             : `${count} ${count === 1 ? "item" : "items"}`}
                       </span>
                       <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-teal-700 dark:group-hover:text-teal-300" aria-hidden="true" />

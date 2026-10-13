@@ -9,11 +9,13 @@ import Fund from '@/models/Fund';
 import Infrastructure from '@/models/Infrastructure';
 import NotificationBoard from '@/models/NotificationBoard';
 import VoterData from '@/models/VoterData';
+import { INFRA_TYPES } from '@/lib/infrastructureDisplay';
 
 export const dynamic = 'force-dynamic';
 
 const ACTIONABLE_APPLICATION_STATUSES = ['Submitted', 'Under Review', 'Updated'];
 const CLOSED_QUERY_STATUSES = ['Resolved', 'Rejected', 'Closed'];
+const RESOLVED_QUERY_STATUSES = ['Resolved', 'Closed'];
 
 export async function GET() {
   try {
@@ -21,62 +23,129 @@ export async function GET() {
 
     const now = new Date();
     const [
-      actionableApplications,
-      approvedCertificates,
-      totalQueries,
-      resolvedQueries,
-      upcomingAppointments,
-      birthCertificateQueue,
-      deathCertificateQueue,
-      openQueries,
-      pendingAppointments,
-      aadhaarRequests,
-      voterRequests,
+      applicationCounts,
+      queryCounts,
+      appointmentCounts,
+      infrastructureTypeCounts,
       voterRecords,
       budgets,
       funds,
       developmentProjects,
-      infrastructureAssets,
       publishedNotices,
     ] = await Promise.all([
-      Application.countDocuments({ status: { $in: ACTIONABLE_APPLICATION_STATUSES } }),
-      Application.countDocuments({
-        serviceType: { $in: ['birth-certificate', 'death-certificate'] },
-        status: { $in: ['Approved', 'Completed'] },
-      }),
-      Query.countDocuments(),
-      Query.countDocuments({ status: { $in: ['Resolved', 'Closed'] } }),
-      Appointment.countDocuments({
-        archivedAt: null,
-        status: { $in: ['Approved', 'Rescheduled'] },
-        $or: [
-          { scheduledDate: { $gte: now } },
-          { scheduledDate: null, appointmentDate: { $gte: now } },
-        ],
-      }),
-      Application.countDocuments({
-        serviceType: 'birth-certificate',
-        status: { $in: ACTIONABLE_APPLICATION_STATUSES },
-      }),
-      Application.countDocuments({
-        serviceType: 'death-certificate',
-        status: { $in: ACTIONABLE_APPLICATION_STATUSES },
-      }),
-      Query.countDocuments({ status: { $nin: CLOSED_QUERY_STATUSES } }),
-      Appointment.countDocuments({ archivedAt: null, status: 'Pending' }),
-      Application.countDocuments({
-        serviceType: 'aadhaar-request',
-        status: { $in: ACTIONABLE_APPLICATION_STATUSES },
-      }),
-      Application.countDocuments({
-        serviceType: 'voter-request',
-        status: { $in: ACTIONABLE_APPLICATION_STATUSES },
-      }),
+      Application.aggregate([{
+        $group: {
+          _id: null,
+          actionableApplications: {
+            $sum: { $cond: [{ $in: ['$status', ACTIONABLE_APPLICATION_STATUSES] }, 1, 0] },
+          },
+          approvedCertificates: {
+            $sum: {
+              $cond: [{
+                $and: [
+                  { $in: ['$serviceType', ['birth-certificate', 'death-certificate']] },
+                  { $in: ['$status', ['Approved', 'Completed']] },
+                ],
+              }, 1, 0],
+            },
+          },
+          birthCertificateQueue: {
+            $sum: {
+              $cond: [{
+                $and: [
+                  { $eq: ['$serviceType', 'birth-certificate'] },
+                  { $in: ['$status', ACTIONABLE_APPLICATION_STATUSES] },
+                ],
+              }, 1, 0],
+            },
+          },
+          deathCertificateQueue: {
+            $sum: {
+              $cond: [{
+                $and: [
+                  { $eq: ['$serviceType', 'death-certificate'] },
+                  { $in: ['$status', ACTIONABLE_APPLICATION_STATUSES] },
+                ],
+              }, 1, 0],
+            },
+          },
+          aadhaarRequests: {
+            $sum: {
+              $cond: [{
+                $and: [
+                  { $eq: ['$serviceType', 'aadhaar-request'] },
+                  { $in: ['$status', ACTIONABLE_APPLICATION_STATUSES] },
+                ],
+              }, 1, 0],
+            },
+          },
+          voterRequests: {
+            $sum: {
+              $cond: [{
+                $and: [
+                  { $eq: ['$serviceType', 'voter-request'] },
+                  { $in: ['$status', ACTIONABLE_APPLICATION_STATUSES] },
+                ],
+              }, 1, 0],
+            },
+          },
+        },
+      }]),
+      Query.aggregate([{
+        $group: {
+          _id: null,
+          totalQueries: { $sum: 1 },
+          resolvedQueries: {
+            $sum: { $cond: [{ $in: ['$status', RESOLVED_QUERY_STATUSES] }, 1, 0] },
+          },
+          openQueries: {
+            $sum: { $cond: [{ $in: ['$status', CLOSED_QUERY_STATUSES] }, 0, 1] },
+          },
+        },
+      }]),
+      Appointment.aggregate([{
+        $group: {
+          _id: null,
+          upcomingAppointments: {
+            $sum: {
+              $cond: [{
+                $and: [
+                  { $eq: ['$archivedAt', null] },
+                  { $in: ['$status', ['Approved', 'Rescheduled']] },
+                  {
+                    $or: [
+                      { $gte: ['$scheduledDate', now] },
+                      {
+                        $and: [
+                          { $eq: ['$scheduledDate', null] },
+                          { $gte: ['$appointmentDate', now] },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              }, 1, 0],
+            },
+          },
+          pendingAppointments: {
+            $sum: {
+              $cond: [{
+                $and: [
+                  { $eq: ['$archivedAt', null] },
+                  { $eq: ['$status', 'Pending'] },
+                ],
+              }, 1, 0],
+            },
+          },
+        },
+      }]),
+      Infrastructure.aggregate([
+        { $group: { _id: '$type', count: { $sum: 1 } } },
+      ]),
       VoterData.countDocuments({ type: 'gram-panchayat' }),
       Budget.countDocuments(),
       Fund.countDocuments(),
       Development.countDocuments(),
-      Infrastructure.countDocuments(),
       NotificationBoard.countDocuments({
         status: 'published',
         $or: [{ validTill: null }, { validTill: { $gt: now } }],
@@ -89,26 +158,38 @@ export async function GET() {
       }),
     ]);
 
+    const applicationStats = applicationCounts[0] || {};
+    const queryStats = queryCounts[0] || { totalQueries: 0, resolvedQueries: 0, openQueries: 0 };
+    const appointmentStats = appointmentCounts[0] || { upcomingAppointments: 0, pendingAppointments: 0 };
+    const infrastructureCounts = Object.fromEntries(INFRA_TYPES.map((type) => [type, 0]));
+    let infrastructureAssets = 0;
+    for (const item of infrastructureTypeCounts) {
+      infrastructureAssets += item.count;
+      if (Object.hasOwn(infrastructureCounts, item._id)) {
+        infrastructureCounts[item._id] = item.count;
+      }
+    }
+
     return NextResponse.json({
       updatedAt: now.toISOString(),
       metrics: {
-        actionableApplications,
-        approvedCertificates,
-        grievanceResolutionRate: totalQueries
-          ? Math.round((resolvedQueries / totalQueries) * 100)
+        actionableApplications: applicationStats.actionableApplications || 0,
+        approvedCertificates: applicationStats.approvedCertificates || 0,
+        grievanceResolutionRate: queryStats.totalQueries
+          ? Math.round((queryStats.resolvedQueries / queryStats.totalQueries) * 100)
           : null,
-        upcomingAppointments,
+        upcomingAppointments: appointmentStats.upcomingAppointments,
       },
       queue: {
-        birthCertificateQueue,
-        deathCertificateQueue,
-        openQueries,
-        pendingAppointments,
+        birthCertificateQueue: applicationStats.birthCertificateQueue || 0,
+        deathCertificateQueue: applicationStats.deathCertificateQueue || 0,
+        openQueries: queryStats.openQueries,
+        pendingAppointments: appointmentStats.pendingAppointments,
       },
       services: {
-        totalQueries,
-        aadhaarRequests,
-        voterRequests,
+        totalQueries: queryStats.totalQueries,
+        aadhaarRequests: applicationStats.aadhaarRequests || 0,
+        voterRequests: applicationStats.voterRequests || 0,
         voterRecords,
         budgets,
         funds,
@@ -116,6 +197,7 @@ export async function GET() {
         infrastructureAssets,
         publishedNotices,
       },
+      infrastructureCounts,
     });
   } catch (error) {
     console.error('Homepage statistics fetch error:', error);
