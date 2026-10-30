@@ -370,7 +370,7 @@ export default function HomePage() {
     { title: "Voter list", hindi: "मतदाता सूची", href: "/voter", icon: BadgeCheck },
     { title: "Development projects", hindi: "विकास कार्य", href: "/development", icon: ArrowRight },
     { title: "Budget & funds", hindi: "बजट और निधि", href: "/budget", icon: FileText },
-    { title: "All notices", hindi: "सभी सूचनाएं देखें", href: "/notifications", icon: BellRing },
+    { title: "Notice board", hindi: "सभी सूचनाएं देखें", href: "/notices", icon: BellRing },
   ];
 
   const allServices = [
@@ -576,7 +576,7 @@ export default function HomePage() {
                 <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Stay informed</p>
                 <h2 id="latest-notices-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">Latest notices</h2>
               </div>
-              <Link href="/notifications" className="inline-flex items-center gap-1 text-sm font-bold text-teal-800 hover:underline dark:text-teal-300">
+              <Link href="/notices" className="inline-flex items-center gap-1 text-sm font-bold text-teal-800 hover:underline dark:text-teal-300">
                 View all notices <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
@@ -584,7 +584,7 @@ export default function HomePage() {
               <DottedSpinner size="sm" label="Loading notices" />
             ) : noticesError ? (
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Notices are temporarily unavailable. <Link href="/notifications" className="font-semibold text-teal-800 underline dark:text-teal-300">Open the notice board</Link>.
+                Notices are temporarily unavailable. <Link href="/notices" className="font-semibold text-teal-800 underline dark:text-teal-300">Open the notice board</Link>.
               </p>
             ) : latestNotices.length === 0 ? (
               <p className="text-sm text-slate-600 dark:text-slate-300">There are no current notices. Check the notice board for updates.</p>

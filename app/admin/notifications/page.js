@@ -323,7 +323,7 @@ export default function AdminNotificationsPage() {
       <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-blue-700 dark:text-blue-400">
-            Notification Manager
+            Community Notice Board Manager
           </h1>
           <button
             onClick={() => signOut({ callbackUrl: "/?logout=true" })}
@@ -364,6 +364,10 @@ export default function AdminNotificationsPage() {
                 ✕
               </button>
             </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Publish birthday wishes, greetings, congratulations, condolence messages, community events, and official notices.
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Type */}
@@ -445,7 +449,7 @@ export default function AdminNotificationsPage() {
 
               {/* Valid Till */}
               <div>
-                <label className="block text-sm font-medium mb-2">Valid Till (Optional, expires at end of day)</label>
+                <label className="block text-sm font-medium mb-2">Remove from public board after (Optional)</label>
                 <input
                   type="date"
                   name="validTill"
@@ -453,6 +457,9 @@ export default function AdminNotificationsPage() {
                   onChange={handleInputChange}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  The notice disappears from the public board at the end of this date and is archived for admins; it is not permanently deleted.
+                </p>
               </div>
 
               {/* Priority */}
@@ -491,7 +498,7 @@ export default function AdminNotificationsPage() {
 
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium mb-2">Category</label>
+                <label className="block text-sm font-medium mb-2">Notice Category</label>
                 <select
                   name="category"
                   value={formData.category}
@@ -513,10 +520,23 @@ export default function AdminNotificationsPage() {
                   type="datetime-local"
                   name="scheduledPublishDate"
                   value={formData.scheduledPublishDate}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    const scheduledPublishDate = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      scheduledPublishDate,
+                      status: scheduledPublishDate
+                        ? 'scheduled'
+                        : prev.status === 'scheduled'
+                          ? 'published'
+                          : prev.status,
+                    }));
+                  }}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
                 />
-                <p className="text-xs text-gray-500 mt-1">Leave empty for immediate publishing. Scheduled notices publish automatically at this time.</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Choose a future date and time to publish automatically. Leave empty to publish immediately (or keep as a draft).
+                </p>
               </div>
 
               {/* File Upload */}
@@ -594,7 +614,7 @@ export default function AdminNotificationsPage() {
             }}
             className="mb-6 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-medium"
           >
-            + Create Notification
+            + Create Notice
           </button>
         )}
 

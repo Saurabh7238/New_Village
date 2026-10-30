@@ -97,7 +97,7 @@ export default function AdminPanel() {
               👥 Members
             </Link>
             <Link href="/admin/notifications" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-              📢 Notifications
+              📢 Notice Board
             </Link>
             <Link href="/admin/chats" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               💬 Live Chats
