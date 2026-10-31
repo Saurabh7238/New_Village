@@ -6,13 +6,13 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, MessageCircle, Route, School, ShieldCheck, Sparkles, X } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowDown, ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, MessageCircle, Route, School, ShieldCheck, Sparkles, X } from "lucide-react";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import DottedSpinner from "@/components/DottedSpinner";
 import { useLanguage } from "@/app/language-provider";
 import { sanitizePublicReviews } from "@/lib/reviewVisibility";
-import { getInfraCategoryByType } from "@/lib/infrastructureDisplay";
+import { getInfraCategoryByType, INFRA_CATEGORIES } from "@/lib/infrastructureDisplay";
 
 const INFRA_TYPE_ICONS = {
   Road: Route,
@@ -37,6 +37,7 @@ const DEFAULT_SLIDES = [
 export default function HomePage() {
   const { language } = useLanguage();
   const { status: authStatus } = useSession();
+  const reduceMotion = useReducedMotion();
   const [visitCount, setVisitCount] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
   const [homeSettingsLoaded, setHomeSettingsLoaded] = useState(false);
@@ -61,6 +62,7 @@ export default function HomePage() {
   const [showLoginWarning, setShowLoginWarning] = useState(false);
   const [activeReviewIndex, setActiveReviewIndex] = useState(0);
   const [showAllServices, setShowAllServices] = useState(false);
+  const [showAllInfrastructure, setShowAllInfrastructure] = useState(false);
   const [showAllServiceStats, setShowAllServiceStats] = useState(false);
   const [infrastructureCounts, setInfrastructureCounts] = useState(null);
   const [infrastructureLoadFailed, setInfrastructureLoadFailed] = useState(false);
@@ -391,6 +393,13 @@ export default function HomePage() {
     { title: "Gallery", hindi: "गैलरी", href: "/gallery" },
     { title: "Village map", hindi: "गांव का मानचित्र", href: "/map" },
   ];
+  const additionalInfrastructure = INFRA_CATEGORIES.filter(
+    (category) => !FEATURED_INFRA_TYPES.includes(category.type)
+  );
+  const rollOutTransition = {
+    duration: reduceMotion ? 0 : 0.55,
+    ease: [0.22, 1, 0.36, 1],
+  };
 
   const statsValue = (value) => adminStatsLoadFailed
     ? "Unavailable"
@@ -525,21 +534,22 @@ export default function HomePage() {
             </ul>
           </section>
 
-          <section id="services" aria-labelledby="popular-services-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+          <section id="services" aria-labelledby="popular-services-heading" className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Quick access</p>
                 <h2 id="popular-services-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white">Popular services</h2>
               </div>
-              <a
-                href="#services"
+              <button
+                type="button"
                 aria-expanded={showAllServices}
                 aria-controls="all-services-directory"
                 onClick={() => setShowAllServices((visible) => !visible)}
-                className="text-sm font-semibold text-teal-800 hover:underline dark:text-teal-300"
+                className="inline-flex min-h-10 items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 text-sm font-semibold text-teal-900 transition hover:border-teal-400 hover:bg-teal-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-200 dark:hover:bg-teal-950"
               >
-                {showAllServices ? "Show fewer services ↑" : "View all services ↓"}
-              </a>
+                {showAllServices ? "Show fewer" : "All services"}
+                <ArrowDown className={`h-4 w-4 transition-transform duration-300 ${showAllServices ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {quickLinks.map(({ title, hindi, href, icon: Icon }) => (
@@ -558,23 +568,37 @@ export default function HomePage() {
                 </Link>
               ))}
             </div>
-            {showAllServices && (
-              <div id="all-services-directory" className="mt-5 border-t border-slate-200 pt-4 dark:border-slate-700">
-                <ul className="grid gap-x-10 divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-2 lg:grid-cols-3">
-                  {allServices.map((service) => (
-                    <li key={service.href} className="border-b border-slate-100 dark:border-slate-800">
-                      <Link href={service.href} className="flex min-h-14 items-center justify-between gap-3 py-3 text-slate-800 transition hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-100 dark:hover:text-teal-300">
-                        <span>
-                          <span className="block text-sm font-medium">{service.title}</span>
-                          <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{service.hindi}</span>
-                        </span>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <AnimatePresence initial={false}>
+              {showAllServices && (
+                <motion.div
+                  id="all-services-directory"
+                  key="all-services-directory"
+                  initial={{ height: 0, opacity: 0, rotateX: -8 }}
+                  animate={{ height: "auto", opacity: 1, rotateX: 0 }}
+                  exit={{ height: 0, opacity: 0, rotateX: -5 }}
+                  transition={rollOutTransition}
+                  style={{ transformOrigin: "top center", perspective: 900, overflow: "hidden" }}
+                  className="mt-5"
+                >
+                  <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">All village services</p>
+                    <ul className="grid gap-x-10 divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-2 lg:grid-cols-3">
+                      {allServices.map((service) => (
+                        <li key={service.href} className="border-b border-slate-100 dark:border-slate-800">
+                          <Link href={service.href} className="flex min-h-14 items-center justify-between gap-3 py-3 text-slate-800 transition hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-100 dark:hover:text-teal-300">
+                            <span>
+                              <span className="block text-sm font-medium">{service.title}</span>
+                              <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{service.hindi}</span>
+                            </span>
+                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
 
           <section aria-labelledby="latest-notices-heading" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
@@ -627,16 +651,23 @@ export default function HomePage() {
             )}
           </section>
 
-          <section aria-labelledby="infrastructure-heading" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-7">
+          <section aria-labelledby="infrastructure-heading" className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-7">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-700">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Village information</p>
                 <h2 id="infrastructure-heading" className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">Village infrastructure</h2>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Explore public facilities and development across the village.</p>
               </div>
-              <Link href="/infrastructure" className="inline-flex min-h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-teal-300 dark:hover:bg-teal-950/40">
-                View all infrastructure <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              <button
+                type="button"
+                aria-expanded={showAllInfrastructure}
+                aria-controls="all-infrastructure-directory"
+                onClick={() => setShowAllInfrastructure((visible) => !visible)}
+                className="inline-flex min-h-10 items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 text-sm font-semibold text-teal-900 transition hover:border-teal-400 hover:bg-teal-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-200 dark:hover:bg-teal-950"
+              >
+                {showAllInfrastructure ? "Show fewer" : "Explore all facilities"}
+                <ArrowDown className={`h-4 w-4 transition-transform duration-300 ${showAllInfrastructure ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
             </div>
             <ul className="grid gap-x-10 divide-y divide-slate-100 dark:divide-slate-800 md:grid-cols-2 md:divide-y-0">
               {FEATURED_INFRA_TYPES.map((type) => {
@@ -663,6 +694,52 @@ export default function HomePage() {
                 );
               })}
             </ul>
+            <AnimatePresence initial={false}>
+              {showAllInfrastructure && (
+                <motion.div
+                  id="all-infrastructure-directory"
+                  key="all-infrastructure-directory"
+                  initial={{ height: 0, opacity: 0, rotateX: -8 }}
+                  animate={{ height: "auto", opacity: 1, rotateX: 0 }}
+                  exit={{ height: 0, opacity: 0, rotateX: -5 }}
+                  transition={rollOutTransition}
+                  style={{ transformOrigin: "top center", perspective: 900, overflow: "hidden" }}
+                  className="mt-4"
+                >
+                  <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">All infrastructure categories</p>
+                      <Link href="/infrastructure" className="inline-flex items-center gap-1 text-sm font-bold text-teal-800 hover:underline dark:text-teal-300">
+                        Open infrastructure hub <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </Link>
+                    </div>
+                    <ul className="grid gap-x-8 divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-2 lg:grid-cols-3">
+                      {additionalInfrastructure.map((category) => {
+                        const count = infrastructureCounts?.[category.type];
+                        return (
+                          <li key={category.type} className="border-b border-slate-100 dark:border-slate-800">
+                            <Link href={`/infrastructure/${category.slug}`} className="group flex min-h-14 items-center gap-3 py-3 text-slate-800 transition hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-100 dark:hover:text-teal-300">
+                              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-teal-800 transition-colors group-hover:bg-teal-100 dark:bg-slate-800 dark:text-teal-300 dark:group-hover:bg-teal-950">
+                                <Route className="h-4 w-4" aria-hidden="true" />
+                              </span>
+                              <span className="min-w-0 flex-1 text-sm font-medium">{category.hubLabel}</span>
+                              <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                                {infrastructureLoadFailed
+                                  ? "Unavailable"
+                                  : count === undefined
+                                    ? <DottedSpinner size="sm" label={`Loading ${category.hubLabel} count`} />
+                                    : `${count} ${count === 1 ? "item" : "items"}`}
+                              </span>
+                              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white px-5 py-7 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-8 sm:py-8">

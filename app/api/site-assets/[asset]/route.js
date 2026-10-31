@@ -24,7 +24,7 @@ export async function GET(_request, { params }) {
       headers: {
         'Content-Type': siteAsset.mimeType,
         'Content-Length': String(Buffer.byteLength(siteAsset.data, 'base64')),
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
         'X-Content-Type-Options': 'nosniff',
         'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
       },
