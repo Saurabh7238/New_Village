@@ -15,7 +15,6 @@ import {
   STATUS_LABELS,
   CATEGORY_LABELS,
   getStatusColor,
-  getPriorityColor,
   getLevelColor,
   getCategoryColor,
 } from '@/lib/notificationConstants';
@@ -29,11 +28,134 @@ import {
   getIconForFileType,
 } from '@/lib/notificationDisplay';
 
+const GREETING_CATEGORIES = ['birthday', 'greeting', 'congratulations', 'condolence'];
+
 function toLocalDateTimeInput(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
   return date.toISOString().slice(0, 16);
+}
+
+function AdminNoticeSection({ title, description, notices, loading, onCreate, onEdit, onDelete }) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md dark:border-gray-700 dark:bg-gray-800">
+      <header className="flex flex-col gap-3 border-b border-gray-200 p-5 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-bold">{title}</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{description}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onCreate}
+          className="shrink-0 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+        >
+          + Create {title === 'Official Announcements' ? 'Announcement' : 'Greeting'}
+        </button>
+      </header>
+
+      {loading ? (
+        <p role="status" className="p-8 text-center text-gray-500">Loading notices...</p>
+      ) : notices.length === 0 ? (
+        <p className="p-8 text-center text-gray-500">No {title.toLowerCase()} found.</p>
+      ) : (
+        <>
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-gray-100 dark:bg-gray-700">
+                <tr>
+                  <th className="p-3 text-left font-semibold">Title</th>
+                  <th className="p-3 text-left font-semibold">Type</th>
+                  <th className="p-3 text-left font-semibold">Level</th>
+                  <th className="p-3 text-left font-semibold">Status</th>
+                  <th className="p-3 text-left font-semibold">Category</th>
+                  <th className="p-3 text-left font-semibold">Date</th>
+                  <th className="p-3 text-left font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {notices.map((notice) => (
+                  <tr key={notice.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="max-w-xs truncate p-3">{notice.title}</td>
+                    <td className="p-3">{getTypeLabel(notice.type)}</td>
+                    <td className="p-3">
+                      <span className={`rounded px-2 py-1 text-xs font-medium ${getLevelColor(notice.level)}`}>
+                        {getLevelLabel(notice.level)}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className={`rounded px-2 py-1 text-xs font-medium ${getStatusColor(notice.status)}`}>
+                        {getStatusLabel(notice.status)}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className={`rounded px-2 py-1 text-xs font-medium ${getCategoryColor(notice.category)}`}>
+                        {CATEGORY_LABELS[notice.category] || CATEGORY_LABELS.announcement}
+                      </span>
+                    </td>
+                    <td className="p-3 text-sm">
+                      {notice.scheduledPublishDate && notice.status === 'scheduled' ? (
+                        <span>
+                          Scheduled
+                          <span className="block text-xs text-gray-500">{formatDateTime(notice.scheduledPublishDate)}</span>
+                        </span>
+                      ) : formatDate(notice.issueDate)}
+                    </td>
+                    <td className="space-x-2 p-3">
+                      <Link href={`/notifications/${notice.id}`} className="text-sm font-medium text-green-600 hover:text-green-800">
+                        View
+                      </Link>
+                      <button type="button" onClick={() => onEdit(notice)} className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                        Edit
+                      </button>
+                      <button type="button" onClick={() => onDelete(notice.id)} className="text-sm font-medium text-red-600 hover:text-red-800">
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="space-y-3 p-3 md:hidden">
+            {notices.map((notice) => (
+              <article key={notice.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700">
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <p className="font-bold text-green-700 dark:text-green-400">{notice.title}</p>
+                    <p className="text-gray-600 dark:text-gray-400">{getTypeLabel(notice.type)}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 border-t border-gray-300 pt-2 dark:border-gray-600">
+                    <p><strong>Level:</strong> {getLevelLabel(notice.level)}</p>
+                    <p><strong>Status:</strong> {getStatusLabel(notice.status)}</p>
+                    <p><strong>Category:</strong> {CATEGORY_LABELS[notice.category] || CATEGORY_LABELS.announcement}</p>
+                    <p>
+                      <strong>{notice.scheduledPublishDate && notice.status === 'scheduled' ? 'Scheduled:' : 'Date:'}</strong>{' '}
+                      {notice.scheduledPublishDate && notice.status === 'scheduled'
+                        ? formatDateTime(notice.scheduledPublishDate)
+                        : formatDate(notice.issueDate)}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Link href={`/notifications/${notice.id}`} className="flex-1 rounded bg-green-600 px-2 py-2 text-center font-medium text-white hover:bg-green-700">
+                      View
+                    </Link>
+                    <button type="button" onClick={() => onEdit(notice)} className="flex-1 rounded bg-blue-600 px-2 py-2 font-medium text-white hover:bg-blue-700">
+                      Edit
+                    </button>
+                    <button type="button" onClick={() => onDelete(notice.id)} className="flex-1 rounded bg-red-600 px-2 py-2 font-medium text-white hover:bg-red-700">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
 }
 
 export default function AdminNotificationsPage() {
@@ -78,6 +200,8 @@ export default function AdminNotificationsPage() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
+      params.append('page', '1');
+      params.append('limit', '200');
       if (filters.type) params.append('type', filters.type);
       if (filters.level) params.append('level', filters.level);
       if (filters.category) params.append('category', filters.category);
@@ -290,7 +414,7 @@ export default function AdminNotificationsPage() {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = (category = 'announcement') => {
     setFormData({
       type: 'message',
       level: 'national',
@@ -300,12 +424,18 @@ export default function AdminNotificationsPage() {
       validTill: '',
       priority: 'medium',
       status: 'published',
-      category: 'announcement',
+      category,
       scheduledPublishDate: '',
     });
     setEditingId(null);
     setUploadedFiles([]);
     setSelectedFile(null);
+  };
+
+  const openCreateForm = (category) => {
+    resetForm(category);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Auth protection
@@ -605,19 +735,6 @@ export default function AdminNotificationsPage() {
           </form>
         )}
 
-        {/* Create Button */}
-        {!showForm && (
-          <button
-            onClick={() => {
-              resetForm();
-              setShowForm(true);
-            }}
-            className="mb-6 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-medium"
-          >
-            + Create Notice
-          </button>
-        )}
-
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
           <h2 className="text-lg font-semibold mb-4">Filters</h2>
@@ -680,133 +797,25 @@ export default function AdminNotificationsPage() {
           </div>
         </div>
 
-        {/* Notifications List */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-          {notifications.length === 0 && !loading ? (
-            <div className="p-8 text-center text-gray-500">
-              No notifications found. {!showForm && 'Create one to get started.'}
-            </div>
-          ) : (
-            <>
-              {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-100 dark:bg-gray-700 border-b">
-                    <tr>
-                      <th className="p-3 text-left font-semibold">Title</th>
-                      <th className="p-3 text-left font-semibold">Type</th>
-                      <th className="p-3 text-left font-semibold">Level</th>
-                      <th className="p-3 text-left font-semibold">Status</th>
-                      <th className="p-3 text-left font-semibold">Category</th>
-                      <th className="p-3 text-left font-semibold">Date</th>
-                      <th className="p-3 text-left font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {notifications.map((notif) => (
-                      <tr key={notif.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="p-3 max-w-xs truncate">{notif.title}</td>
-                        <td className="p-3">{getTypeLabel(notif.type)}</td>
-                        <td className="p-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getLevelColor(notif.level)}`}>
-                            {getLevelLabel(notif.level)}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(notif.status)}`}>
-                            {getStatusLabel(notif.status)}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(notif.category)}`}>
-                            {CATEGORY_LABELS[notif.category]}
-                          </span>
-                        </td>
-                        <td className="p-3 text-sm">
-                          {notif.scheduledPublishDate && notif.status === 'scheduled' ? (
-                            <span>
-                              Scheduled
-                              <span className="block text-xs text-gray-500">{formatDateTime(notif.scheduledPublishDate)}</span>
-                            </span>
-                          ) : formatDate(notif.issueDate)}
-                        </td>
-                        <td className="p-3 space-x-2">
-                          <Link href={`/notifications/${notif.id}`} className="text-green-600 hover:text-green-800 text-sm font-medium">
-                            View
-                          </Link>
-                          <button
-                            onClick={() => handleEdit(notif)}
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(notif.id)}
-                            className="text-red-600 hover:text-red-800 text-sm font-medium"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-3 p-3">
-                {notifications.map((notif) => (
-                  <div key={notif.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 p-3">
-                    <div className="space-y-2 text-xs">
-                      <div className="flex justify-between items-start gap-2">
-                        <div className="flex-1">
-                          <p className="font-bold text-green-700 dark:text-green-400">{notif.title}</p>
-                          <p className="text-gray-600 dark:text-gray-400">{getTypeLabel(notif.type)}</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 border-t border-gray-300 dark:border-gray-600 pt-2">
-                        <div>
-                          <strong>Level:</strong> <span className={`px-1 rounded text-xs font-medium ${getLevelColor(notif.level)}`}>{getLevelLabel(notif.level)}</span>
-                        </div>
-                        <div>
-                          <strong>Status:</strong> <span className={`px-1 rounded text-xs font-medium ${getStatusColor(notif.status)}`}>{getStatusLabel(notif.status)}</span>
-                        </div>
-                        <div>
-                          <strong>Category:</strong> {CATEGORY_LABELS[notif.category]}
-                        </div>
-                        <div>
-                          <strong>{notif.scheduledPublishDate && notif.status === 'scheduled' ? 'Scheduled:' : 'Date:'}</strong>{' '}
-                          {notif.scheduledPublishDate && notif.status === 'scheduled'
-                            ? formatDateTime(notif.scheduledPublishDate)
-                            : formatDate(notif.issueDate)}
-                        </div>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <Link
-                          href={`/notifications/${notif.id}`}
-                          className="flex-1 rounded bg-green-600 dark:bg-green-700 px-2 py-2 text-center text-white hover:bg-green-700 dark:hover:bg-green-600 font-medium"
-                        >
-                          View
-                        </Link>
-                        <button
-                          onClick={() => handleEdit(notif)}
-                          className="flex-1 rounded bg-blue-600 dark:bg-blue-700 px-2 py-2 text-white hover:bg-blue-700 dark:hover:bg-blue-600 font-medium"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(notif.id)}
-                          className="flex-1 rounded bg-red-600 dark:bg-red-700 px-2 py-2 text-white hover:bg-red-700 dark:hover:bg-red-600 font-medium"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+        <div className="space-y-6">
+          <AdminNoticeSection
+            title="Official Announcements"
+            description="Manage messages, circulars, orders, public notices, and other official updates."
+            notices={notifications.filter((notice) => !GREETING_CATEGORIES.includes(notice.category))}
+            loading={loading}
+            onCreate={() => openCreateForm('announcement')}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+          <AdminNoticeSection
+            title="Greetings & Community Messages"
+            description="Manage birthday wishes, greetings, congratulations, and condolence notices."
+            notices={notifications.filter((notice) => GREETING_CATEGORIES.includes(notice.category))}
+            loading={loading}
+            onCreate={() => openCreateForm('greeting')}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         </div>
       </div>
     </div>
