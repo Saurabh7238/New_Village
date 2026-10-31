@@ -582,15 +582,20 @@ export default function HomePage() {
                 >
                   <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">All village services</p>
-                    <ul className="grid gap-x-10 divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-2 lg:grid-cols-3">
+                    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                       {allServices.map((service) => (
-                        <li key={service.href} className="border-b border-slate-100 dark:border-slate-800">
-                          <Link href={service.href} className="flex min-h-14 items-center justify-between gap-3 py-3 text-slate-800 transition hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-slate-100 dark:hover:text-teal-300">
-                            <span>
-                              <span className="block text-sm font-medium">{service.title}</span>
+                        <li key={service.href} className="min-w-0">
+                          <Link
+                            href={service.href}
+                            className="group flex min-h-20 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-white hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-slate-900"
+                          >
+                            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300">
+                              <FileText className="h-5 w-5" aria-hidden="true" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-sm font-bold text-slate-900 group-hover:text-teal-800 dark:text-white dark:group-hover:text-teal-300">{service.title}</span>
                               <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{service.hindi}</span>
                             </span>
-                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                           </Link>
                         </li>
                       ))}
