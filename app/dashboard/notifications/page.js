@@ -12,6 +12,7 @@ function formatDate(date) {
 }
 
 function getLabel(notification) {
+  if (notification.relatedType === 'notice') return 'Community Notice';
   if (notification.relatedType === 'query') return 'Query';
   if (notification.relatedType === 'appointment') return 'Appointment';
   return notification.serviceType.replace(/[-:]/g, ' ');
@@ -58,7 +59,9 @@ export default function MyNotificationsPage() {
     setNotifications((items) => items.map((item) => ({ ...item, isRead: true })));
   };
 
-  const unreadCount = notifications.filter((notification) => !notification.isRead && notification.adminResponded).length;
+  const unreadCount = notifications.filter((notification) =>
+    !notification.isRead && (notification.relatedType === 'notice' || notification.adminResponded)
+  ).length;
   const visibleNotifications = notifications.filter((notification) => filter === 'all' || (filter === 'unread' && !notification.isRead) || notification.relatedType === filter);
 
   return (
@@ -73,12 +76,12 @@ export default function MyNotificationsPage() {
         </div>
 
         <div className="mb-5 flex flex-wrap gap-2">
-          {[['all', 'All'], ['query', 'Queries'], ['application', 'Applications'], ['appointment', 'Appointments'], ['unread', 'Unread']].map(([value, label]) => <button key={value} onClick={() => setFilter(value)} className={`rounded px-3 py-2 text-sm font-semibold ${filter === value ? 'bg-green-700 text-white' : 'bg-white text-gray-700 shadow dark:bg-gray-800 dark:text-gray-200'}`}>{label}</button>)}
+          {[['all', 'All'], ['query', 'Queries'], ['application', 'Applications'], ['appointment', 'Appointments'], ['notice', 'Notice board'], ['unread', 'Unread']].map(([value, label]) => <button key={value} onClick={() => setFilter(value)} className={`rounded px-3 py-2 text-sm font-semibold ${filter === value ? 'bg-green-700 text-white' : 'bg-white text-gray-700 shadow dark:bg-gray-800 dark:text-gray-200'}`}>{label}</button>)}
         </div>
 
         {message && <p className="mb-4 rounded bg-red-100 p-3 text-red-800 dark:bg-red-900 dark:text-red-100">{message}</p>}
         {loading ? <p>Loading updates...</p> : notifications.length === 0 ? (
-          <div className="rounded-lg bg-white p-8 text-center shadow dark:bg-gray-800">No service updates yet.</div>
+          <div className="rounded-lg bg-white p-8 text-center shadow dark:bg-gray-800">No updates yet.</div>
         ) : visibleNotifications.length === 0 ? <div className="rounded-lg bg-white p-8 text-center shadow dark:bg-gray-800">No updates match this filter.</div> : (
           <div className="space-y-3">
             {visibleNotifications.map((notification) => (
@@ -90,6 +93,7 @@ export default function MyNotificationsPage() {
                       {!notification.isRead && <span className="rounded bg-red-600 px-2 py-1 text-xs font-bold text-white">New</span>}
                     </div>
                     <h2 className="font-bold">{notification.title}</h2>
+                    {notification.message && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-200">{notification.message}</p>}
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{formatDate(notification.adminResponded || notification.updatedAt)}</p>
                   </div>
                   <Link href={notification.link} onClick={() => !notification.isRead && markRead(notification.id)} className="shrink-0 rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">View</Link>

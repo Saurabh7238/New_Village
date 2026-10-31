@@ -19,6 +19,8 @@ export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [citizenNoticeNotifications, setCitizenNoticeNotifications] = useState([]);
+  const [citizenNoticeUnreadCount, setCitizenNoticeUnreadCount] = useState(0);
   const [serviceNotifications, setServiceNotifications] = useState([]);
   const [serviceUnreadCount, setServiceUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
@@ -102,6 +104,39 @@ export default function Header() {
     loadServiceNotifications();
     const interval = setInterval(loadServiceNotifications, 30000);
     return () => clearInterval(interval);
+  }, [status, session?.user?.role]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || session?.user?.role === "admin") {
+      setCitizenNoticeNotifications([]);
+      setCitizenNoticeUnreadCount(0);
+      return;
+    }
+
+    let active = true;
+    const loadCitizenNoticeNotifications = async () => {
+      try {
+        const response = await fetch('/api/my-notifications', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Unable to load personal notice updates.');
+        const data = await response.json();
+        const allNoticeItems = (Array.isArray(data.notifications) ? data.notifications : [])
+          .filter((item) => item.relatedType === 'notice');
+        const noticeItems = allNoticeItems.slice(0, 5);
+        if (active) {
+          setCitizenNoticeNotifications(noticeItems);
+          setCitizenNoticeUnreadCount(allNoticeItems.filter((item) => !item.isRead).length);
+        }
+      } catch (error) {
+        console.error('Failed to load personal notice updates:', error);
+      }
+    };
+
+    loadCitizenNoticeNotifications();
+    const interval = setInterval(loadCitizenNoticeNotifications, 30000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, [status, session?.user?.role]);
 
   useEffect(() => {
@@ -230,10 +265,10 @@ export default function Header() {
     pathname.startsWith("/admin");
   const visibleNotifications = showServiceNotifications
     ? serviceNotifications
-    : notifications;
+    : [...citizenNoticeNotifications, ...notifications].slice(0, 5);
   const visibleNotificationCount = showServiceNotifications
     ? serviceUnreadCount
-    : notificationCount;
+    : citizenNoticeUnreadCount || notificationCount;
 
   const notificationTypeCounts = ["message", "circular", "order"].reduce((acc, type) => {
     acc[type] = visibleNotifications.filter((item) => (item.type || item.category || "").toLowerCase() === type).length;
@@ -355,6 +390,15 @@ export default function Header() {
                             fetch("/api/service-notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: note.id }) });
                             setServiceUnreadCount((count) => Math.max(0, count - 1));
                             setServiceNotifications((items) => items.map((item) => item.id === note.id ? { ...item, isRead: true } : item));
+                          }
+                          if (!showServiceNotifications && note.relatedType === 'notice' && !note.isRead) {
+                            fetch('/api/my-notifications', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: note.id }),
+                            }).catch((error) => console.error('Failed to mark notice update as read:', error));
+                            setCitizenNoticeUnreadCount((count) => Math.max(0, count - 1));
+                            setCitizenNoticeNotifications((items) => items.map((item) => item.id === note.id ? { ...item, isRead: true } : item));
                           }
                           router.push(note.link || "/notifications");
                         }}

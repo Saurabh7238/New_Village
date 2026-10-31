@@ -55,6 +55,10 @@ const NotificationBoardSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    subscribersNotifiedAt: {
+      type: Date,
+      default: null,
+    },
     viewCount: {
       type: Number,
       default: 0,

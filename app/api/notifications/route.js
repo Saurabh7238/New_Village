@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { syncNotificationLifecycle } from '@/lib/notificationLifecycle';
 import { GREETING_CATEGORIES } from '@/lib/notificationConstants';
+import { notifyNoticeSubscribers } from '@/lib/noticeNotificationService';
 
 async function getSession() {
   return await getServerSession(authOptions);
@@ -235,10 +236,25 @@ export async function POST(request) {
       createdBy: session.user.id,
     });
 
+    let deliveryWarning = '';
+    if (newNotification.status === 'published') {
+      try {
+        const delivery = await notifyNoticeSubscribers(newNotification);
+        if (delivery.emailFailed) {
+          deliveryWarning = delivery.emailConfigured
+            ? ` Notice published, but email delivery failed for ${delivery.emailFailed} subscriber(s).`
+            : ' Notice published, but email delivery is not configured.';
+        }
+      } catch (error) {
+        console.error('Notice published, but subscriber delivery failed:', error);
+        deliveryWarning = ' Notice published, but subscriber alerts could not be delivered.';
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
-        message: 'Notification created successfully',
+        message: `Notification created successfully.${deliveryWarning}`,
         notification: {
           ...newNotification.toObject(),
           id: newNotification._id.toString(),
@@ -367,6 +383,21 @@ export async function PUT(request) {
       );
     }
 
+    let deliveryWarning = '';
+    if (updatedNotification.status === 'published') {
+      try {
+        const delivery = await notifyNoticeSubscribers(updatedNotification);
+        if (delivery.emailFailed) {
+          deliveryWarning = delivery.emailConfigured
+            ? ` Notice updated, but email delivery failed for ${delivery.emailFailed} subscriber(s).`
+            : ' Notice updated, but email delivery is not configured.';
+        }
+      } catch (error) {
+        console.error('Notice updated, but subscriber delivery failed:', error);
+        deliveryWarning = ' Notice updated, but subscriber alerts could not be delivered.';
+      }
+    }
+
     const documents = await NotificationDocument.find({
       notificationId: id,
     }).lean();
@@ -374,7 +405,7 @@ export async function PUT(request) {
     return NextResponse.json(
       {
         success: true,
-        message: 'Notification updated successfully',
+        message: `Notification updated successfully.${deliveryWarning}`,
         notification: {
           ...updatedNotification.toObject(),
           id: updatedNotification._id.toString(),

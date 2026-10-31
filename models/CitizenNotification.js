@@ -11,5 +11,9 @@ const CitizenNotificationSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 CitizenNotificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
+CitizenNotificationSchema.index(
+  { userId: 1, relatedType: 1, relatedId: 1 },
+  { unique: true, partialFilterExpression: { relatedType: 'notice' } }
+);
 
 export default mongoose.models.CitizenNotification || mongoose.model('CitizenNotification', CitizenNotificationSchema);

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/dbConnect';
 import ServiceNotification from '@/models/ServiceNotification';
+import CitizenNotification from '@/models/CitizenNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 
 const links = {
@@ -14,15 +15,20 @@ export async function GET() {
   if (!session) return NextResponse.json({ message: 'Please sign in.' }, { status: 401 });
 
   await connectDB();
-  const notifications = await ServiceNotification.find({ userId: session.user.id })
-    .sort({ updatedAt: -1 })
-    .limit(100)
-    .select('serviceType relatedType relatedId isRead adminResponded updatedAt')
-    .lean();
-
-  return NextResponse.json({
-    unread: notifications.filter((notification) => !notification.isRead && notification.adminResponded).length,
-    notifications: notifications.map((notification) => ({
+  const [serviceNotifications, noticeNotifications] = await Promise.all([
+    ServiceNotification.find({ userId: session.user.id })
+      .sort({ updatedAt: -1 })
+      .limit(100)
+      .select('serviceType relatedType relatedId isRead adminResponded updatedAt')
+      .lean(),
+    CitizenNotification.find({ userId: session.user.id, relatedType: 'notice' })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .select('title message relatedId isRead createdAt updatedAt')
+      .lean(),
+  ]);
+  const notifications = [
+    ...serviceNotifications.map((notification) => ({
       id: notification._id.toString(),
       serviceType: notification.serviceType,
       relatedType: notification.relatedType,
@@ -33,6 +39,26 @@ export async function GET() {
       title: `Update for your ${notification.serviceType.replace(/[-:]/g, ' ')}`,
       link: links[notification.relatedType](notification.relatedId.toString()),
     })),
+    ...noticeNotifications.map((notification) => ({
+      id: notification._id.toString(),
+      serviceType: 'Community notice',
+      relatedType: 'notice',
+      relatedId: notification.relatedId.toString(),
+      isRead: notification.isRead,
+      adminResponded: notification.createdAt,
+      createdAt: notification.createdAt,
+      updatedAt: notification.updatedAt,
+      title: notification.title,
+      message: notification.message,
+      link: `/notifications/${notification.relatedId}`,
+    })),
+  ].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 100);
+
+  return NextResponse.json({
+    unread: notifications.filter((notification) =>
+      !notification.isRead && (notification.relatedType === 'notice' || notification.adminResponded)
+    ).length,
+    notifications,
   });
 }
 
@@ -42,10 +68,29 @@ export async function PATCH(request) {
 
   const { id, all } = await request.json().catch(() => ({}));
   await connectDB();
-  const filter = { userId: session.user.id, adminResponded: { $ne: null } };
-  if (!all) filter._id = id;
-
   if (!all && !id) return NextResponse.json({ message: 'Notification ID is required.' }, { status: 400 });
-  await ServiceNotification.updateMany(filter, { $set: { isRead: true } });
+  if (all) {
+    await Promise.all([
+      ServiceNotification.updateMany(
+        { userId: session.user.id, adminResponded: { $ne: null } },
+        { $set: { isRead: true } },
+      ),
+      CitizenNotification.updateMany(
+        { userId: session.user.id, relatedType: 'notice' },
+        { $set: { isRead: true } },
+      ),
+    ]);
+  } else {
+    await Promise.all([
+      ServiceNotification.updateOne(
+        { _id: id, userId: session.user.id, adminResponded: { $ne: null } },
+        { $set: { isRead: true } },
+      ),
+      CitizenNotification.updateOne(
+        { _id: id, userId: session.user.id, relatedType: 'notice' },
+        { $set: { isRead: true } },
+      ),
+    ]);
+  }
   return NextResponse.json({ success: true });
 }
