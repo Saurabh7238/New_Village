@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 export default function WelcomeToast() {
   const [showToast, setShowToast] = useState(false);
   const [message, setMessage] = useState("");
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   const displayName =
     session?.user?.name || session?.user?.email?.split("@")[0] || null;
@@ -18,14 +18,21 @@ export default function WelcomeToast() {
     const isWelcome = params.get("welcome") === "true";
     const isLogout = params.get("logout") === "true";
 
-    if (isWelcome || isLogout) {
-      if (isWelcome) {
-        setMessage(`Welcome to Chiutahara Portal${displayName ? `, ${displayName}` : ""}!`);
-      } else {
-        setMessage("You have successfully logged out.");
-      }
+    if (isWelcome && status === "loading") return undefined;
+    if (isWelcome && status === "authenticated") {
+      setMessage(`Welcome to Chiutahara Portal, ${displayName || "there"}!`);
       setShowToast(true);
       params.delete("welcome");
+      const newSearch = params.toString();
+      const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}${window.location.hash || ""}`;
+      window.history.replaceState({}, "", newUrl);
+      const timeout = window.setTimeout(() => setShowToast(false), 5000);
+      return () => window.clearTimeout(timeout);
+    }
+
+    if (isLogout) {
+      setMessage("You have successfully logged out.");
+      setShowToast(true);
       params.delete("logout");
       const newSearch = params.toString();
       const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}${window.location.hash || ""}`;
@@ -33,8 +40,15 @@ export default function WelcomeToast() {
       const timeout = window.setTimeout(() => setShowToast(false), 5000);
       return () => window.clearTimeout(timeout);
     }
+
+    if (isWelcome && status === "unauthenticated") {
+      params.delete("welcome");
+      const newSearch = params.toString();
+      const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}${window.location.hash || ""}`;
+      window.history.replaceState({}, "", newUrl);
+    }
     return undefined;
-  }, [displayName]);
+  }, [displayName, status]);
 
   return (
     <AnimatePresence>

@@ -24,7 +24,6 @@ export default function Header() {
   const [darkMode, setDarkMode] = useState(false);
   const [siteBranding, setSiteBranding] = useState({});
   const [largeText, setLargeText] = useState(false);
-  const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
   const notificationRef = useRef(null);
   const menuButtonRef = useRef(null);
   const menuPanelRef = useRef(null);
@@ -38,11 +37,6 @@ export default function Header() {
     session?.user?.email?.split("@")[0] ||
     session?.user?.role ||
     null;
-
-  useEffect(() => {
-    const welcomeTimeout = window.setTimeout(() => setShowWelcomeMessage(false), 6000);
-    return () => window.clearTimeout(welcomeTimeout);
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -264,18 +258,12 @@ export default function Header() {
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
       <div className="overflow-hidden border-b border-white/10 bg-slate-900">
-        {showWelcomeMessage ? (
-          <div className="py-1.5 text-center text-xs font-semibold tracking-wide text-slate-200">
-            Welcome to Chiutahara Portal
+        <div className="py-1.5 text-xs font-semibold tracking-wide text-slate-200">
+          <div className="panchayat-motto-track flex w-max whitespace-nowrap">
+            <span className="px-8">Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen</span>
+            <span aria-hidden="true" className="px-8">Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen</span>
           </div>
-        ) : (
-          <div className="py-1.5 text-xs font-semibold tracking-wide text-slate-200">
-            <div className="panchayat-motto-track flex w-max whitespace-nowrap">
-              <span className="px-8">Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen</span>
-              <span aria-hidden="true" className="px-8">Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen</span>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       <div className="mx-auto flex max-w-6xl flex-nowrap items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 lg:px-8">
