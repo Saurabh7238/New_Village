@@ -1,40 +1,52 @@
 import dbConnect from '@/lib/dbConnect';
 import { requireAdminSession } from '@/lib/adminAuth';
 import HomeSettings from '@/models/HomeSettings';
+import SiteAsset from '@/models/SiteAsset';
 
 export async function GET() {
   try {
     await dbConnect();
     const settings = await HomeSettings.findOne({ name: 'default' }).lean();
+    const assets = await SiteAsset.find({}).select('key mimeType updatedAt').lean();
+    const branding = Object.fromEntries(assets.map((asset) => [
+      asset.key,
+      {
+        url: `/api/site-assets/${asset.key}?v=${new Date(asset.updatedAt).getTime()}`,
+        mimeType: asset.mimeType,
+      },
+    ]));
 
     return Response.json({
-      settings: settings || {
-        name: 'default',
-        popupEnabled: true,
-        popupTitle: 'Important Update',
-        popupMessage: 'Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.',
-        popupLink: '',
-        galleryProtectionEnabled: false,
-        slides: [
-          {
-            title: 'Village Services',
-            imageUrl: '/slide.png',
-            alt: 'Village services banner',
-            href: '/grievance',
-          },
-          {
-            title: 'Voter Services',
-            imageUrl: '/voter.png',
-            alt: 'Voter list banner',
-            href: '/voter',
-          },
-          {
-            title: 'Panchayat Campus',
-            imageUrl: '/panchayat.jpg',
-            alt: 'Panchayat campus banner',
-            href: '/about',
-          },
-        ],
+      settings: {
+        ...(settings || {
+          name: 'default',
+          popupEnabled: true,
+          popupTitle: 'Important Update',
+          popupMessage: 'Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.',
+          popupLink: '',
+          galleryProtectionEnabled: false,
+          slides: [
+            {
+              title: 'Village Services',
+              imageUrl: '/slide.png',
+              alt: 'Village services banner',
+              href: '/grievance',
+            },
+            {
+              title: 'Voter Services',
+              imageUrl: '/voter.png',
+              alt: 'Voter list banner',
+              href: '/voter',
+            },
+            {
+              title: 'Panchayat Campus',
+              imageUrl: '/panchayat.jpg',
+              alt: 'Panchayat campus banner',
+              href: '/about',
+            },
+          ],
+        }),
+        branding,
       },
     });
   } catch (error) {

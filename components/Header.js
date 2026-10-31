@@ -9,7 +9,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Bell, Moon, Sun, Phone, Menu as MenuIcon, X } from "lucide-react";
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
-import { TYPE_LABELS } from "@/lib/notificationConstants";
+import { GREETING_CATEGORIES, TYPE_LABELS } from "@/lib/notificationConstants";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -22,6 +22,7 @@ export default function Header() {
   const [serviceNotifications, setServiceNotifications] = useState([]);
   const [serviceUnreadCount, setServiceUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
+  const [siteBranding, setSiteBranding] = useState({});
   const [largeText, setLargeText] = useState(false);
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
   const notificationRef = useRef(null);
@@ -41,6 +42,23 @@ export default function Header() {
   useEffect(() => {
     const welcomeTimeout = window.setTimeout(() => setShowWelcomeMessage(false), 6000);
     return () => window.clearTimeout(welcomeTimeout);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/admin/home-settings', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load site branding.');
+        return response.json();
+      })
+      .then((data) => {
+        if (active) setSiteBranding(data.settings?.branding || {});
+      })
+      .catch((error) => console.error('Failed to load header branding:', error));
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -106,7 +124,12 @@ export default function Header() {
     setLargeText(document.documentElement.classList.contains("text-size-large"));
 
     const loadNotifications = () => {
-      fetch("/api/notifications?page=1&limit=5")
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '5',
+        excludeCategories: GREETING_CATEGORIES.join(','),
+      });
+      fetch(`/api/notifications?${params.toString()}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           const items = Array.isArray(data?.notifications)
@@ -259,11 +282,12 @@ export default function Header() {
         <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
           <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12">
             <Image
-              src="/favicon .ico"
+              src={siteBranding.darkLogo?.url || siteBranding.logo?.url || '/favicon.png'}
               alt="Chiutahara Heritage Village logo"
               fill
               sizes="(max-width: 640px) 40px, 48px"
-              className="object-cover"
+              unoptimized
+              className="object-contain"
               priority
             />
           </span>

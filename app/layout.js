@@ -5,6 +5,7 @@ import ScrollToTopButton from "../components/ScrollToTopButton";
 import WelcomeToast from "../components/WelcomeToast";
 import ChatWidget from "../components/ChatWidget";
 import PwaRegistration from "../components/PwaRegistration";
+import SiteFooter from "../components/SiteFooter";
 import { LanguageProvider } from "./language-provider";
 
 export const metadata = {
@@ -23,13 +24,13 @@ export const metadata = {
     title: "Gram Panchayat Chiutahara",
     description: "Digital access to Gram Panchayat Chiutahara services and information.",
     url: "https://www.grampanchayatchiutahara.online",
-    images: [{ url: "/favicon.png", width: 512, height: 512, alt: "Gram Panchayat Chiutahara" }],
+    images: [{ url: "/api/site-assets/logo", width: 512, height: 512, alt: "Gram Panchayat Chiutahara" }],
   },
   twitter: {
     card: "summary",
     title: "Gram Panchayat Chiutahara",
     description: "Digital access to Gram Panchayat Chiutahara services and information.",
-    images: ["/favicon.png"],
+    images: ["/api/site-assets/logo"],
   },
   robots: {
     index: true,
@@ -40,9 +41,9 @@ export const metadata = {
     "ea9456cfebe0b9f15eb7": "7332b2c0c97e285c3aca",
   },
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: "/api/site-assets/favicon",
+    shortcut: "/api/site-assets/favicon",
+    apple: "/api/site-assets/favicon",
   },
   appleWebApp: {
     capable: true,
@@ -71,7 +72,7 @@ export default function RootLayout({ children }) {
               "@type": "Organization",
               name: "Gram Panchayat Chiutahara",
               url: "https://www.grampanchayatchiutahara.online",
-              logo: "https://www.grampanchayatchiutahara.online/favicon.png",
+              logo: "https://www.grampanchayatchiutahara.online/api/site-assets/logo",
               sameAs: [],
             }),
           }}
@@ -106,11 +107,7 @@ export default function RootLayout({ children }) {
             </main>
             <ScrollToTopButton />
             <ChatWidget />
-            <footer className="border-t border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-              <div className="mx-auto max-w-6xl px-4 py-5 text-center text-sm">
-                © {new Date().getFullYear()} Gram Panchayat Chiutahara
-              </div>
-            </footer>
+            <SiteFooter />
           </LanguageProvider>
         </Providers>
       </body>

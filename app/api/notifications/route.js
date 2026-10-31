@@ -6,6 +6,7 @@ import NotificationDocument from '@/models/NotificationDocument';
 import mongoose from 'mongoose';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { syncNotificationLifecycle } from '@/lib/notificationLifecycle';
+import { GREETING_CATEGORIES } from '@/lib/notificationConstants';
 
 async function getSession() {
   return await getServerSession(authOptions);
@@ -35,6 +36,9 @@ export async function GET(request) {
     const type = searchParams.get('type');
     const level = searchParams.get('level');
     const category = searchParams.get('category');
+    const excludedCategories = (searchParams.get('excludeCategories') || '')
+      .split(',')
+      .filter((value) => GREETING_CATEGORIES.includes(value));
     const status = searchParams.get('status');
     const search = searchParams.get('search');
     const dateFrom = searchParams.get('dateFrom');
@@ -70,6 +74,9 @@ export async function GET(request) {
     if (type) filter.type = type;
     if (level) filter.level = level;
     if (category) filter.category = category;
+    if (excludedCategories.length > 0) {
+      filter.$and = [...(filter.$and || []), { category: { $nin: excludedCategories } }];
+    }
     if (status && isAdmin) filter.status = status;
 
     if (search) {
@@ -155,6 +162,9 @@ export async function POST(request) {
     await dbConnect();
     const body = await request.json();
     const { type, level, title, description, issueDate, validTill, priority, status, category, scheduledPublishDate } = body;
+    const notificationType = GREETING_CATEGORIES.includes(category)
+      ? 'message'
+      : type;
     const issueDateValue = issueDate ? new Date(issueDate) : new Date();
     const validTillValue = validTill ? new Date(validTill) : null;
     const scheduledPublishDateValue = scheduledPublishDate ? new Date(scheduledPublishDate) : null;
@@ -170,7 +180,7 @@ export async function POST(request) {
       );
     }
 
-    if (!type || !level || !title || !description) {
+    if (!notificationType || !level || !title || !description) {
       return NextResponse.json(
         { success: false, message: 'Type, level, title, and description are required' },
         { status: 400 }
@@ -212,7 +222,7 @@ export async function POST(request) {
     }
 
     const newNotification = await NotificationBoard.create({
-      type,
+      type: notificationType,
       level,
       title,
       description,
@@ -270,7 +280,8 @@ export async function PUT(request) {
     }
 
     const body = await request.json();
-    const { title, description, level, priority, status, issueDate, validTill, category, scheduledPublishDate } = body;
+    const { title, description, level, priority, status, issueDate, validTill, category, scheduledPublishDate, type } = body;
+    const notificationType = GREETING_CATEGORIES.includes(category) ? 'message' : type;
     const issueDateValue = issueDate ? new Date(issueDate) : undefined;
     const validTillValue = validTill ? new Date(validTill) : null;
     const scheduledPublishDateValue = scheduledPublishDate ? new Date(scheduledPublishDate) : null;
@@ -335,6 +346,7 @@ export async function PUT(request) {
     const updatedNotification = await NotificationBoard.findByIdAndUpdate(
       id,
       {
+        ...(notificationType ? { type: notificationType } : {}),
         title,
         description,
         level,

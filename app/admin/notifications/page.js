@@ -9,6 +9,7 @@ import {
   NOTIFICATION_PRIORITIES,
   NOTIFICATION_STATUS,
   NOTIFICATION_CATEGORIES,
+  GREETING_CATEGORIES,
   TYPE_LABELS,
   LEVEL_LABELS,
   PRIORITY_LABELS,
@@ -27,8 +28,6 @@ import {
   formatFileSize,
   getIconForFileType,
 } from '@/lib/notificationDisplay';
-
-const GREETING_CATEGORIES = ['birthday', 'greeting', 'congratulations', 'condolence'];
 
 function toLocalDateTimeInput(value) {
   const date = new Date(value);
@@ -308,6 +307,7 @@ export default function AdminNotificationsPage() {
 
       const payload = {
         ...formData,
+        type: GREETING_CATEGORIES.includes(formData.category) ? 'message' : formData.type,
         title: trimmedTitle,
         description: trimmedDescription,
         validTill: formData.validTill
@@ -500,8 +500,8 @@ export default function AdminNotificationsPage() {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Type */}
-              <div>
+              {/* Official announcement types do not apply to community greetings. */}
+              {!GREETING_CATEGORIES.includes(formData.category) && <div>
                 <label className="block text-sm font-medium mb-2">Type *</label>
                 <select
                   name="type"
@@ -516,7 +516,7 @@ export default function AdminNotificationsPage() {
                     </option>
                   ))}
                 </select>
-              </div>
+              </div>}
 
               {/* Level */}
               <div>
@@ -632,7 +632,14 @@ export default function AdminNotificationsPage() {
                 <select
                   name="category"
                   value={formData.category}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    const category = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      category,
+                      ...(GREETING_CATEGORIES.includes(category) ? { type: 'message' } : {}),
+                    }));
+                  }}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
                 >
                   {NOTIFICATION_CATEGORIES.map((c) => (

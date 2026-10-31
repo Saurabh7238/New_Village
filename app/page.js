@@ -48,6 +48,7 @@ export default function HomePage() {
     popupTitle: "Important Update",
     popupMessage: "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
     popupLink: "",
+    heroBackgroundImage: "",
     slides: DEFAULT_SLIDES,
   });
   const [reviews, setReviews] = useState([]);
@@ -118,6 +119,7 @@ export default function HomePage() {
             popupTitle: data.settings.popupTitle || "Important Update",
             popupMessage: data.settings.popupMessage || "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
             popupLink: data.settings.popupLink || "",
+            heroBackgroundImage: data.settings.branding?.heroImage?.url || "",
             slides: Array.isArray(data.settings.slides) && data.settings.slides.length
               ? data.settings.slides
               : DEFAULT_SLIDES,
@@ -450,7 +452,12 @@ export default function HomePage() {
 
         {/* Main Content */}
         <div className="space-y-5 pb-5 transition-colors duration-300 sm:space-y-7">
-          <section className="overflow-hidden rounded-3xl border border-teal-950/10 bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-800 text-white shadow-xl shadow-teal-950/10">
+          <section
+            className="overflow-hidden rounded-3xl border border-teal-950/10 bg-gradient-to-br from-teal-950 via-teal-900 to-emerald-800 bg-cover bg-center text-white shadow-xl shadow-teal-950/10"
+            style={homeSettings.heroBackgroundImage ? {
+              backgroundImage: `linear-gradient(115deg, rgba(4, 47, 46, 0.94), rgba(15, 118, 110, 0.78)), url("${homeSettings.heroBackgroundImage}")`,
+            } : undefined}
+          >
             <div>
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .45 }} className="flex flex-col items-start px-5 py-8 sm:px-9 sm:py-10 lg:px-12 lg:py-14">
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[.14em] text-teal-50">
