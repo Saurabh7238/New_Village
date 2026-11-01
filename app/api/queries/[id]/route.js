@@ -8,6 +8,7 @@ import ServiceNotification from '@/models/ServiceNotification';
 import CitizenNotification from '@/models/CitizenNotification';
 import QueryMessage from '@/models/QueryMessage';
 import { writeAuditLog } from '@/lib/writeAuditLog';
+import { sendTrackedEmail } from '@/lib/trackedEmail';
 
 export async function GET(request, { params }) {
   await connectDB();
@@ -110,6 +111,7 @@ export async function PUT(request, { params }) {
       };
     }
 
+    const previousQuery = status ? await Query.findById(id).select('status').lean() : null;
     const query = await Query.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
 
     if (!query) {
@@ -133,6 +135,17 @@ export async function PUT(request, { params }) {
         { upsert: true },
       );
       await CitizenNotification.create({ userId: query.userId, title: `Query ${query.queryId} updated`, message: query.adminRemarks || `Your query status is now ${query.status}.`, type: 'query', relatedType: 'query', relatedId: query._id });
+    }
+    if (status && previousQuery?.status !== query.status && query.userId) {
+      await sendTrackedEmail({
+        userId: query.userId,
+        category: 'grievance',
+        eventKey: `grievance:${query._id}:${query.status}:${query.updatedAt.toISOString()}`,
+        relatedType: 'query',
+        relatedId: query._id,
+        subject: `Grievance ${query.queryId} update: ${query.status}`,
+        text: `Your grievance ${query.queryId} is now ${query.status}. Sign in to the Chiutahara Portal to view the latest details.`,
+      });
     }
 
     return NextResponse.json(query, { status: 200 });
@@ -163,6 +176,11 @@ export async function DELETE(_request, { params }) {
       ServiceNotification.deleteMany({ relatedType: 'query', relatedId: query._id }),
       CitizenNotification.deleteMany({ userId: query.userId, relatedType: 'query', relatedId: query._id }),
     ]);
+    await writeAuditLog({
+      session,
+      action: 'Grievance deleted',
+      details: { queryId: query._id.toString(), publicQueryId: query.queryId },
+    });
 
     return NextResponse.json({ message: `Query ${query.queryId} deleted successfully.` });
   } catch (error) {

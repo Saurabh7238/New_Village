@@ -23,6 +23,9 @@ const NoticeSubscriptionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    applicationEmailEnabled: { type: Boolean, default: false },
+    appointmentEmailEnabled: { type: Boolean, default: false },
+    grievanceEmailEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

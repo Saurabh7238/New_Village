@@ -2,6 +2,7 @@ import dbConnect from '@/lib/dbConnect';
 import { requireAdminSession } from '@/lib/adminAuth';
 import HomeSettings from '@/models/HomeSettings';
 import SiteAsset from '@/models/SiteAsset';
+import { writeAuditLog } from '@/lib/writeAuditLog';
 
 export async function GET() {
   try {
@@ -25,6 +26,10 @@ export async function GET() {
           popupMessage: 'Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.',
           popupLink: '',
           galleryProtectionEnabled: false,
+          noticeEmailNotificationsEnabled: true,
+          applicationEmailNotificationsEnabled: true,
+          appointmentEmailNotificationsEnabled: true,
+          grievanceEmailNotificationsEnabled: true,
           slides: [
             {
               title: 'Village Services',
@@ -46,6 +51,10 @@ export async function GET() {
             },
           ],
         }),
+        noticeEmailNotificationsEnabled: settings?.noticeEmailNotificationsEnabled !== false,
+        applicationEmailNotificationsEnabled: settings?.applicationEmailNotificationsEnabled !== false,
+        appointmentEmailNotificationsEnabled: settings?.appointmentEmailNotificationsEnabled !== false,
+        grievanceEmailNotificationsEnabled: settings?.grievanceEmailNotificationsEnabled !== false,
         branding,
       },
     });
@@ -93,12 +102,30 @@ export async function POST(req) {
     if (typeof payload.galleryProtectionEnabled === 'boolean') {
       update.galleryProtectionEnabled = payload.galleryProtectionEnabled;
     }
+    if (typeof payload.noticeEmailNotificationsEnabled === 'boolean') {
+      update.noticeEmailNotificationsEnabled = payload.noticeEmailNotificationsEnabled;
+    }
+    if (typeof payload.applicationEmailNotificationsEnabled === 'boolean') {
+      update.applicationEmailNotificationsEnabled = payload.applicationEmailNotificationsEnabled;
+    }
+    if (typeof payload.appointmentEmailNotificationsEnabled === 'boolean') {
+      update.appointmentEmailNotificationsEnabled = payload.appointmentEmailNotificationsEnabled;
+    }
+    if (typeof payload.grievanceEmailNotificationsEnabled === 'boolean') {
+      update.grievanceEmailNotificationsEnabled = payload.grievanceEmailNotificationsEnabled;
+    }
 
     const settings = await HomeSettings.findOneAndUpdate(
       { name: 'default' },
       update,
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
+    await writeAuditLog({
+      session,
+      action: 'Homepage settings updated',
+      entityType: 'home-settings',
+      details: { fields: Object.keys(update) },
+    });
 
     return Response.json({ success: true, settings });
   } catch (error) {
@@ -115,20 +142,43 @@ export async function PATCH(req) {
     }
 
     const payload = await req.json();
-    if (typeof payload.galleryProtectionEnabled !== 'boolean') {
-      return Response.json({ error: 'A gallery protection setting is required.' }, { status: 400 });
+    const update = {};
+    for (const setting of [
+      'galleryProtectionEnabled',
+      'noticeEmailNotificationsEnabled',
+      'applicationEmailNotificationsEnabled',
+      'appointmentEmailNotificationsEnabled',
+      'grievanceEmailNotificationsEnabled',
+    ]) {
+      if (typeof payload[setting] === 'boolean') update[setting] = payload[setting];
+    }
+    if (!Object.keys(update).length) {
+      return Response.json({ error: 'A supported setting is required.' }, { status: 400 });
     }
 
     await dbConnect();
     const settings = await HomeSettings.findOneAndUpdate(
       { name: 'default' },
-      { $set: { galleryProtectionEnabled: payload.galleryProtectionEnabled } },
+      { $set: update },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     ).lean();
+    await writeAuditLog({
+      session,
+      action: 'Notification email settings updated',
+      entityType: 'home-settings',
+      details: update,
+    });
 
-    return Response.json({ success: true, galleryProtectionEnabled: settings.galleryProtectionEnabled });
+    return Response.json({
+      success: true,
+      galleryProtectionEnabled: settings.galleryProtectionEnabled,
+      noticeEmailNotificationsEnabled: settings.noticeEmailNotificationsEnabled !== false,
+      applicationEmailNotificationsEnabled: settings.applicationEmailNotificationsEnabled !== false,
+      appointmentEmailNotificationsEnabled: settings.appointmentEmailNotificationsEnabled !== false,
+      grievanceEmailNotificationsEnabled: settings.grievanceEmailNotificationsEnabled !== false,
+    });
   } catch (error) {
-    console.error('Error updating gallery protection setting:', error);
-    return Response.json({ error: 'Failed to update gallery protection setting.' }, { status: 500 });
+    console.error('Error updating home settings:', error);
+    return Response.json({ error: 'Failed to update home settings.' }, { status: 500 });
   }
 }

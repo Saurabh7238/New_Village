@@ -159,7 +159,7 @@ export default function TrackPage() {
 
               <h3 className="text-xl font-bold mb-3">{query.subject}</h3>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2 sm:gap-4">
                 <div>
                   <p className={`text-xs ${labelClass}`}>Category</p>
                   <p className="font-semibold">{query.category}</p>
@@ -274,7 +274,7 @@ export default function TrackPage() {
             </div>
 
             {/* Download Options */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               <button
                 onClick={async () => {
                   const res = await fetch(`/api/queries/${query._id}/pdf?type=acknowledgment`);

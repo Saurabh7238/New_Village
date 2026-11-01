@@ -38,6 +38,9 @@ export default function NoticesPage() {
     categories: [],
     inAppEnabled: true,
     emailEnabled: false,
+    applicationEmailEnabled: false,
+    appointmentEmailEnabled: false,
+    grievanceEmailEnabled: false,
   });
   const [subscriptionEmail, setSubscriptionEmail] = useState('');
   const [emailConfigured, setEmailConfigured] = useState(false);
@@ -63,7 +66,12 @@ export default function NoticesPage() {
         setSubscription(data.subscription);
         setSubscriptionEmail(data.email || '');
         setEmailConfigured(Boolean(data.emailConfigured));
-        setHasSubscription(data.subscription.categories.length > 0);
+        setHasSubscription(
+          data.subscription.categories.length > 0
+          || data.subscription.applicationEmailEnabled
+          || data.subscription.appointmentEmailEnabled
+          || data.subscription.grievanceEmailEnabled
+        );
       } catch (loadError) {
         console.error('Failed to load notice subscription settings:', loadError);
         if (active) setSubscriptionError(loadError.message || 'Unable to load subscription settings.');
@@ -159,7 +167,12 @@ export default function NoticesPage() {
         throw new Error(data.message || 'Unable to save subscription settings.');
       }
       setSubscription(data.subscription);
-      setHasSubscription(true);
+      setHasSubscription(
+        data.subscription.categories.length > 0
+        || data.subscription.applicationEmailEnabled
+        || data.subscription.appointmentEmailEnabled
+        || data.subscription.grievanceEmailEnabled
+      );
       setSubscriptionMessage(data.message);
     } catch (saveError) {
       console.error('Failed to save notice subscription:', saveError);
@@ -179,7 +192,14 @@ export default function NoticesPage() {
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Unable to stop notice updates.');
       }
-      setSubscription({ categories: [], inAppEnabled: true, emailEnabled: false });
+      setSubscription((current) => ({
+        categories: [],
+        inAppEnabled: false,
+        emailEnabled: false,
+        applicationEmailEnabled: current.applicationEmailEnabled,
+        appointmentEmailEnabled: current.appointmentEmailEnabled,
+        grievanceEmailEnabled: current.grievanceEmailEnabled,
+      }));
       setHasSubscription(false);
       setSubscriptionMessage('You are unsubscribed from notice updates.');
     } catch (unsubscribeError) {
@@ -214,9 +234,9 @@ export default function NoticesPage() {
               <BellRing className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
-              <h2 id="notice-subscription-heading" className="text-lg font-bold">Get notice updates</h2>
+              <h2 id="notice-subscription-heading" className="text-lg font-bold">Notification preferences</h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                Subscribe to meetings, public deadlines, village events, and official updates.
+                Choose notice categories and email alerts for your service requests.
               </p>
             </div>
           </div>
@@ -284,13 +304,50 @@ export default function NoticesPage() {
                 )}
               </fieldset>
 
+              <fieldset>
+                <legend className="text-sm font-semibold">Email me when my request changes</legend>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  These are separate from public notice subscriptions. In-app service updates remain available in My Updates.
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  {[
+                    ['applicationEmailEnabled', 'Applications'],
+                    ['appointmentEmailEnabled', 'Appointments'],
+                    ['grievanceEmailEnabled', 'Grievances'],
+                  ].map(([field, label]) => (
+                    <label key={field} className={`flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 ${!emailConfigured || !subscriptionEmail ? 'opacity-60' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={subscription[field]}
+                        disabled={!emailConfigured || !subscriptionEmail}
+                        onChange={(event) => setSubscription((current) => ({ ...current, [field]: event.target.checked }))}
+                        className="h-4 w-4 accent-teal-700"
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
               {subscriptionError && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">{subscriptionError}</p>}
               {subscriptionMessage && <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{subscriptionMessage}</p>}
 
               <div className="flex flex-wrap gap-2">
                 <button
                   type="submit"
-                  disabled={subscriptionSaving || subscription.categories.length === 0 || (!subscription.inAppEnabled && !subscription.emailEnabled)}
+                  disabled={subscriptionSaving || (
+                    subscription.categories.length === 0
+                    && !subscription.applicationEmailEnabled
+                    && !subscription.appointmentEmailEnabled
+                    && !subscription.grievanceEmailEnabled
+                  ) || (
+                    subscription.categories.length > 0
+                    && !subscription.inAppEnabled
+                    && !subscription.emailEnabled
+                    && !subscription.applicationEmailEnabled
+                    && !subscription.appointmentEmailEnabled
+                    && !subscription.grievanceEmailEnabled
+                  )}
                   className="rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {subscriptionSaving ? 'Saving...' : hasSubscription ? 'Update subscription' : 'Subscribe to updates'}

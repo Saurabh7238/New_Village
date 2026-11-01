@@ -35,8 +35,8 @@ export default function RequestStatusCard({ item, type }) {
       <div><p className="font-bold text-emerald-700 dark:text-emerald-300">{reference}</p><p className="mt-1 capitalize text-sm text-slate-600 dark:text-slate-300">{title}</p></div>
       <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{item.status}</span>
     </div>
-    <ol className="mt-5 flex items-start" aria-label={`Status timeline for ${reference}`}>
-      {steps.map((step, index) => <li key={step} className="flex flex-1 flex-col items-center text-center text-[11px] font-medium text-slate-500 dark:text-slate-400"><span className={`grid h-6 w-6 place-items-center rounded-full ${index <= activeIndex ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"}`}>{index < activeIndex ? "✓" : index + 1}</span><span className="mt-1">{step}</span></li>)}
+    <ol className="mt-5 flex items-start overflow-x-auto pb-2" aria-label={`Status timeline for ${reference}`}>
+      {steps.map((step, index) => <li key={step} className="flex min-w-16 flex-1 flex-col items-center px-1 text-center text-[10px] font-medium text-slate-500 dark:text-slate-400 sm:min-w-0 sm:text-[11px]"><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${index <= activeIndex ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"}`}>{index < activeIndex ? "✓" : index + 1}</span><span className="mt-1 break-words">{step}</span></li>)}
     </ol>
     <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">Submitted {new Date(item.createdAt || item.appointmentDate).toLocaleDateString()}</p>
     {item.adminRemarks && <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-700 dark:text-slate-200"><strong>Latest update:</strong> {item.adminRemarks}</p>}

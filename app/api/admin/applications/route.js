@@ -8,6 +8,7 @@ import { writeAuditLog } from '@/lib/writeAuditLog';
 import { emitApplicationUpdated, emitDocumentRequested } from '@/lib/socketEmitter';
 import CitizenDocument from '@/models/CitizenDocument';
 import { dataUrlByteLength, hasDocumentQuota, MAX_USER_DOCUMENT_BYTES } from '@/lib/documentQuota';
+import { sendTrackedEmail } from '@/lib/trackedEmail';
 
 const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Updated', 'Approved', 'Rejected', 'Completed'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -106,6 +107,18 @@ export async function PUT(request) {
         relatedId: application._id,
       });
 
+      if (statusChanged) {
+        await sendTrackedEmail({
+          userId: application.userId,
+          category: 'application',
+          eventKey: `application:${application._id}:${application.status}:${application.updatedAt.toISOString()}`,
+          relatedType: 'application',
+          relatedId: application._id,
+          subject: `Application ${application.applicationNumber}: ${application.status}`,
+          text: `Your ${application.serviceType.replace(/-/g, ' ')} application ${application.applicationNumber} is now ${application.status}. Sign in to the Chiutahara Portal to view the latest details.`,
+        });
+      }
+
       // Emit Socket.io events for real-time updates
       if (requestedDocumentsChanged && nextRequestedDocuments.length > 0) {
         await emitDocumentRequested(application, nextRequestedDocuments);
@@ -133,6 +146,11 @@ export async function DELETE(request) {
     if (!application) return NextResponse.json({ message: 'Application not found.' }, { status: 404 });
     await ServiceNotification.deleteOne({ relatedType: 'application', relatedId: application._id });
     await CitizenNotification.deleteMany({ userId: application.userId, relatedType: 'application', relatedId: application._id });
+    await writeAuditLog({
+      session,
+      action: 'Application deleted',
+      details: { applicationId: application._id.toString(), applicationNumber: application.applicationNumber },
+    });
     return NextResponse.json({ message: 'Application deleted successfully.' });
   } catch (error) {
     console.error('Admin application delete error:', error);

@@ -32,8 +32,18 @@ export async function GET() {
             categories: subscription.categories,
             inAppEnabled: subscription.inAppEnabled,
             emailEnabled: subscription.emailEnabled,
+            applicationEmailEnabled: subscription.applicationEmailEnabled === true,
+            appointmentEmailEnabled: subscription.appointmentEmailEnabled === true,
+            grievanceEmailEnabled: subscription.grievanceEmailEnabled === true,
           }
-        : { categories: [], inAppEnabled: true, emailEnabled: false },
+        : {
+            categories: [],
+            inAppEnabled: true,
+            emailEnabled: false,
+            applicationEmailEnabled: false,
+            appointmentEmailEnabled: false,
+            grievanceEmailEnabled: false,
+          },
     });
   } catch (error) {
     console.error('Failed to load notice subscription:', error);
@@ -55,14 +65,18 @@ export async function PUT(request) {
     )];
     const inAppEnabled = body.inAppEnabled === true;
     const emailEnabled = body.emailEnabled === true;
+    const applicationEmailEnabled = body.applicationEmailEnabled === true;
+    const appointmentEmailEnabled = body.appointmentEmailEnabled === true;
+    const grievanceEmailEnabled = body.grievanceEmailEnabled === true;
+    const hasServiceEmailPreference = applicationEmailEnabled || appointmentEmailEnabled || grievanceEmailEnabled;
 
-    if (categories.length === 0) {
+    if (categories.length === 0 && !hasServiceEmailPreference) {
       return NextResponse.json({ success: false, message: 'Select at least one notice category.' }, { status: 400 });
     }
-    if (!inAppEnabled && !emailEnabled) {
+    if (categories.length > 0 && !inAppEnabled && !emailEnabled && !hasServiceEmailPreference) {
       return NextResponse.json({ success: false, message: 'Enable at least one delivery method.' }, { status: 400 });
     }
-    if (emailEnabled && !isNoticeEmailConfigured()) {
+    if ((emailEnabled || hasServiceEmailPreference) && !isNoticeEmailConfigured()) {
       return NextResponse.json({
         success: false,
         message: 'Email delivery is not configured yet. Ask the site administrator to configure SMTP settings.',
@@ -74,7 +88,7 @@ export async function PUT(request) {
     if (!user) {
       return NextResponse.json({ success: false, message: 'Account not found.' }, { status: 404 });
     }
-    if (emailEnabled && !user.email) {
+    if ((emailEnabled || hasServiceEmailPreference) && !user.email) {
       return NextResponse.json({
         success: false,
         message: 'Add an email address to your account before enabling email notices.',
@@ -83,7 +97,14 @@ export async function PUT(request) {
 
     const subscription = await NoticeSubscription.findOneAndUpdate(
       { userId: session.user.id },
-      { $set: { categories, inAppEnabled, emailEnabled } },
+      { $set: {
+        categories,
+        inAppEnabled,
+        emailEnabled,
+        applicationEmailEnabled,
+        appointmentEmailEnabled,
+        grievanceEmailEnabled,
+      } },
       { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
     ).lean();
 
@@ -94,6 +115,9 @@ export async function PUT(request) {
         categories: subscription.categories,
         inAppEnabled: subscription.inAppEnabled,
         emailEnabled: subscription.emailEnabled,
+        applicationEmailEnabled: subscription.applicationEmailEnabled,
+        appointmentEmailEnabled: subscription.appointmentEmailEnabled,
+        grievanceEmailEnabled: subscription.grievanceEmailEnabled,
       },
     });
   } catch (error) {
@@ -110,7 +134,16 @@ export async function DELETE() {
     }
 
     await dbConnect();
-    await NoticeSubscription.deleteOne({ userId: session.user.id });
+    const subscription = await NoticeSubscription.findOne({ userId: session.user.id });
+    if (subscription) {
+      subscription.categories = [];
+      subscription.inAppEnabled = false;
+      subscription.emailEnabled = false;
+      await subscription.save();
+      if (!subscription.applicationEmailEnabled && !subscription.appointmentEmailEnabled && !subscription.grievanceEmailEnabled) {
+        await NoticeSubscription.deleteOne({ _id: subscription._id });
+      }
+    }
     return NextResponse.json({ success: true, message: 'Notice subscription removed.' });
   } catch (error) {
     console.error('Failed to remove notice subscription:', error);

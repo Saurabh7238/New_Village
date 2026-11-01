@@ -8,6 +8,7 @@ import { authOptions } from '../auth/[...nextauth]/route';
 import { syncNotificationLifecycle } from '@/lib/notificationLifecycle';
 import { GREETING_CATEGORIES } from '@/lib/notificationConstants';
 import { notifyNoticeSubscribers } from '@/lib/noticeNotificationService';
+import { writeAuditLog } from '@/lib/writeAuditLog';
 
 async function getSession() {
   return await getServerSession(authOptions);
@@ -241,15 +242,21 @@ export async function POST(request) {
       try {
         const delivery = await notifyNoticeSubscribers(newNotification);
         if (delivery.emailFailed) {
-          deliveryWarning = delivery.emailConfigured
-            ? ` Notice published, but email delivery failed for ${delivery.emailFailed} subscriber(s).`
-            : ' Notice published, but email delivery is not configured.';
+          deliveryWarning = ` Notice published, but email delivery failed for ${delivery.emailFailed} subscriber(s). Review delivery history for details.`;
         }
       } catch (error) {
         console.error('Notice published, but subscriber delivery failed:', error);
         deliveryWarning = ' Notice published, but subscriber alerts could not be delivered.';
       }
     }
+
+    await writeAuditLog({
+      session,
+      action: 'Notice created',
+      entityType: 'notice',
+      entityId: newNotification._id.toString(),
+      details: { title: newNotification.title, category: newNotification.category, status: newNotification.status },
+    });
 
     return NextResponse.json(
       {
@@ -388,15 +395,21 @@ export async function PUT(request) {
       try {
         const delivery = await notifyNoticeSubscribers(updatedNotification);
         if (delivery.emailFailed) {
-          deliveryWarning = delivery.emailConfigured
-            ? ` Notice updated, but email delivery failed for ${delivery.emailFailed} subscriber(s).`
-            : ' Notice updated, but email delivery is not configured.';
+          deliveryWarning = ` Notice updated, but email delivery failed for ${delivery.emailFailed} subscriber(s). Review delivery history for details.`;
         }
       } catch (error) {
         console.error('Notice updated, but subscriber delivery failed:', error);
         deliveryWarning = ' Notice updated, but subscriber alerts could not be delivered.';
       }
     }
+
+    await writeAuditLog({
+      session,
+      action: 'Notice updated',
+      entityType: 'notice',
+      entityId: updatedNotification._id.toString(),
+      details: { title: updatedNotification.title, category: updatedNotification.category, status: updatedNotification.status },
+    });
 
     const documents = await NotificationDocument.find({
       notificationId: id,
@@ -460,6 +473,13 @@ export async function DELETE(request) {
     }
 
     await NotificationDocument.deleteMany({ notificationId: id });
+    await writeAuditLog({
+      session,
+      action: 'Notice deleted',
+      entityType: 'notice',
+      entityId: deletedNotification._id.toString(),
+      details: { title: deletedNotification.title, category: deletedNotification.category },
+    });
 
     return NextResponse.json(
       { success: true, message: 'Notification deleted successfully' },

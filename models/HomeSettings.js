@@ -38,6 +38,10 @@ const HomeSettingsSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    noticeEmailNotificationsEnabled: { type: Boolean, default: true },
+    applicationEmailNotificationsEnabled: { type: Boolean, default: true },
+    appointmentEmailNotificationsEnabled: { type: Boolean, default: true },
+    grievanceEmailNotificationsEnabled: { type: Boolean, default: true },
     slides: {
       type: [SlideSchema],
       default: [

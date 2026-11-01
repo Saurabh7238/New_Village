@@ -29,6 +29,13 @@ import {
   getIconForFileType,
 } from '@/lib/notificationDisplay';
 
+const EMAIL_SETTINGS = [
+  ['noticeEmailNotificationsEnabled', 'Notice subscriber emails'],
+  ['applicationEmailNotificationsEnabled', 'Application status emails'],
+  ['appointmentEmailNotificationsEnabled', 'Appointment status emails'],
+  ['grievanceEmailNotificationsEnabled', 'Grievance status emails'],
+];
+
 function toLocalDateTimeInput(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
@@ -165,6 +172,14 @@ export default function AdminNotificationsPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
+  const [emailSettings, setEmailSettings] = useState({
+    noticeEmailNotificationsEnabled: true,
+    applicationEmailNotificationsEnabled: true,
+    appointmentEmailNotificationsEnabled: true,
+    grievanceEmailNotificationsEnabled: true,
+  });
+  const [emailSettingsLoaded, setEmailSettingsLoaded] = useState(false);
+  const [savingEmailSetting, setSavingEmailSetting] = useState('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -233,6 +248,49 @@ export default function AdminNotificationsPage() {
     setMessage(msg);
     setMessageType(type);
     setTimeout(() => setMessage(''), 4000);
+  };
+
+  useEffect(() => {
+    if (status !== 'authenticated' || session?.user?.role !== 'admin') return undefined;
+    let active = true;
+    fetch('/api/admin/home-settings', { cache: 'no-store' })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Unable to load email settings.');
+        return data.settings;
+      })
+      .then((settings) => {
+        if (!active) return;
+        setEmailSettings(Object.fromEntries(
+          EMAIL_SETTINGS.map(([field]) => [field, settings?.[field] !== false])
+        ));
+        setEmailSettingsLoaded(true);
+      })
+      .catch((error) => {
+        console.error('Email settings load failed:', error);
+        if (active) showMessage('Unable to load email notification settings.', 'error');
+      });
+    return () => { active = false; };
+  }, [session?.user?.role, status]);
+
+  const updateEmailSetting = async (field, enabled) => {
+    setSavingEmailSetting(field);
+    try {
+      const response = await fetch('/api/admin/home-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: enabled }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to update email setting.');
+      setEmailSettings((current) => ({ ...current, [field]: data[field] !== false }));
+      showMessage(`${EMAIL_SETTINGS.find(([setting]) => setting === field)?.[1]} ${data[field] ? 'enabled' : 'disabled'}.`, 'success');
+    } catch (error) {
+      console.error('Email setting update failed:', error);
+      showMessage(error.message || 'Unable to update email setting.', 'error');
+    } finally {
+      setSavingEmailSetting('');
+    }
   };
 
   const handleInputChange = (e) => {
@@ -455,13 +513,44 @@ export default function AdminNotificationsPage() {
           <h1 className="text-3xl sm:text-4xl font-bold text-blue-700 dark:text-blue-400">
             Community Notice Board Manager
           </h1>
-          <button
-            onClick={() => signOut({ callbackUrl: "/?logout=true" })}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm"
-          >
-            Sign Out
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/email-deliveries" className="rounded bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">
+              Email delivery history
+            </Link>
+            <button
+              onClick={() => signOut({ callbackUrl: "/?logout=true" })}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
+
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="text-lg font-semibold">Email notification controls</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            Admin switches control whether each email type can be sent. Citizens’ own preferences are checked separately.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {EMAIL_SETTINGS.map(([field, label]) => (
+              <label key={field} className="flex min-h-12 items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700">
+                <span className="text-sm font-medium">{label}</span>
+                <span className="flex items-center gap-2 text-sm">
+                  <span>{emailSettings[field] ? 'On' : 'Off'}</span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    aria-label={label}
+                    checked={emailSettings[field]}
+                    disabled={!emailSettingsLoaded || Boolean(savingEmailSetting)}
+                    onChange={(event) => updateEmailSetting(field, event.target.checked)}
+                    className="h-5 w-5 accent-teal-700"
+                  />
+                </span>
+              </label>
+            ))}
+          </div>
+        </section>
 
         {/* Message */}
         {message && (
