@@ -4,7 +4,7 @@ import dbConnect from '@/lib/dbConnect';
 import NotificationBoard from '@/models/NotificationBoard';
 import NotificationDocument from '@/models/NotificationDocument';
 import mongoose from 'mongoose';
-import { authOptions } from '../auth/[...nextauth]/route';
+import authOptions from '@/lib/authOptions';
 import { syncNotificationLifecycle } from '@/lib/notificationLifecycle';
 import { GREETING_CATEGORIES } from '@/lib/notificationConstants';
 import { notifyNoticeSubscribers } from '@/lib/noticeNotificationService';

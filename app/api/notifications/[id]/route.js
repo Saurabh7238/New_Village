@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import dbConnect from '@/lib/dbConnect';
 import NotificationBoard from '@/models/NotificationBoard';
 import NotificationDocument from '@/models/NotificationDocument';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import authOptions from '@/lib/authOptions';
 import { syncNotificationLifecycle } from '@/lib/notificationLifecycle';
 
 export async function GET(_request, { params }) {

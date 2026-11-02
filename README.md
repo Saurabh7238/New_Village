@@ -37,6 +37,10 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Signed-in residents can submit a chatbot request, then use the confirmation card's **Track this ticket** link or the **Copy ticket** action. Chatbot tickets are saved separately from formal grievance queries and can be checked at `/chat/track`. Admins can review and update their statuses from **Admin Panel → Chatbot Support Tickets**. Ticket status changes are stored in the configured MongoDB database; no paid chatbot or ticketing service is required.
 
+## Grievance SLA alerts
+
+The admin dashboard checks open grievances against the acknowledgment and resolution targets in `lib/queryDisplay.js` and shows overdue cases with links to their records. These alerts refresh every minute; the grievance management page also updates its overdue count using the live SLA calculation.
+
 ## Push to GitHub (safe workflow)
 
 1. **Do not commit** MongoDB files under `data/` (only `data/*.json` seed files belong in Git).

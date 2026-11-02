@@ -3,7 +3,7 @@ import Chat from "@/models/Chat";
 import ChatTicket from "@/models/ChatTicket";
 import dbConnect from "@/lib/dbConnect";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import authOptions from "@/lib/authOptions";
 
 const ALL_SERVICES = [
   "Birth Certificate",

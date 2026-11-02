@@ -11,13 +11,28 @@ import PageHeader from "@/components/PageHeader";
 export default function AdminPanel() {
   const { data: session, status } = useSession();
   const [serviceCounts, setServiceCounts] = useState({});
+  const [slaAlerts, setSlaAlerts] = useState({ count: 0, items: [], checkedAt: null, error: '' });
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
     if (status !== 'authenticated' || session?.user?.role !== 'admin') return;
     const load = () => fetch('/api/service-notifications').then((response) => response.ok ? response.json() : null).then((data) => setServiceCounts(data?.byService || {})).catch(() => setServiceCounts({}));
+    const loadSlaAlerts = () => fetch('/api/admin/sla', { cache: 'no-store' })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Unable to load overdue alerts.');
+        setSlaAlerts({ ...data, error: '' });
+      })
+      .catch((error) => {
+        console.error('Admin SLA alert load failed:', error);
+        setSlaAlerts((current) => ({ ...current, error: 'Overdue grievance alerts could not be loaded.' }));
+      });
     load();
-    const interval = setInterval(load, 15000);
+    loadSlaAlerts();
+    const interval = setInterval(() => {
+      load();
+      loadSlaAlerts();
+    }, 60000);
     return () => clearInterval(interval);
   }, [status, session?.user?.role]);
   const queryCount = Object.entries(serviceCounts).filter(([type]) => type.startsWith('query:')).reduce((sum, [, count]) => sum + count, 0);
@@ -57,6 +72,52 @@ export default function AdminPanel() {
             </Button>
           </>}
         />
+
+        {!showAnalytics && (
+          <section aria-labelledby="overdue-grievances-heading" className={`rounded-xl border p-5 shadow-sm ${slaAlerts.count ? 'border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/30' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 id="overdue-grievances-heading" className="text-lg font-bold">
+                  Overdue grievance alerts <span className={slaAlerts.count ? 'text-red-700 dark:text-red-300' : 'text-slate-500'}>({slaAlerts.count})</span>
+                </h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  Based on the configured grievance acknowledgment and resolution SLAs.
+                  {slaAlerts.checkedAt ? ` Checked ${new Date(slaAlerts.checkedAt).toLocaleTimeString()}.` : ''}
+                </p>
+              </div>
+              <Link href="/admin/queries" className="rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-800">
+                Review grievances
+              </Link>
+            </div>
+            {slaAlerts.error && <p role="alert" className="mt-3 text-sm text-red-700 dark:text-red-300">{slaAlerts.error}</p>}
+            {!slaAlerts.error && slaAlerts.items.length > 0 && (
+              <ul className="mt-4 divide-y divide-red-200 dark:divide-red-900">
+                {slaAlerts.items.map((item) => (
+                  <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                    <div className="min-w-0">
+                      <Link href={`/admin/queries/${item.id}`} className="font-semibold text-red-800 hover:underline dark:text-red-200">
+                        {item.queryId} · {item.category} · Ward {item.ward}
+                      </Link>
+                      <p className="truncate text-sm text-slate-700 dark:text-slate-200">{item.subject}</p>
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold text-red-700 dark:text-red-300">
+                      {item.breachType === 'acknowledgment' ? 'Acknowledgment overdue' : 'Resolution overdue'}
+                      {item.overdueDays > 0 ? ` · ${item.overdueDays}d` : ` · ${item.overdueHours}h`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!slaAlerts.error && slaAlerts.count === 0 && (
+              <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-300">No overdue grievances right now.</p>
+            )}
+            {!slaAlerts.error && slaAlerts.count > slaAlerts.items.length && (
+              <p className="mt-2 text-sm text-red-700 dark:text-red-300">
+                Showing the 10 oldest overdue grievances. Review the grievance list for the rest.
+              </p>
+            )}
+          </section>
+        )}
 
         {showAnalytics && (
           <AdminAnalyticsDashboard />

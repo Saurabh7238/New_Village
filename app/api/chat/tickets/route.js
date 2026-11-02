@@ -1,7 +1,7 @@
 import ChatTicket from "@/models/ChatTicket";
 import dbConnect from "@/lib/dbConnect";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import authOptions from "@/lib/authOptions";
 
 export async function GET(request) {
   try {

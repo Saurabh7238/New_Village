@@ -90,7 +90,7 @@ export default function AdminQueriesPage() {
       inProgress: queriesData.filter(q => q.status === "In Progress").length,
       resolved: queriesData.filter(q => q.status === "Resolved").length,
       pending: queriesData.filter(q => ["New", "In Progress"].includes(q.status)).length,
-      overdue: queriesData.filter(q => q.escalate === true).length
+      overdue: queriesData.filter((query) => checkSlaBreach(query).breached).length
     };
     setStats(stats);
 
@@ -105,7 +105,7 @@ export default function AdminQueriesPage() {
       // Check for SLA breaches
       queriesData.forEach(q => {
         const lastQ = lastKnownQueries.find(lq => lq._id === q._id);
-        if (lastQ && !lastQ.escalate && q.escalate) {
+        if (lastQ && !checkSlaBreach(lastQ).breached && checkSlaBreach(q).breached) {
           addToast(`⚠️ Query ${q.queryId} SLA BREACHED - Action required!`, "error", 8000);
         }
       });
