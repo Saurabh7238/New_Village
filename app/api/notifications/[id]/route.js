@@ -15,6 +15,8 @@ export async function GET(_request, { params }) {
     await dbConnect();
     const now = new Date();
     await syncNotificationLifecycle(now);
+    const { searchParams } = new URL(_request.url);
+    const countView = searchParams.get('countView') === 'true';
     const session = await getServerSession(authOptions);
     const viewerId = session?.user?.id;
     const isAdmin = session?.user?.role === 'admin';
@@ -30,12 +32,20 @@ export async function GET(_request, { params }) {
         };
     let notification;
 
-    if (viewerId && !isAdmin && mongoose.Types.ObjectId.isValid(viewerId)) {
-      notification = await NotificationBoard.findOneAndUpdate(
-        { ...visibilityFilter, viewedBy: { $ne: viewerId } },
-        { $addToSet: { viewedBy: viewerId }, $inc: { viewCount: 1 } },
-        { new: true, projection: { viewedBy: 0 } },
-      ).lean();
+    if (countView && !isAdmin) {
+      if (viewerId && mongoose.Types.ObjectId.isValid(viewerId)) {
+        notification = await NotificationBoard.findOneAndUpdate(
+          { ...visibilityFilter, viewedBy: { $ne: viewerId } },
+          { $addToSet: { viewedBy: viewerId }, $inc: { viewCount: 1 } },
+          { new: true, projection: { viewedBy: 0 } },
+        ).lean();
+      } else {
+        notification = await NotificationBoard.findOneAndUpdate(
+          visibilityFilter,
+          { $inc: { viewCount: 1 } },
+          { new: true, projection: { viewedBy: 0 } },
+        ).lean();
+      }
     }
 
     if (!notification) {

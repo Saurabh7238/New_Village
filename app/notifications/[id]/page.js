@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -22,19 +22,23 @@ export default function NotificationDetailPage() {
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const countedNotificationId = useRef(null);
 
   useEffect(() => {
     if (params.id) {
-      fetchNotification(params.id, true);
+      const countView = countedNotificationId.current !== params.id;
+      if (countView) countedNotificationId.current = params.id;
+      fetchNotification(params.id, true, countView);
       const refreshInterval = setInterval(() => fetchNotification(params.id), 30000);
       return () => clearInterval(refreshInterval);
     }
   }, [params.id]);
 
-  const fetchNotification = async (id, showLoading = false) => {
+  const fetchNotification = async (id, showLoading = false, countView = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await fetch(`/api/notifications/${id}`);
+      const query = countView ? '?countView=true' : '';
+      const res = await fetch(`/api/notifications/${id}${query}`);
       const data = await res.json();
 
       if (data.success) {

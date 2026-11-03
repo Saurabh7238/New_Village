@@ -5,6 +5,7 @@ import QueryMessage from '@/models/QueryMessage';
 import CitizenNotification from '@/models/CitizenNotification';
 import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession, isAdminOrStaff } from '@/lib/sessionAuth';
+import { sendTrackedEmail } from '@/lib/trackedEmail';
 
 async function getAuthorizedQuery(id, session) {
   const query = await Query.findById(id);
@@ -49,6 +50,17 @@ export async function POST(request, { params }) {
       { upsert: true },
     );
     await CitizenNotification.create({ userId: query.userId, title: `New response on ${query.queryId}`, message: 'Panchayat Admin has replied to your query.', type: 'message', relatedType: 'query', relatedId: query._id });
+    if (query.userId) {
+      await sendTrackedEmail({
+        userId: query.userId,
+        category: 'grievance',
+        eventKey: `grievance:${query._id}:message:${saved._id}`,
+        relatedType: 'query',
+        relatedId: query._id,
+        subject: `New response on grievance ${query.queryId}`,
+        text: `The panchayat office has responded to your grievance ${query.queryId}:\n\n${saved.message}\n\nSign in to the Chiutahara Portal to view the conversation.`,
+      });
+    }
   }
   return NextResponse.json({ message: { ...saved.toObject(), id: saved._id.toString() } }, { status: 201 });
 }

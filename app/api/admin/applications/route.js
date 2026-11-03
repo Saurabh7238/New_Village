@@ -107,15 +107,25 @@ export async function PUT(request) {
         relatedId: application._id,
       });
 
-      if (statusChanged) {
+      if (statusChanged || remarksChanged || documentsChanged || requestedDocumentsChanged) {
+        const responseDetails = [
+          `Your ${application.serviceType.replace(/-/g, ' ')} application ${application.applicationNumber} is now ${application.status}.`,
+          application.adminRemarks ? `Administrator response: ${application.adminRemarks}` : '',
+          requestedDocumentsChanged && nextRequestedDocuments.length
+            ? `Please submit: ${nextRequestedDocuments.join(', ')}.`
+            : '',
+          documentsChanged && nextAdminDocuments.length
+            ? 'The panchayat office added a document to your application.'
+            : '',
+        ].filter(Boolean).join('\n\n');
         await sendTrackedEmail({
           userId: application.userId,
           category: 'application',
-          eventKey: `application:${application._id}:${application.status}:${application.updatedAt.toISOString()}`,
+          eventKey: `application:${application._id}:response:${application.updatedAt.toISOString()}`,
           relatedType: 'application',
           relatedId: application._id,
-          subject: `Application ${application.applicationNumber}: ${application.status}`,
-          text: `Your ${application.serviceType.replace(/-/g, ' ')} application ${application.applicationNumber} is now ${application.status}. Sign in to the Chiutahara Portal to view the latest details.`,
+          subject: `Application ${application.applicationNumber} update`,
+          text: `${responseDetails}\n\nSign in to the Chiutahara Portal to view the latest details.`,
         });
       }
 

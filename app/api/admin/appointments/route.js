@@ -54,7 +54,7 @@ export async function PUT(request) {
     }
     if (['Approved', 'Rescheduled'].includes(status) && (!update.scheduledDate || !update.scheduledTime)) return NextResponse.json({ message: 'Set a scheduled date and time before approving or rescheduling.' }, { status: 400 });
     await connectDB();
-    const previousAppointment = await Appointment.findOne({ _id: id, archivedAt: null }).select('status').lean();
+    const previousAppointment = await Appointment.findOne({ _id: id, archivedAt: null }).select('status adminRemarks scheduledDate scheduledTime').lean();
     const appointment = await Appointment.findOneAndUpdate({ _id: id, archivedAt: null }, { ...update, $push: { statusHistory: { status, remarks: update.adminRemarks, changedBy: session.user.id } } }, { new: true, runValidators: true });
     if (!appointment) return NextResponse.json({ message: 'Appointment not found.' }, { status: 404 });
     await writeAuditLog({ session, action: 'Appointment updated', details: { appointmentId: appointment._id.toString(), appointmentNumber: appointment.appointmentNumber, status } });
@@ -72,15 +72,21 @@ export async function PUT(request) {
     );
     const schedule = appointment.scheduledDate && appointment.scheduledTime ? ` Scheduled for ${appointment.scheduledDate.toLocaleDateString('en-GB')} at ${appointment.scheduledTime}.` : '';
     await CitizenNotification.create({ userId: appointment.userId, title: `Appointment ${status}`, message: `${update.adminRemarks || `Your appointment ${appointment.appointmentNumber} is ${status.toLowerCase()}.`}${schedule}`, type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });
-    if (previousAppointment?.status !== appointment.status) {
+    const appointmentDetailsChanged = previousAppointment && (
+      previousAppointment.status !== appointment.status
+      || previousAppointment.adminRemarks !== appointment.adminRemarks
+      || previousAppointment.scheduledDate?.getTime() !== appointment.scheduledDate?.getTime()
+      || previousAppointment.scheduledTime !== appointment.scheduledTime
+    );
+    if (appointmentDetailsChanged) {
       await sendTrackedEmail({
         userId: appointment.userId,
         category: 'appointment',
-        eventKey: `appointment:${appointment._id}:${appointment.status}:${appointment.updatedAt.toISOString()}`,
+        eventKey: `appointment:${appointment._id}:response:${appointment.updatedAt.toISOString()}`,
         relatedType: 'appointment',
         relatedId: appointment._id,
-        subject: `Appointment ${appointment.appointmentNumber}: ${appointment.status}`,
-        text: `Your appointment request ${appointment.appointmentNumber} is now ${appointment.status}.${schedule} Sign in to the Chiutahara Portal to view the latest details.`,
+        subject: `Appointment ${appointment.appointmentNumber} update`,
+        text: `Your appointment request ${appointment.appointmentNumber} is now ${appointment.status}.${appointment.adminRemarks ? `\n\nAdministrator response: ${appointment.adminRemarks}` : ''}${schedule}\n\nSign in to the Chiutahara Portal to view the latest details.`,
       });
     }
     return NextResponse.json({ message: 'Appointment updated successfully.', appointment });

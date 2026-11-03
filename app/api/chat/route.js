@@ -16,6 +16,7 @@ const ALL_SERVICES = [
   "School / Hospital",
   "Budget / Funds",
 ];
+const USER_CHAT_RETENTION_DAYS = 7;
 
 const SERVICE_MAP = {
   "Birth Certificate": ["birth", "janm"],
@@ -116,6 +117,7 @@ export async function POST(request) {
 
     await dbConnect();
     const userId = session.user.email;
+    const userHistoryCutoff = new Date(Date.now() - USER_CHAT_RETENTION_DAYS * 24 * 60 * 60 * 1000);
     const text = message.trim();
     const lang = detectLang(text);
     const isStartingNewRequest = /^start new request$/i.test(text);
@@ -129,7 +131,11 @@ export async function POST(request) {
       return Response.json({ reply, lang, quickReplies: ALL_SERVICES });
     }
 
-    const lastBotMessage = await Chat.findOne({ userId, sender: "bot" })
+    const lastBotMessage = await Chat.findOne({
+      userId,
+      sender: "bot",
+      createdAt: { $gte: userHistoryCutoff },
+    })
       .sort({ createdAt: -1 })
       .lean();
     const flowStep = lastBotMessage?.flowStep || "service";
@@ -228,7 +234,11 @@ export async function GET() {
 
     await dbConnect();
     const userId = session.user.email;
-    const messages = await Chat.find({ userId }).sort({ createdAt: -1 }).limit(100).lean();
+    const userHistoryCutoff = new Date(Date.now() - USER_CHAT_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const messages = await Chat.find({
+      userId,
+      createdAt: { $gte: userHistoryCutoff },
+    }).sort({ createdAt: -1 }).limit(100).lean();
     messages.reverse();
     const lastBotMessage = [...messages].reverse().find((message) => message.sender === "bot");
     const lastTicketMessage = [...messages].reverse().find((message) => message.ticket);

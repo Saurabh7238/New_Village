@@ -111,7 +111,7 @@ export async function PUT(request, { params }) {
       };
     }
 
-    const previousQuery = status ? await Query.findById(id).select('status').lean() : null;
+    const previousQuery = await Query.findById(id).select('status adminRemarks').lean();
     const query = await Query.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
 
     if (!query) {
@@ -136,15 +136,19 @@ export async function PUT(request, { params }) {
       );
       await CitizenNotification.create({ userId: query.userId, title: `Query ${query.queryId} updated`, message: query.adminRemarks || `Your query status is now ${query.status}.`, type: 'query', relatedType: 'query', relatedId: query._id });
     }
-    if (status && previousQuery?.status !== query.status && query.userId) {
+    const queryResponseChanged = previousQuery && (
+      previousQuery.status !== query.status
+      || previousQuery.adminRemarks !== query.adminRemarks
+    );
+    if (queryResponseChanged && query.userId) {
       await sendTrackedEmail({
         userId: query.userId,
         category: 'grievance',
-        eventKey: `grievance:${query._id}:${query.status}:${query.updatedAt.toISOString()}`,
+        eventKey: `grievance:${query._id}:response:${query.updatedAt.toISOString()}`,
         relatedType: 'query',
         relatedId: query._id,
-        subject: `Grievance ${query.queryId} update: ${query.status}`,
-        text: `Your grievance ${query.queryId} is now ${query.status}. Sign in to the Chiutahara Portal to view the latest details.`,
+        subject: `Grievance ${query.queryId} update`,
+        text: `Your grievance ${query.queryId} is now ${query.status}.${query.adminRemarks ? `\n\nAdministrator response: ${query.adminRemarks}` : ''}\n\nSign in to the Chiutahara Portal to view the latest details.`,
       });
     }
 
