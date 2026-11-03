@@ -1,8 +1,10 @@
 import mongoose from "mongoose";
 import ChatTicket from "@/models/ChatTicket";
 import User from "@/models/User";
+import CitizenNotification from "@/models/CitizenNotification";
 import dbConnect from "@/lib/dbConnect";
 import { requireAdminSession } from "@/lib/adminAuth";
+import { sendTrackedEmail } from "@/lib/trackedEmail";
 
 const TICKET_STATUSES = ["Open", "In Progress", "Resolved", "Closed"];
 
@@ -38,12 +40,36 @@ export async function PATCH(request) {
     }
 
     await dbConnect();
+    const previousTicket = await ChatTicket.findById(id).select("status").lean();
     const ticket = await ChatTicket.findByIdAndUpdate(
       id,
       { status },
       { new: true, runValidators: true }
     ).lean();
     if (!ticket) return Response.json({ error: "Ticket not found." }, { status: 404 });
+
+    if (previousTicket?.status !== ticket.status) {
+      const user = await User.findOne({ email: ticket.userId }).select("_id").lean();
+      if (user) {
+        await CitizenNotification.create({
+          userId: user._id,
+          title: `Chat support ticket ${ticket.ticketId} ${ticket.status}`,
+          message: `Your support ticket ${ticket.ticketId} is now ${ticket.status}.`,
+          type: "message",
+          relatedType: "chat-ticket",
+          relatedId: ticket._id,
+        });
+        await sendTrackedEmail({
+          userId: user._id,
+          category: "grievance",
+          eventKey: `chat-ticket:${ticket._id}:${ticket.status}:${ticket.updatedAt.toISOString()}`,
+          relatedType: "chat-ticket",
+          relatedId: ticket._id,
+          subject: `Support ticket ${ticket.ticketId}: ${ticket.status}`,
+          text: `Your support ticket ${ticket.ticketId} for ${ticket.service} is now ${ticket.status}. Sign in to the Chiutahara Portal to view the latest details.`,
+        });
+      }
+    }
 
     return Response.json(ticket);
   } catch (error) {

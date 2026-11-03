@@ -10,13 +10,24 @@ import PageHeader from "@/components/PageHeader";
 
 export default function AdminPanel() {
   const { data: session, status } = useSession();
-  const [serviceCounts, setServiceCounts] = useState({});
+  const [requestCounts, setRequestCounts] = useState(null);
+  const [requestCountsError, setRequestCountsError] = useState('');
   const [slaAlerts, setSlaAlerts] = useState({ count: 0, items: [], checkedAt: null, error: '' });
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
     if (status !== 'authenticated' || session?.user?.role !== 'admin') return;
-    const load = () => fetch('/api/service-notifications').then((response) => response.ok ? response.json() : null).then((data) => setServiceCounts(data?.byService || {})).catch(() => setServiceCounts({}));
+    const loadRequestCounts = () => fetch('/api/admin/request-counts', { cache: 'no-store' })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Unable to load request counts.');
+        setRequestCounts(data);
+        setRequestCountsError('');
+      })
+      .catch((error) => {
+        console.error('Admin request counts load failed:', error);
+        setRequestCountsError('Request counts could not be loaded.');
+      });
     const loadSlaAlerts = () => fetch('/api/admin/sla', { cache: 'no-store' })
       .then(async (response) => {
         const data = await response.json();
@@ -27,17 +38,22 @@ export default function AdminPanel() {
         console.error('Admin SLA alert load failed:', error);
         setSlaAlerts((current) => ({ ...current, error: 'Overdue grievance alerts could not be loaded.' }));
       });
-    load();
+    loadRequestCounts();
     loadSlaAlerts();
     const interval = setInterval(() => {
-      load();
+      loadRequestCounts();
       loadSlaAlerts();
     }, 60000);
     return () => clearInterval(interval);
   }, [status, session?.user?.role]);
-  const queryCount = Object.entries(serviceCounts).filter(([type]) => type.startsWith('query:')).reduce((sum, [, count]) => sum + count, 0);
-  const applicationCount = Object.entries(serviceCounts).filter(([type]) => !type.startsWith('query:')).reduce((sum, [, count]) => sum + count, 0);
-  const badge = (count) => count > 0 ? <span className="ml-2 inline-grid min-w-5 place-items-center rounded-full bg-white px-1.5 py-0.5 text-xs font-bold text-red-700">{count}</span> : null;
+  const requestBadge = (counts) => (
+    <span className="mt-2 flex flex-wrap justify-center gap-1.5 text-[11px] font-semibold">
+      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-800 dark:bg-blue-950 dark:text-blue-200">New {counts?.new ?? '—'}</span>
+      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-950 dark:text-amber-200">Due {counts?.due ?? '—'}</span>
+      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-slate-800 dark:bg-slate-700 dark:text-slate-100">All {counts?.all ?? '—'}</span>
+    </span>
+  );
+  const applicationCount = (serviceType) => requestCounts?.applications?.byType?.[serviceType];
 
   if (status === "loading") {
     return <div className="p-8 text-center text-slate-600 dark:text-slate-300">Loading...</div>;
@@ -126,33 +142,35 @@ export default function AdminPanel() {
         {!showAnalytics && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
           <h2 className="mb-5 text-xl font-bold">Management Sections</h2>
+          <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">New = newly submitted · Due = awaiting action · All = total records</p>
+          {requestCountsError && <p role="alert" className="mb-4 text-sm text-red-700 dark:text-red-300">{requestCountsError}</p>}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Link href="/admin/applications?service=aadhaar-request" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-              Aadhaar Requests {badge(serviceCounts['aadhaar-request'] || 0)}
+              Aadhaar Requests {requestBadge(applicationCount('aadhaar-request'))}
             </Link>
             <Link href="/admin/applications?service=birth-certificate" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-              Birth Certificates {badge(serviceCounts['birth-certificate'] || 0)}
+              Birth Certificates {requestBadge(applicationCount('birth-certificate'))}
             </Link>
             <Link href="/admin/applications?service=death-certificate" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-              Death Certificates {badge(serviceCounts['death-certificate'] || 0)}
+              Death Certificates {requestBadge(applicationCount('death-certificate'))}
             </Link>
             <Link href="/admin/members" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Panchayat Members
             </Link>
             <Link href="/admin/applications" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-              Service Applications {badge(applicationCount)}
+              Service Applications {requestBadge(requestCounts?.applications)}
             </Link>
             <Link href="/admin/development" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Development Projects & Reports
             </Link>
             <Link href="/admin/chat-tickets" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-              Chatbot Support Tickets
+              Chatbot Support Tickets {requestBadge(requestCounts?.chatTickets)}
             </Link>
             <Link href="/admin/queries" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-              🎯 Query Management {badge(queryCount)}
+              🎯 Query Management {requestBadge(requestCounts?.queries)}
             </Link>
             <Link href="/admin/appointments" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-              Appointments
+              Appointments {requestBadge(requestCounts?.appointments)}
             </Link>
             <Link href="/admin/members" className="hidden">
               👥 Members
@@ -173,7 +191,7 @@ export default function AdminPanel() {
               🎨 Logo, Favicon &amp; Media
             </Link>
             <Link href="/admin/reviews" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
-              ⭐ Reviews
+              ⭐ Reviews {requestBadge(requestCounts?.reviews)}
             </Link>
             <Link href="/admin/activity-log" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:border-teal-400 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/30">
               Activity Log

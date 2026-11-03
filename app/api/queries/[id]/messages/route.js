@@ -49,7 +49,7 @@ export async function POST(request, { params }) {
       },
       { upsert: true },
     );
-    await CitizenNotification.create({ userId: query.userId, title: `New response on ${query.queryId}`, message: 'Panchayat Admin has replied to your query.', type: 'message', relatedType: 'query', relatedId: query._id });
+    await CitizenNotification.create({ userId: query.userId, title: `New response on ${query.queryId}`, message: `Panchayat Admin has replied to query ${query.queryId}.`, type: 'message', relatedType: 'query', relatedId: query._id });
     if (query.userId) {
       await sendTrackedEmail({
         userId: query.userId,

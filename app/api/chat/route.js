@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import Chat from "@/models/Chat";
 import ChatTicket from "@/models/ChatTicket";
+import CitizenNotification from "@/models/CitizenNotification";
 import dbConnect from "@/lib/dbConnect";
 import { getServerSession } from "next-auth/next";
 import authOptions from "@/lib/authOptions";
@@ -104,6 +105,7 @@ function getQuickReplies(flowStep) {
 
 export async function POST(request) {
   let createdTicketId = null;
+  let createdTicket = null;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -174,6 +176,7 @@ export async function POST(request) {
               try {
                 ticket = await ChatTicket.create({ ticketId: newTicketId(), userId, service, ward });
                 createdTicketId = ticket.ticketId;
+                createdTicket = ticket;
                 break;
               } catch (error) {
                 if (error?.code !== 11000 || attempt === 2) throw error;
@@ -210,6 +213,16 @@ export async function POST(request) {
       { userId, sender: "user", message: text, language: lang },
       { userId, sender: "bot", message: reply, ...botData },
     ]);
+    if (createdTicketId) {
+      await CitizenNotification.create({
+        userId: session.user.id,
+        title: `Chat support ticket ${createdTicketId} submitted`,
+        message: `Your ${botData.service} request for Ward ${botData.ward} was submitted as ticket ${createdTicketId}.`,
+        type: "message",
+        relatedType: "chat-ticket",
+        relatedId: createdTicket._id,
+      });
+    }
 
     return Response.json({ reply, lang, quickReplies, confirmation });
   } catch (error) {

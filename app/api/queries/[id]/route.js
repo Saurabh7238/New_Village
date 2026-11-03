@@ -134,7 +134,7 @@ export async function PUT(request, { params }) {
         },
         { upsert: true },
       );
-      await CitizenNotification.create({ userId: query.userId, title: `Query ${query.queryId} updated`, message: query.adminRemarks || `Your query status is now ${query.status}.`, type: 'query', relatedType: 'query', relatedId: query._id });
+      await CitizenNotification.create({ userId: query.userId, title: `Query ${query.queryId} updated`, message: `${query.queryId}: ${query.adminRemarks || `Your query status is now ${query.status}.`}`, type: 'query', relatedType: 'query', relatedId: query._id });
     }
     const queryResponseChanged = previousQuery && (
       previousQuery.status !== query.status

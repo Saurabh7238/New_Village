@@ -100,8 +100,8 @@ export async function PUT(request) {
       );
       await CitizenNotification.create({
         userId: application.userId,
-        title: `Application ${status}`,
-        message: application.adminRemarks || (requestedDocumentsChanged ? `Please submit: ${nextRequestedDocuments.join(', ')}.` : documentsChanged ? 'Panchayat office added a document to your application.' : `Your application ${application.applicationNumber} has been ${status.toLowerCase()}.`),
+        title: `Application ${application.applicationNumber} ${status}`,
+        message: `${application.applicationNumber}: ${application.adminRemarks || (requestedDocumentsChanged ? `Please submit: ${nextRequestedDocuments.join(', ')}.` : documentsChanged ? 'Panchayat office added a document to your application.' : `Your application has been ${status.toLowerCase()}.`)}`,
         type: 'application',
         relatedType: 'application',
         relatedId: application._id,

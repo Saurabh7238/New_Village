@@ -71,7 +71,7 @@ export async function PUT(request) {
       { upsert: true },
     );
     const schedule = appointment.scheduledDate && appointment.scheduledTime ? ` Scheduled for ${appointment.scheduledDate.toLocaleDateString('en-GB')} at ${appointment.scheduledTime}.` : '';
-    await CitizenNotification.create({ userId: appointment.userId, title: `Appointment ${status}`, message: `${update.adminRemarks || `Your appointment ${appointment.appointmentNumber} is ${status.toLowerCase()}.`}${schedule}`, type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });
+    await CitizenNotification.create({ userId: appointment.userId, title: `Appointment ${appointment.appointmentNumber} ${status}`, message: `${appointment.appointmentNumber}: ${update.adminRemarks || `Your appointment is ${status.toLowerCase()}.`}${schedule}`, type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });
     const appointmentDetailsChanged = previousAppointment && (
       previousAppointment.status !== appointment.status
       || previousAppointment.adminRemarks !== appointment.adminRemarks

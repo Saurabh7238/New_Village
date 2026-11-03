@@ -38,7 +38,7 @@ export async function POST(request) {
     const appointment = await Appointment.create({ appointmentNumber, userId: user._id, service: 'General Panchayat Appointment', appointmentDate: new Date(), appointmentTime: 'Pending scheduling', purpose: purpose.trim() });
     await writeAuditLog({ session, action: 'Appointment requested', details: { appointmentId: appointment._id.toString(), appointmentNumber } });
     await ServiceNotification.create({ userId: user._id, serviceType: 'appointment', relatedType: 'appointment', relatedId: appointment._id, queryRaised: appointment.createdAt });
-    await CitizenNotification.create({ userId: user._id, title: `${appointmentNumber} booked`, message: 'Your request has been sent to the Panchayat office. The administrator will set your date and time.', type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });
+    await CitizenNotification.create({ userId: user._id, title: `${appointmentNumber} booked`, message: `Your appointment request ${appointmentNumber} has been sent to the Panchayat office. The administrator will set your date and time.`, type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });
     return NextResponse.json({ message: 'Appointment requested successfully.', appointmentNumber, id: appointment._id.toString() }, { status: 201 });
   } catch (error) {
     console.error('Appointment creation error:', error);

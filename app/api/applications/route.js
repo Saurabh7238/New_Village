@@ -97,7 +97,7 @@ export async function POST(request) {
     const admins = await User.find({ role: 'admin', status: 'active' }).select('_id').lean();
     await Promise.all([
       ServiceNotification.create({ userId: user._id, serviceType, relatedType: 'application', relatedId: application._id, queryRaised: application.createdAt }),
-      CitizenNotification.create({ userId: user._id, title: `${applicationNumber} submitted`, message: 'Your application has been submitted for review.', type: 'application', relatedType: 'application', relatedId: application._id }),
+      CitizenNotification.create({ userId: user._id, title: `${applicationNumber} submitted`, message: `Your application ${applicationNumber} has been submitted for review.`, type: 'application', relatedType: 'application', relatedId: application._id }),
       admins.length ? AdminNotification.insertMany(admins.map((admin) => ({
         userId: admin._id,
         title: `New service application: ${applicationNumber}`,

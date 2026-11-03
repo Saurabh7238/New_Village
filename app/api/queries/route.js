@@ -106,7 +106,7 @@ export async function POST(request) {
     await CitizenNotification.create({
       userId: citizen._id,
       title: `Query ${queryId} submitted`,
-      message: 'Your query has been submitted successfully and is pending review.',
+      message: `Your query ${queryId} has been submitted successfully and is pending review.`,
       type: 'query',
       relatedType: 'query',
       relatedId: newQuery._id,
