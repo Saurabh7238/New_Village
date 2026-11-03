@@ -16,6 +16,7 @@ import {
   getVoterGender,
   getVoterAge,
   getVoterWard,
+  hasVoterValue,
 } from "@/lib/voterDisplay";
 
 const VOTER_TYPE_LABELS = {
@@ -49,6 +50,9 @@ export default function AdminVotersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedVoterIds, setSelectedVoterIds] = useState([]);
+  const [editingVoter, setEditingVoter] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
@@ -128,6 +132,59 @@ export default function AdminVotersPage() {
       }
     } catch (error) {
       addToast("Error deleting selected voters: " + error.message, "error");
+    }
+  };
+
+  const startEditingVoter = (voter) => {
+    setEditingVoter(voter);
+    setEditForm({
+      voterId: getVoterId(voter),
+      elector_name_en: voter.elector_name_en || voter.elector_name || voter.electorName || voter.voterName || voter.name || "",
+      elector_name_hi: voter.elector_name_hi || "",
+      parent_name_en: voter.parent_name_en || voter.parent_name || voter.voterGuardianName || "",
+      parent_name_hi: voter.parent_name_hi || "",
+      serialNumber: getVoterSerialNumber(voter),
+      svnNo: voter.svn_no || voter.svnNo || "",
+      houseNo: getVoterHouseNo(voter),
+      voterWardNo: voter.ward || voter.voterWardNo || "",
+      voterConstituency: voter.constituency || voter.voterConstituency || "",
+      voterGender: getVoterGender(voter),
+      voterAge: getVoterAge(voter) ?? "",
+    });
+  };
+
+  const handleEditSubmit = async (event) => {
+    event.preventDefault();
+    if (!editingVoter || !editForm) return;
+
+    setEditLoading(true);
+    try {
+      const response = await fetch("/api/voter-data", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingVoter._id || editingVoter.id,
+          type: voterType,
+          ...editForm,
+          voterName: editForm.elector_name_en || editForm.elector_name_hi,
+          voterGuardianName: editForm.parent_name_en || editForm.parent_name_hi,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to update voter.");
+
+      setVoterList((current) =>
+        current.map((voter) =>
+          (voter._id || voter.id) === (editingVoter._id || editingVoter.id) ? data : voter
+        )
+      );
+      setEditingVoter(null);
+      setEditForm(null);
+      addToast("Voter details updated.", "success");
+    } catch (error) {
+      addToast(error.message || "Failed to update voter.", "error");
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -269,7 +326,7 @@ export default function AdminVotersPage() {
             )}
             {selectedVoterIds.length > 0 && (
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                Bulk deletion is available below: select records in the table or cards, then choose Delete selected.
+                Select voter cards below, then choose Delete selected for bulk removal.
               </p>
             )}
           </section>
@@ -317,147 +374,63 @@ export default function AdminVotersPage() {
           </div>
         </div>
 
-        {/* Desktop Table View */}
-        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-100 dark:bg-gray-700">
-                <tr>
-                  <th className="p-3"><input type="checkbox" checked={filteredVoters.length > 0 && filteredVoters.every((voter) => selectedVoterIds.includes(voter._id || getVoterId(voter)))} onChange={() => {
-                    const allSelected = filteredVoters.every((voter) => selectedVoterIds.includes(voter._id || getVoterId(voter)));
-                    setSelectedVoterIds((prev) => {
-                      if (allSelected) {
-                        return prev.filter((id) => !filteredVoters.some((voter) => (voter._id || getVoterId(voter)) === id));
-                      }
-                      const next = [...prev];
-                      filteredVoters.forEach((voter) => {
-                        const key = voter._id || getVoterId(voter);
-                        if (!next.includes(key)) next.push(key);
-                      });
-                      return next;
-                    });
-                  }} className="h-4 w-4" /></th>
-                  <th className="p-3">Serial No</th>
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Guardian</th>
-                  <th className="p-3">Voter ID</th>
-                  <th className="p-3">House No</th>
-                  <th className="p-3">Ward</th>
-                  <th className="p-3">Gender</th>
-                  <th className="p-3">Age</th>
-                  <th className="p-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="9" className="p-4 text-center text-sm">
-                      Loading voters...
-                    </td>
-                  </tr>
-                ) : filteredVoters.length === 0 ? (
-                  <tr>
-                    <td colSpan="9" className="p-4 text-center text-sm">
-                      No voters found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredVoters.map((voter) => (
-                    <tr
-                      key={getVoterId(voter) || voter._id}
-                      className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      <td className="p-3 text-xs">
-                        <input
-                          type="checkbox"
-                          checked={selectedVoterIds.includes(voter._id || getVoterId(voter))}
-                          onChange={() => toggleVoterSelection(voter)}
-                          className="h-4 w-4"
-                        />
-                      </td>
-                      <td className="p-3 text-xs">{getVoterSerialNumber(voter)}</td>
-                      <td className="p-3 text-xs">
-                        {getVoterName(voter, language)}
-                      </td>
-                      <td className="p-3 text-xs">
-                        {getVoterGuardian(voter, language)}
-                      </td>
-                      <td className="p-3 text-xs font-mono">{getVoterId(voter)}</td>
-                      <td className="p-3 text-xs">{getVoterHouseNo(voter)}</td>
-                      <td className="p-3 text-xs">{getVoterWard(voter)}</td>
-                      <td className="p-3 text-xs">{getVoterGender(voter) || "N/A"}</td>
-                      <td className="p-3 text-xs">{getVoterAge(voter) || "N/A"}</td>
-                      <td className="p-3 text-xs">
-                        <button
-                          onClick={() => handleDelete(getVoterId(voter), voter)}
-                          className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700 whitespace-nowrap"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Mobile Card View */}
-        <div className="md:hidden space-y-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {loading ? (
-            <div className="p-8 text-center text-sm">Loading voters...</div>
+            <div className="p-8 text-center text-sm sm:col-span-2">Loading voters...</div>
           ) : filteredVoters.length === 0 ? (
-            <div className="p-8 text-center text-sm">No voters found.</div>
+            <div className="p-8 text-center text-sm sm:col-span-2">No voters found.</div>
           ) : (
             filteredVoters.map((voter) => (
               <div
-                key={getVoterId(voter) || voter._id}
-                className="rounded-lg border border-gray-200 bg-white p-4 shadow dark:border-gray-700 dark:bg-gray-800"
+                key={voter._id || voter.id || getVoterId(voter)}
+                className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
               >
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-1">
-                      <div className="mb-2 flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedVoterIds.includes(voter._id || getVoterId(voter))}
-                          onChange={() => toggleVoterSelection(voter)}
-                          className="h-4 w-4"
-                        />
-                        <div>
-                          <p className="font-bold text-green-700">{getVoterName(voter, language)}</p>
-                        </div>
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedVoterIds.includes(voter._id || getVoterId(voter))}
+                    onChange={() => toggleVoterSelection(voter)}
+                    className="mt-1 h-4 w-4 shrink-0"
+                    aria-label={`Select voter ${getVoterId(voter)}`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-green-700 dark:text-green-300">
+                          {getVoterName(voter, language)}
+                        </p>
+                        {hasVoterValue(getVoterGuardian(voter, language)) && (
+                          <p className="truncate text-xs text-gray-600 dark:text-gray-400">
+                            {language === "hi" ? "अभिभावक" : "Guardian"}: {getVoterGuardian(voter, language)}
+                          </p>
+                        )}
                       </div>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {language === "hi" ? "अभिभावक" : "Guardian"}: {getVoterGuardian(voter, language)}
-                      </p>
+                      <span className="shrink-0 rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                        {getVoterSerialNumber(voter) || getVoterId(voter)}
+                      </span>
                     </div>
-                    <button
-                      onClick={() => handleDelete(getVoterId(voter), voter)}
-                      className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700 flex-shrink-0 whitespace-nowrap"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                  <div className="border-t dark:border-gray-700 pt-2 grid grid-cols-2 gap-2">
-                    <div>
-                      <strong>Serial No:</strong> {getVoterSerialNumber(voter)}
+                    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t pt-2 text-xs dark:border-gray-700">
+                      {hasVoterValue(getVoterId(voter)) && <p><strong>ID:</strong> {getVoterId(voter)}</p>}
+                      {hasVoterValue(getVoterHouseNo(voter)) && <p><strong>House:</strong> {getVoterHouseNo(voter)}</p>}
+                      {hasVoterValue(getVoterWard(voter)) && <p><strong>Ward:</strong> {getVoterWard(voter)}</p>}
+                      {hasVoterValue(getVoterGender(voter)) && <p><strong>Gender:</strong> {getVoterGender(voter)}</p>}
+                      {getVoterAge(voter) !== null && <p><strong>Age:</strong> {getVoterAge(voter)}</p>}
                     </div>
-                    <div>
-                      <strong>Voter ID:</strong> {getVoterId(voter)}
-                    </div>
-                    <div>
-                      <strong>House No:</strong> {getVoterHouseNo(voter)}
-                    </div>
-                    <div>
-                      <strong>Ward:</strong> {getVoterWard(voter)}
-                    </div>
-                    <div>
-                      <strong>Gender:</strong> {getVoterGender(voter) || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Age:</strong> {getVoterAge(voter) || "N/A"}
+                    <div className="mt-3 flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => startEditingVoter(voter)}
+                        className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(getVoterId(voter), voter)}
+                        className="rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -465,6 +438,77 @@ export default function AdminVotersPage() {
             ))
           )}
         </div>
+
+        {editingVoter && editForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <form
+              onSubmit={handleEditSubmit}
+              className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-5 shadow-xl dark:bg-gray-800"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Edit voter details</h2>
+                <button
+                  type="button"
+                  onClick={() => { setEditingVoter(null); setEditForm(null); }}
+                  className="rounded px-2 py-1 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  aria-label="Close edit form"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  ["voterId", "Voter ID", true],
+                  ["elector_name_en", "Name (English)", false],
+                  ["elector_name_hi", "Name (Hindi)", false],
+                  ["parent_name_en", "Guardian (English)", false],
+                  ["parent_name_hi", "Guardian (Hindi)", false],
+                  ["serialNumber", "Serial Number", false],
+                  ["svnNo", "SVN Number", false],
+                  ["houseNo", "House Number", false],
+                  ...(voterType === "gram-panchayat"
+                    ? [["voterWardNo", "Ward Number", false]]
+                    : [["voterConstituency", "Constituency", false]]),
+                  ["voterGender", "Gender", false],
+                  ["voterAge", "Age", false],
+                ].map(([field, label, required]) => (
+                  <label key={field} className="grid gap-1 text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {label}
+                    <input
+                      type={field === "voterAge" ? "number" : "text"}
+                      min={field === "voterAge" ? "0" : undefined}
+                      max={field === "voterAge" ? "130" : undefined}
+                      value={editForm[field]}
+                      required={required}
+                      onChange={(event) => setEditForm((current) => ({ ...current, [field]: event.target.value }))}
+                      className="rounded border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700"
+                    />
+                  </label>
+                ))}
+              </div>
+              {!editForm.elector_name_en.trim() && !editForm.elector_name_hi.trim() && (
+                <p className="mt-2 text-sm text-red-600">Provide a name in English or Hindi.</p>
+              )}
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setEditingVoter(null); setEditForm(null); }}
+                  disabled={editLoading}
+                  className="rounded border px-4 py-2 text-sm dark:border-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading || (!editForm.elector_name_en.trim() && !editForm.elector_name_hi.trim())}
+                  className="rounded bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50"
+                >
+                  {editLoading ? "Saving..." : "Save changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

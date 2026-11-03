@@ -241,7 +241,11 @@ export async function PUT(request) {
       type,
       voterId,
       voterName,
+      elector_name_en,
+      elector_name_hi,
       voterGuardianName,
+      parent_name_en,
+      parent_name_hi,
       voterGender,
       voterAge,
       voterWardNo,
@@ -261,7 +265,11 @@ export async function PUT(request) {
     }
 
     const voterIdTrim = normalizeStr(voterId);
-    const voterNameTrim = normalizeStr(voterName);
+    const voterNameEn = normalizeStr(elector_name_en);
+    const voterNameHi = normalizeStr(elector_name_hi);
+    const voterNameTrim = normalizeStr(voterName) || voterNameEn || voterNameHi;
+    const parentNameEn = normalizeStr(parent_name_en);
+    const parentNameHi = normalizeStr(parent_name_hi);
 
     if (!voterIdTrim?.trim() || !voterNameTrim?.trim()) {
       return NextResponse.json(
@@ -270,19 +278,23 @@ export async function PUT(request) {
       );
     }
 
+    const displayName = voterNameEn || voterNameTrim;
+    const displayGuardian = parentNameEn || normalizeStr(voterGuardianName) || parentNameHi;
     const updateData = {
       voterId: voterIdTrim.trim(),
-      voterName: voterNameTrim.trim(),
-      voterGuardianName: voterGuardianName ? String(voterGuardianName).trim() : "",
+      elector_id: voterIdTrim.trim(),
+      electorId: voterIdTrim.trim(),
+      voterName: displayName.trim(),
+      voterGuardianName: displayGuardian ? displayGuardian.trim() : "",
       voterGender: voterGender ? String(voterGender).trim() : "",
-      name: voterNameTrim.trim(),
+      name: displayName.trim(),
 
       // Canonical fields
-      svn_no: svnNo ? String(svnNo).trim() : voterIdTrim.trim(),
+      svn_no: svnNo !== undefined ? String(svnNo).trim() : voterIdTrim.trim(),
       serial_number: serialNumber ? String(serialNumber).trim() : "",
       house_no: houseNo ? String(houseNo).trim() : "",
-      elector_name: voterNameTrim.trim(),
-      parent_name: voterGuardianName ? String(voterGuardianName).trim() : "",
+      elector_name: displayName.trim(),
+      parent_name: displayGuardian ? displayGuardian.trim() : "",
       relation_type: relationType ? String(relationType).trim() : "",
       relationship:
         relationship && String(relationship).trim().length > 0
@@ -291,28 +303,34 @@ export async function PUT(request) {
             ? String(voterGuardianName).trim()
             : "",
       gender: voterGender ? String(voterGender).trim() : "",
-
-      image: body.image || undefined,
-      dateOfBirth: body.dateOfBirth || undefined,
+      elector_name_en: voterNameEn ? voterNameEn.trim() : "",
+      elector_name_hi: voterNameHi ? voterNameHi.trim() : "",
+      parent_name_en: parentNameEn ? parentNameEn.trim() : "",
+      parent_name_hi: parentNameHi ? parentNameHi.trim() : "",
+      image: body.image || "",
+      dateOfBirth: body.dateOfBirth || "",
     };
 
-    if (voterAge !== undefined && voterAge !== null && voterAge !== "") {
+    if (voterAge === "") {
+      updateData.age = null;
+      updateData.voterAge = null;
+    } else if (voterAge !== undefined && voterAge !== null) {
       const parsedAge = Number(voterAge);
-      if (Number.isNaN(parsedAge)) {
+      if (!Number.isInteger(parsedAge) || parsedAge < 0 || parsedAge > 130) {
         return NextResponse.json({ error: "Invalid age" }, { status: 400 });
       }
       updateData.age = parsedAge;
       updateData.voterAge = parsedAge;
     }
 
-    if (type === "gram-panchayat" && voterWardNo) {
-      updateData.voterWardNo = voterWardNo;
-      updateData.ward = voterWardNo;
+    if (type === "gram-panchayat") {
+      updateData.voterWardNo = voterWardNo ? String(voterWardNo).trim() : "";
+      updateData.ward = updateData.voterWardNo;
     }
 
-    if (type !== "gram-panchayat" && voterConstituency) {
-      updateData.voterConstituency = voterConstituency;
-      updateData.constituency = voterConstituency;
+    if (type !== "gram-panchayat") {
+      updateData.voterConstituency = voterConstituency ? String(voterConstituency).trim() : "";
+      updateData.constituency = updateData.voterConstituency;
     }
 
     const updated = await VoterData.findByIdAndUpdate(id, updateData, { new: true });
@@ -327,4 +345,3 @@ export async function PUT(request) {
     return NextResponse.json({ error: "Failed to update voter" }, { status: 500 });
   }
 }
-
