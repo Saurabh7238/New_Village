@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useToast, ToastContainer } from "@/components/Toast";
 import {
@@ -39,10 +39,11 @@ export default function AdminVotersPage() {
   const [houseNo, setHouseNo] = useState("");
   const [svnNo, setSvnNo] = useState("");
 
-  const [editingVoterId, setEditingVoterId] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importMessage, setImportMessage] = useState("");
-  const [showImportForm, setShowImportForm] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importCount, setImportCount] = useState(0);
+  const importInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedVoterIds, setSelectedVoterIds] = useState([]);
@@ -128,6 +129,73 @@ export default function AdminVotersPage() {
     }
   };
 
+  const handleImportFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    setImportFile(null);
+    setImportCount(0);
+    setImportMessage("");
+    if (!file) return;
+
+    try {
+      const payload = JSON.parse(await file.text());
+      const rows = Array.isArray(payload)
+        ? payload
+        : payload?.electors || payload?.voters;
+      if (!Array.isArray(rows) || rows.length === 0) {
+        throw new Error("JSON must contain a non-empty electors or voters array.");
+      }
+      if (rows.length > 5000) {
+        throw new Error("Import up to 5,000 voters at a time.");
+      }
+      setImportFile(file);
+      setImportCount(rows.length);
+    } catch (error) {
+      setImportMessage(error.message || "Could not read the selected JSON file.");
+      event.target.value = "";
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (!importFile || voterType !== "gram-panchayat") return;
+    if (!window.confirm(`Import ${importCount} voter record(s)? Existing voter IDs will be updated.`)) return;
+
+    setImportLoading(true);
+    setImportMessage("");
+    try {
+      const payload = JSON.parse(await importFile.text());
+      const res = await fetch("/api/import-gram-panchayat-voters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Bulk import failed.");
+
+      setImportMessage(data.message);
+      setImportFile(null);
+      setImportCount(0);
+      setSelectedVoterIds([]);
+      setSearchTerm("");
+      if (importInputRef.current) importInputRef.current.value = "";
+      addToast(data.message, "success");
+      try {
+        const refreshed = await fetch(`/api/voter-data?type=${voterType}`);
+        if (!refreshed.ok) throw new Error("Could not refresh the voter list.");
+        const refreshedData = await refreshed.json();
+        setVoterList(Array.isArray(refreshedData) ? refreshedData : []);
+      } catch {
+        const warning = `${data.message} Reload the page to refresh the voter list.`;
+        setImportMessage(warning);
+        addToast(warning, "warning");
+      }
+    } catch (error) {
+      setImportMessage(error.message || "Bulk import failed.");
+      addToast(error.message || "Bulk import failed.", "error");
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
   const toggleVoterSelection = (voter) => {
     const key = voter._id || getVoterId(voter);
     setSelectedVoterIds((prev) =>
@@ -161,6 +229,49 @@ export default function AdminVotersPage() {
             Sign Out
           </button>
         </div>
+
+        {voterType === "gram-panchayat" && (
+          <section className="mb-6 rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="font-semibold text-gray-900 dark:text-gray-100">Bulk import voters</h2>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                  Upload a JSON file with an <code>electors</code> or <code>voters</code> array.
+                  English and Hindi names and ward numbers are supported.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleImportFileChange}
+                  disabled={importLoading}
+                  className="max-w-full text-sm text-gray-700 file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-2 dark:text-gray-200 dark:file:bg-gray-700"
+                  aria-label="Select voter JSON file"
+                />
+                <button
+                  type="button"
+                  onClick={handleBulkImport}
+                  disabled={!importFile || importLoading}
+                  className="rounded bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {importLoading ? "Importing..." : `Import ${importCount ? `(${importCount})` : ""}`}
+                </button>
+              </div>
+            </div>
+            {importMessage && (
+              <p role="status" className="mt-3 text-sm text-gray-700 dark:text-gray-200">
+                {importMessage}
+              </p>
+            )}
+            {selectedVoterIds.length > 0 && (
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                Bulk deletion is available below: select records in the table or cards, then choose Delete selected.
+              </p>
+            )}
+          </section>
+        )}
 
         {/* Filters */}
         <div className="mb-6 grid gap-3 rounded-lg bg-white p-4 shadow dark:bg-gray-800 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -263,8 +374,18 @@ export default function AdminVotersPage() {
                         />
                       </td>
                       <td className="p-3 text-xs">{getVoterSerialNumber(voter)}</td>
-                      <td className="p-3 text-xs">{getVoterName(voter)}</td>
-                      <td className="p-3 text-xs">{getVoterGuardian(voter)}</td>
+                      <td className="p-3 text-xs">
+                        {getVoterName(voter)}
+                        {voter.elector_name_hi && voter.elector_name_hi !== getVoterName(voter) && (
+                          <span className="block text-gray-500">{voter.elector_name_hi}</span>
+                        )}
+                      </td>
+                      <td className="p-3 text-xs">
+                        {getVoterGuardian(voter)}
+                        {voter.parent_name_hi && voter.parent_name_hi !== getVoterGuardian(voter) && (
+                          <span className="block text-gray-500">{voter.parent_name_hi}</span>
+                        )}
+                      </td>
                       <td className="p-3 text-xs font-mono">{getVoterId(voter)}</td>
                       <td className="p-3 text-xs">{getVoterHouseNo(voter)}</td>
                       <td className="p-3 text-xs">{getVoterWard(voter)}</td>
@@ -308,10 +429,18 @@ export default function AdminVotersPage() {
                           onChange={() => toggleVoterSelection(voter)}
                           className="h-4 w-4"
                         />
-                        <p className="font-bold text-green-700">{getVoterName(voter)}</p>
+                        <div>
+                          <p className="font-bold text-green-700">{getVoterName(voter)}</p>
+                          {voter.elector_name_hi && voter.elector_name_hi !== getVoterName(voter) && (
+                            <p className="text-gray-500">{voter.elector_name_hi}</p>
+                          )}
+                        </div>
                       </div>
                       <p className="text-gray-600 dark:text-gray-400">
                         Guardian: {getVoterGuardian(voter)}
+                        {voter.parent_name_hi && voter.parent_name_hi !== getVoterGuardian(voter) && (
+                          <span className="block">{voter.parent_name_hi}</span>
+                        )}
                       </p>
                     </div>
                     <button

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import VoterData from "@/models/VoterData";
 import { requireAdminSession } from "@/lib/adminAuth";
+import { normalizeVoterImport } from "@/lib/voterImport";
 
 export async function POST(request) {
   try {
@@ -10,170 +11,57 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
     }
 
-    await dbConnect();
-
-    const body = await request.json();
-
-    // Accept both "electors" and "voters" keys
-    const voters = body?.electors || body?.voters || [];
-
-    if (!Array.isArray(voters) || voters.length === 0) {
+    let normalized;
+    try {
+      normalized = normalizeVoterImport(await request.json());
+    } catch (error) {
       return NextResponse.json(
-        { error: "No voters data found. Use { electors: [...] }" },
+        { success: false, error: error.message || 'Invalid voter import data.' },
         { status: 400 }
       );
     }
 
-    console.log(`Processing ${voters.length} voters...`);
-
-    const bulkData = voters.map((voter, idx) => {
-      const electorName =
-        voter.elector_name ?? voter.voter_name ?? voter.voterName ?? voter.name ?? "";
-
-      const parentName =
-        voter.parent_name ??
-        voter.parentName ??
-        voter.guardian_name ??
-        voter.voterGuardianName ??
-        voter.relationship_name ??
-        voter.relation_name ??
-        "";
-
-      const svnNo =
-        voter.SVN ?? voter.Svn ?? voter.svn ?? voter.svn_no ?? voter.svnNo ?? "";
-
-      // Voter ID / EPIC-like identifier (if present in upload). SVN is the expected identifier in this UI,
-      // but we store both: elector_id gets SVN fallback.
-      const electorId =
-        voter.elector_id ??
-        voter.voter_id ??
-        voter.voterId ??
-        voter.electorId ??
-        voter["EPIC No."] ??
-        svnNo ??
-        "";
-
-      const gender = voter.gender ?? voter.voterGender ?? voter.Gender ?? "";
-
-      const ageRaw = voter.age ?? voter.Age ?? voter.voterAge;
-      const age =
-        ageRaw === "" || ageRaw === null || ageRaw === undefined
-          ? null
-          : Number.parseInt(ageRaw);
-
-      // House No should come from house_* fields only
-      const houseNo =
-        voter.house_no ?? voter.houseNo ?? voter.house_number ?? "";
-
-      const serialNum =
-        voter.serial_number ??
-        voter.serial_no ??
-        voter.serialNumber ??
-        voter["Serial No."] ??
-        voter["Serial Number"] ??
-        (idx + 1);
-
-      const wardFromUpload =
-        voter.voterWardNo ??
-        voter.voter_ward_no ??
-        voter.ward_no ??
-        voter.ward_no_no ??
-        voter.ward ??
-        voter.Ward ??
-        "";
-
-      // Relationship alias (guardian name label). Example: "Father"/"Husband"/"Mother" may be stored here depending on upload.
-      const relationship =
-        voter.relationship ??
-        voter.relation ??
-        voter.relation_name ??
-        voter["Relation's Name"] ??
-        voter.parent_spouse_name ??
-        "";
-
-      // Canonical relation type (father/mother/husband) if provided in upload
-      const relationType =
-        voter.relation_type ??
-        voter.relationType ??
-        voter.relationTypeName ??
-        voter.relation_type_name ??
-        "";
-
-
-      if (!String(electorName).trim() || !String(electorId).trim()) {
-        throw new Error(`Row ${idx + 1}: Missing elector_name or elector_id`);
-      }
-
-      const electorNameTrim = String(electorName).trim();
-      const electorIdTrim = String(electorId).trim();
-      const parentNameTrim = parentName ? String(parentName).trim() : "";
-      const genderTrim = gender ? String(gender).trim() : "";
-      const houseNoTrim = houseNo ? String(houseNo).trim() : "";
-      const wardTrim = wardFromUpload ? String(wardFromUpload).trim() : "";
-      const relationTypeTrim = relationType ? String(relationType).trim() : "";
-
-      return {
-        type: "gram-panchayat",
-
-        // Canonical fields required by UI
-        serial_number: serialNum,
-        house_no: houseNoTrim,
-        ward: wardTrim || (houseNoTrim ? String(houseNoTrim).trim() : ""),
-        elector_name: electorNameTrim,
-        parent_name: parentNameTrim,
-        // Keep elector_id only as a legacy/alias; UI uses svn_no
-        elector_id: electorIdTrim,
-        gender: genderTrim,
-        age: Number.isNaN(age) ? null : age,
-
-      svn_no: svnNo ? String(svnNo).trim() : "",
-
-
-        // Relation fields
-        relationship: relationship ? String(relationship).trim() : "",
-        relation_type: relationTypeTrim,
-
-        // Frontend aliases (lib/voterDisplay.js)
-        voterId: electorIdTrim,
-        voterName: electorNameTrim,
-        voterGuardianName: parentNameTrim,
-        voterGender: genderTrim,
-        voterAge: Number.isNaN(age) ? null : age,
-        voterWardNo: wardTrim || "",
-
-        // Extra aliases
-        name: electorNameTrim,
-      };
-    });
-
-    console.log(`Inserting ${bulkData.length} voters into database...`);
-
-    const result = await VoterData.insertMany(bulkData, { ordered: false });
-
-    const inserted = result.map((doc) => ({
-      ...doc.toObject(),
-      id: doc._id.toString(),
+    await dbConnect();
+    const { voters, duplicateRows, totalRows } = normalized;
+    const operations = voters.map((voter) => ({
+      updateOne: {
+        filter: {
+          type: 'gram-panchayat',
+          $or: [
+            { elector_id: voter.elector_id },
+            { electorId: voter.elector_id },
+            { voterId: voter.elector_id },
+          ],
+        },
+        update: { $set: voter },
+        upsert: true,
+      },
     }));
+    const result = await VoterData.bulkWrite(operations, { ordered: false });
+    const inserted = result.upsertedCount || 0;
+    const updated = result.modifiedCount || 0;
+    const unchanged = (result.matchedCount || 0) - updated;
 
     return NextResponse.json(
       {
         success: true,
-        inserted: result.length,
-        total: voters.length,
-        voters: inserted,
-        message: `✅ Successfully imported ${result.length} voters`,
+        inserted,
+        updated,
+        unchanged,
+        skippedDuplicates: duplicateRows,
+        total: totalRows,
+        message: `Imported ${inserted} new voter(s), updated ${updated}, left ${unchanged} unchanged, and skipped ${duplicateRows} duplicate row(s).`,
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Import error:", error);
+    console.error("Bulk voter import failed.");
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
-        message: `❌ Import failed: ${error.message}`,
+        error: 'Bulk voter import failed. Please try again.',
       },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }
@@ -194,4 +82,3 @@ export async function GET(request) {
     );
   }
 }
-
