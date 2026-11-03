@@ -111,7 +111,7 @@ export async function PUT(request, { params }) {
       };
     }
 
-    const previousQuery = await Query.findById(id).select('status adminRemarks').lean();
+    const previousQuery = await Query.findById(id).select('status adminRemarks priority assignedTo').lean();
     if (previousQuery && (previousQuery.status !== (updateData.status || previousQuery.status) || (adminRemarks !== undefined && previousQuery.adminRemarks !== adminRemarks))) {
       updateData.$push = {
         ...(updateData.$push || {}),
@@ -131,7 +131,28 @@ export async function PUT(request, { params }) {
         { status: 404 }
       );
     }
-    await writeAuditLog({ session, action: 'Query updated', details: { queryId: query._id.toString(), publicQueryId: query.queryId, status: query.status, priority: query.priority, assignedTo: query.assignedTo } });
+    await writeAuditLog({
+      session,
+      action: 'Query updated',
+      entityType: 'query',
+      entityId: query._id.toString(),
+      details: {
+        queryId: query._id.toString(),
+        publicQueryId: query.queryId,
+        before: previousQuery && {
+          status: previousQuery.status,
+          adminRemarks: previousQuery.adminRemarks || '',
+          priority: previousQuery.priority,
+          assignedTo: previousQuery.assignedTo || null,
+        },
+        after: {
+          status: query.status,
+          adminRemarks: query.adminRemarks || '',
+          priority: query.priority,
+          assignedTo: query.assignedTo || null,
+        },
+      },
+    });
     if (adminRemarks !== undefined || status) {
       await ServiceNotification.findOneAndUpdate(
         { relatedType: 'query', relatedId: query._id },

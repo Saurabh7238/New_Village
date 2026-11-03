@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/dbConnect';
 import ServiceNotification from '@/models/ServiceNotification';
 import CitizenNotification from '@/models/CitizenNotification';
+import NotificationDelivery from '@/models/NotificationDelivery';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 
 const links = {
@@ -27,6 +28,25 @@ export async function GET() {
       .select('title message relatedId isRead createdAt updatedAt')
       .lean(),
   ]);
+  const serviceIds = serviceNotifications.map(({ relatedId }) => relatedId);
+  const deliveries = serviceIds.length
+    ? await NotificationDelivery.find({
+      userId: session.user.id,
+      relatedType: { $in: ['application', 'appointment', 'query'] },
+      relatedId: { $in: serviceIds },
+    }).sort({ updatedAt: -1 }).select('relatedType relatedId status sentAt updatedAt').lean()
+    : [];
+  const deliveryByRequest = new Map();
+  for (const delivery of deliveries) {
+    const key = `${delivery.relatedType}:${delivery.relatedId}`;
+    if (!deliveryByRequest.has(key)) {
+      deliveryByRequest.set(key, {
+        status: delivery.status,
+        sentAt: delivery.sentAt,
+        updatedAt: delivery.updatedAt,
+      });
+    }
+  }
   const notifications = [
     ...serviceNotifications.map((notification) => ({
       id: notification._id.toString(),
@@ -36,6 +56,7 @@ export async function GET() {
       isRead: notification.isRead,
       adminResponded: notification.adminResponded,
       updatedAt: notification.updatedAt,
+      emailDelivery: deliveryByRequest.get(`${notification.relatedType}:${notification.relatedId}`) || null,
       title: `Update for your ${notification.serviceType.replace(/[-:]/g, ' ')}`,
       link: links[notification.relatedType](notification.relatedId.toString()),
     })),

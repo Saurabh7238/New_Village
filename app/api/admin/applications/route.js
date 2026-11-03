@@ -52,6 +52,11 @@ export async function PUT(request) {
     const application = await Application.findById(id);
     if (!application) return NextResponse.json({ message: 'Application not found.' }, { status: 404 });
 
+    const previousState = {
+      status: application.status,
+      adminRemarks: application.adminRemarks || '',
+      requestedDocuments: [...(application.requestedDocuments || [])],
+    };
     const statusChanged = application.status !== status;
     const nextRemarks = String(adminRemarks).slice(0, 2000);
     const remarksChanged = application.adminRemarks !== nextRemarks;
@@ -92,7 +97,22 @@ export async function PUT(request) {
       if (!hasDocumentQuota(existingBytes, newVaultDocuments)) return NextResponse.json({ message: `This citizen's document vault cannot exceed ${MAX_USER_DOCUMENT_BYTES / (1024 * 1024)} MB.` }, { status: 400 });
       if (newVaultDocuments.length) await CitizenDocument.insertMany(newVaultDocuments);
     }
-    await writeAuditLog({ session, action: 'Application updated', details: { applicationId: application._id.toString(), applicationNumber: application.applicationNumber, status, requestedDocuments: nextRequestedDocuments } });
+    await writeAuditLog({
+      session,
+      action: 'Application updated',
+      entityType: 'application',
+      entityId: application._id.toString(),
+      details: {
+        applicationId: application._id.toString(),
+        applicationNumber: application.applicationNumber,
+        before: previousState,
+        after: {
+          status: application.status,
+          adminRemarks: application.adminRemarks,
+          requestedDocuments: application.requestedDocuments,
+        },
+      },
+    });
 
     let emailDelivery = { status: 'not-needed' };
     if (statusChanged || remarksChanged || documentsChanged || requestedDocumentsChanged) {

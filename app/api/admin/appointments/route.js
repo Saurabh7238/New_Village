@@ -54,7 +54,7 @@ export async function PUT(request) {
     }
     if (['Approved', 'Rescheduled'].includes(status) && (!update.scheduledDate || !update.scheduledTime)) return NextResponse.json({ message: 'Set a scheduled date and time before approving or rescheduling.' }, { status: 400 });
     await connectDB();
-    const previousAppointment = await Appointment.findOne({ _id: id, archivedAt: null }).select('status adminRemarks scheduledDate scheduledTime').lean();
+    const previousAppointment = await Appointment.findOne({ _id: id, archivedAt: null }).select('status adminRemarks scheduledDate scheduledTime appointmentDate appointmentTime').lean();
     const nextScheduledDate = chosenDate ? new Date(chosenDate) : previousAppointment?.scheduledDate;
     const nextScheduledTime = chosenTime ? String(chosenTime).slice(0, 30) : previousAppointment?.scheduledTime;
     const historyChanged = previousAppointment && (
@@ -68,7 +68,32 @@ export async function PUT(request) {
       : update;
     const appointment = await Appointment.findOneAndUpdate({ _id: id, archivedAt: null }, appointmentUpdate, { new: true, runValidators: true });
     if (!appointment) return NextResponse.json({ message: 'Appointment not found.' }, { status: 404 });
-    await writeAuditLog({ session, action: 'Appointment updated', details: { appointmentId: appointment._id.toString(), appointmentNumber: appointment.appointmentNumber, status } });
+    await writeAuditLog({
+      session,
+      action: 'Appointment updated',
+      entityType: 'appointment',
+      entityId: appointment._id.toString(),
+      details: {
+        appointmentId: appointment._id.toString(),
+        appointmentNumber: appointment.appointmentNumber,
+        before: previousAppointment && {
+          status: previousAppointment.status,
+          adminRemarks: previousAppointment.adminRemarks || '',
+          scheduledDate: previousAppointment.scheduledDate || null,
+          scheduledTime: previousAppointment.scheduledTime || '',
+          appointmentDate: previousAppointment.appointmentDate || null,
+          appointmentTime: previousAppointment.appointmentTime || '',
+        },
+        after: {
+          status: appointment.status,
+          adminRemarks: appointment.adminRemarks || '',
+          scheduledDate: appointment.scheduledDate || null,
+          scheduledTime: appointment.scheduledTime || '',
+          appointmentDate: appointment.appointmentDate || null,
+          appointmentTime: appointment.appointmentTime || '',
+        },
+      },
+    });
     await ServiceNotification.findOneAndUpdate(
       { relatedType: 'appointment', relatedId: appointment._id },
       {

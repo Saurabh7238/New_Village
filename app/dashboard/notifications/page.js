@@ -95,6 +95,15 @@ export default function MyNotificationsPage() {
                     <h2 className="font-bold">{notification.title}</h2>
                     {notification.message && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-200">{notification.message}</p>}
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{formatDate(notification.adminResponded || notification.updatedAt)}</p>
+                    {notification.emailDelivery && <p className="mt-2 text-xs text-gray-600 dark:text-gray-300" role="status">
+                      Email: {notification.emailDelivery.status === 'sent'
+                        ? `Sent${notification.emailDelivery.sentAt ? ` ${formatDate(notification.emailDelivery.sentAt)}` : ''}`
+                        : notification.emailDelivery.status === 'failed'
+                          ? 'Could not be sent'
+                          : notification.emailDelivery.status === 'sending'
+                            ? 'Sending'
+                            : 'Not sent (preference or administrator setting)'}
+                    </p>}
                   </div>
                   <Link href={notification.link} onClick={() => !notification.isRead && markRead(notification.id)} className="shrink-0 rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">View</Link>
                 </div>

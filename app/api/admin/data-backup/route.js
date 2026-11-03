@@ -8,10 +8,11 @@ import Appointment from '@/models/Appointment';
 import NotificationBoard from '@/models/NotificationBoard';
 import Query from '@/models/Query';
 import User from '@/models/User';
+import VoterData from '@/models/VoterData';
 
 const MAX_RECORDS_PER_COLLECTION = 5000;
 const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
-const SUPPORTED_COLLECTIONS = new Set(['applications', 'appointments', 'grievances', 'notices']);
+const SUPPORTED_COLLECTIONS = new Set(['applications', 'appointments', 'grievances', 'notices', 'voters']);
 const COLLECTIONS = {
   applications: {
     model: Application,
@@ -31,6 +32,11 @@ const COLLECTIONS = {
   notices: {
     model: NotificationBoard,
     select: '_id type level title description issueDate validTill priority status createdBy category scheduledPublishDate subscribersNotifiedAt viewCount createdAt updatedAt',
+    key: '_id',
+  },
+  voters: {
+    model: VoterData,
+    select: '_id type serial_number house_no svn_no elector_id electorId elector_name elector_name_en elector_name_hi parent_name parent_name_en parent_name_hi relation_type relationship gender age voterId name ward constituency voterName voterGuardianName voterGender voterAge voterWardNo voterConstituency dateOfBirth createdAt updatedAt',
     key: '_id',
   },
 };
@@ -123,11 +129,26 @@ function cleanNotice(record) {
   };
 }
 
+function cleanVoter(record) {
+  const fields = [
+    '_id', 'type', 'serial_number', 'house_no', 'svn_no',
+    'elector_id', 'electorId', 'elector_name', 'elector_name_en', 'elector_name_hi',
+    'parent_name', 'parent_name_en', 'parent_name_hi', 'relation_type', 'relationship',
+    'gender', 'age', 'voterId', 'name', 'ward', 'constituency', 'voterName',
+    'voterGuardianName', 'voterGender', 'voterAge', 'voterWardNo', 'voterConstituency',
+    'dateOfBirth', 'createdAt', 'updatedAt',
+  ];
+  return Object.fromEntries(fields
+    .filter((field) => record[field] !== undefined)
+    .map((field) => [field, record[field]]));
+}
+
 const CLEANERS = {
   applications: cleanApplication,
   appointments: cleanAppointment,
   grievances: cleanGrievance,
   notices: cleanNotice,
+  voters: cleanVoter,
 };
 
 export async function GET(request) {

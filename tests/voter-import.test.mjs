@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { extractVoterRows, normalizeVoterImport } from "../lib/voterImport.js";
+import {
+  analyzeVoterImport,
+  extractVoterRows,
+  normalizeVoterImport,
+} from "../lib/voterImport.js";
 
 test("normalizes bilingual ward electors and preserves language fields", () => {
   const result = normalizeVoterImport({
@@ -63,10 +67,36 @@ test("keeps supporting the older voter field aliases", () => {
   assert.equal(voter.relation_type, "father");
 });
 
+test("preview reports valid, invalid, duplicate, and incomplete rows separately", () => {
+  const preview = analyzeVoterImport({
+    ward_number: 1,
+    electors: [
+      { elector_id: "one", elector_name_en: "Valid", age: 0 },
+      { elector_id: "ONE", elector_name_hi: "Duplicate", ward_number: 1 },
+      { elector_name_en: "Missing ID" },
+    ],
+  });
+
+  assert.equal(preview.totalRows, 3);
+  assert.equal(preview.voters.length, 1);
+  assert.equal(preview.duplicateRows, 1);
+  assert.deepEqual(preview.invalidRows, [{
+    row: 3,
+    issues: ["Missing voter ID."],
+  }]);
+  assert.deepEqual(preview.missingFields, {
+    serialNumber: 1,
+    houseNumber: 1,
+    guardianName: 1,
+    gender: 1,
+    age: 0,
+  });
+});
+
 test("rejects records without required IDs, names, or valid ward numbers", () => {
-  assert.throws(() => normalizeVoterImport({ electors: [{ ward_number: 1 }] }), /elector ID and a name/);
+  assert.throws(() => normalizeVoterImport({ electors: [{ ward_number: 1 }] }), /Missing voter ID/);
   assert.throws(() => normalizeVoterImport({
     electors: [{ elector_id: "id-1", elector_name_en: "Name" }],
-  }), /valid ward number/);
+  }), /Ward must be a number/);
   assert.throws(() => extractVoterRows({ records: [] }), /electors or voters array/);
 });

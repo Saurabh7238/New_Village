@@ -3,8 +3,28 @@ import dbConnect from "@/lib/dbConnect";
 import VoterData from "@/models/VoterData";
 import { requireAdminSession } from "@/lib/adminAuth";
 import { serializeVoter } from "@/lib/voterSerialization";
+import { writeAuditLog } from "@/lib/writeAuditLog";
 
 const VALID_TYPES = ["vidhan-sabha", "lok-sabha", "gram-panchayat"];
+const VOTER_AUDIT_FIELDS = [
+  "type", "voterId", "elector_id", "electorId", "voterName", "electorName",
+  "voterGuardianName", "parent_name", "parent_name_en", "parent_name_hi",
+  "parentNameEn", "parentNameHi", "voterGender", "gender", "age", "voterAge",
+  "voterWardNo", "ward", "voterConstituency", "constituency", "svn_no",
+  "serial_number", "house_no", "elector_name", "elector_name_en",
+  "elector_name_hi", "electorNameEn", "electorNameHi", "relation_type",
+  "relationship", "name", "dateOfBirth",
+];
+
+function voterAuditSnapshot(voter) {
+  const record = typeof voter.toObject === "function" ? voter.toObject() : voter;
+  return {
+    _id: record._id.toString(),
+    ...Object.fromEntries(VOTER_AUDIT_FIELDS
+      .filter((field) => record[field] !== undefined)
+      .map((field) => [field, record[field]])),
+  };
+}
 
 export async function GET(request) {
   await dbConnect();
@@ -147,6 +167,13 @@ export async function POST(request) {
     }
 
     const created = await VoterData.create(record);
+    await writeAuditLog({
+      session,
+      action: "Voter record created",
+      entityType: "voter-data",
+      entityId: created._id.toString(),
+      details: { type, before: null, after: voterAuditSnapshot(created) },
+    });
     return NextResponse.json(serializeVoter(created, type), { status: 201 });
   } catch (error) {
     console.error("Failed to create voter:", error);
@@ -184,6 +211,9 @@ export async function DELETE(request) {
     }
 
     if (deleteIds.length > 0) {
+      if (deleteIds.length > 500) {
+        return NextResponse.json({ error: "Delete at most 500 voters at a time." }, { status: 400 });
+      }
       const criteria = {
         type,
         $or: [
@@ -194,7 +224,21 @@ export async function DELETE(request) {
         ],
       };
 
+      const recordsBeforeDelete = await VoterData.find(criteria).lean();
       const result = await VoterData.deleteMany(criteria);
+      if (result.deletedCount > 0) {
+        await writeAuditLog({
+          session,
+          action: "Voter records deleted",
+          entityType: "voter-data",
+          details: {
+            type,
+            count: result.deletedCount,
+            before: recordsBeforeDelete.map(voterAuditSnapshot),
+            after: [],
+          },
+        });
+      }
 
       return NextResponse.json({
         message: `${result.deletedCount} item(s) deleted successfully`,
@@ -202,7 +246,7 @@ export async function DELETE(request) {
       });
     }
 
-    const result = await VoterData.deleteOne({
+    const deleted = await VoterData.findOneAndDelete({
       type,
       $or: [
         { _id: singleId },
@@ -212,13 +256,20 @@ export async function DELETE(request) {
       ],
     });
 
-    if (result.deletedCount === 0) {
+    if (!deleted) {
       return NextResponse.json(
         { error: "Item not found or already deleted" },
         { status: 404 }
       );
     }
 
+    await writeAuditLog({
+      session,
+      action: "Voter record deleted",
+      entityType: "voter-data",
+      entityId: deleted._id.toString(),
+      details: { type, count: 1, before: [voterAuditSnapshot(deleted)], after: [] },
+    });
     return NextResponse.json({ message: "Item deleted successfully" });
   } catch (error) {
     console.error("Failed to delete voter:", error);
@@ -236,6 +287,71 @@ export async function PUT(request) {
 
   try {
     const body = await request.json();
+    if (Array.isArray(body.ids)) {
+      const ids = [...new Set(body.ids.filter((value) => typeof value === "string" && value))];
+      const { type, updates } = body;
+      if (!VALID_TYPES.includes(type) || !ids.length || ids.length > 500) {
+        return NextResponse.json({ error: "Select between 1 and 500 voters of a valid type." }, { status: 400 });
+      }
+      if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
+        return NextResponse.json({ error: "Bulk update fields are required." }, { status: 400 });
+      }
+
+      const updateData = {};
+      const stringFields = {
+        houseNo: "house_no",
+        voterGender: "gender",
+        voterWardNo: type === "gram-panchayat" ? "ward" : null,
+        voterConstituency: type === "gram-panchayat" ? null : "constituency",
+      };
+      for (const [field, databaseField] of Object.entries(stringFields)) {
+        if (databaseField && Object.hasOwn(updates, field) && typeof updates[field] === "string") {
+          updateData[databaseField] = updates[field].trim().slice(0, 200);
+        }
+      }
+      if (Object.hasOwn(updates, "voterAge")) {
+        if (updates.voterAge === "" || updates.voterAge === null) {
+          updateData.age = null;
+          updateData.voterAge = null;
+        } else {
+          const age = Number(updates.voterAge);
+          if (!Number.isInteger(age) || age < 0 || age > 130) {
+            return NextResponse.json({ error: "Age must be between 0 and 130." }, { status: 400 });
+          }
+          updateData.age = age;
+          updateData.voterAge = age;
+        }
+      }
+      if (Object.hasOwn(updateData, "house_no")) updateData.houseNo = updateData.house_no;
+      if (Object.hasOwn(updateData, "gender")) updateData.voterGender = updateData.gender;
+      if (Object.hasOwn(updateData, "ward")) updateData.voterWardNo = updateData.ward;
+      if (Object.hasOwn(updateData, "constituency")) updateData.voterConstituency = updateData.constituency;
+      if (!Object.keys(updateData).length) {
+        return NextResponse.json({ error: "Choose at least one field to update." }, { status: 400 });
+      }
+
+      const before = await VoterData.find({ _id: { $in: ids }, type }).lean();
+      const result = await VoterData.updateMany({ _id: { $in: ids }, type }, { $set: updateData }, { runValidators: true });
+      const after = await VoterData.find({ _id: { $in: before.map((voter) => voter._id) }, type }).lean();
+      await writeAuditLog({
+        session,
+        action: "Voter records bulk updated",
+        entityType: "voter-data",
+        details: {
+          type,
+          count: result.modifiedCount || 0,
+          fields: Object.keys(updateData),
+          before: before.map(voterAuditSnapshot),
+          after: after.map(voterAuditSnapshot),
+        },
+      });
+      return NextResponse.json({
+        success: true,
+        matchedCount: result.matchedCount || 0,
+        modifiedCount: result.modifiedCount || 0,
+      });
+    }
+
     const {
       id,
       type,
@@ -264,33 +380,51 @@ export async function PUT(request) {
       );
     }
 
-    const voterIdTrim = normalizeStr(voterId);
-    const voterNameEn = normalizeStr(elector_name_en);
-    const voterNameHi = normalizeStr(elector_name_hi);
-    const voterNameTrim = normalizeStr(voterName) || voterNameEn || voterNameHi;
-    const parentNameEn = normalizeStr(parent_name_en);
-    const parentNameHi = normalizeStr(parent_name_hi);
+    const voterIdTrim = typeof voterId === "string" ? voterId.trim() : "";
+    const voterNameEn = typeof elector_name_en === "string" ? elector_name_en.trim() : "";
+    const voterNameHi = typeof elector_name_hi === "string" ? elector_name_hi.trim() : "";
+    const requestedName = typeof voterName === "string" ? voterName.trim() : "";
+    const voterNameTrim = requestedName || voterNameEn || voterNameHi;
+    const parentNameEn = typeof parent_name_en === "string" ? parent_name_en.trim() : "";
+    const parentNameHi = typeof parent_name_hi === "string" ? parent_name_hi.trim() : "";
 
-    if (!voterIdTrim?.trim() || !voterNameTrim?.trim()) {
+    if (!voterIdTrim || !voterNameTrim) {
       return NextResponse.json(
         { error: "Voter ID and name are required" },
         { status: 400 }
       );
     }
 
+    const normalizedVoterId = voterIdTrim.toUpperCase();
+    const escapedVoterId = normalizedVoterId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const voterIdPattern = { $regex: `^${escapedVoterId}$`, $options: "i" };
+    const duplicate = await VoterData.findOne({
+      _id: { $ne: id },
+      type,
+      $or: [
+        { elector_id: voterIdPattern },
+        { electorId: voterIdPattern },
+        { voterId: voterIdPattern },
+      ],
+    }).select("_id").lean();
+    if (duplicate) {
+      return NextResponse.json({ error: "Another voter already uses this voter ID." }, { status: 409 });
+    }
+
     const displayName = voterNameEn || voterNameTrim;
     const displayGuardian = parentNameEn || normalizeStr(voterGuardianName) || parentNameHi;
     const updateData = {
-      voterId: voterIdTrim.trim(),
-      elector_id: voterIdTrim.trim(),
-      electorId: voterIdTrim.trim(),
+      voterId: normalizedVoterId,
+      elector_id: normalizedVoterId,
+      electorId: normalizedVoterId,
       voterName: displayName.trim(),
+      electorName: displayName.trim(),
       voterGuardianName: displayGuardian ? displayGuardian.trim() : "",
       voterGender: voterGender ? String(voterGender).trim() : "",
       name: displayName.trim(),
 
       // Canonical fields
-      svn_no: svnNo !== undefined ? String(svnNo).trim() : voterIdTrim.trim(),
+      svn_no: svnNo !== undefined ? String(svnNo).trim() : normalizedVoterId,
       serial_number: serialNumber ? String(serialNumber).trim() : "",
       house_no: houseNo ? String(houseNo).trim() : "",
       elector_name: displayName.trim(),
@@ -307,9 +441,13 @@ export async function PUT(request) {
       elector_name_hi: voterNameHi ? voterNameHi.trim() : "",
       parent_name_en: parentNameEn ? parentNameEn.trim() : "",
       parent_name_hi: parentNameHi ? parentNameHi.trim() : "",
-      image: body.image || "",
-      dateOfBirth: body.dateOfBirth || "",
+      electorNameEn: voterNameEn ? voterNameEn.trim() : "",
+      electorNameHi: voterNameHi ? voterNameHi.trim() : "",
+      parentNameEn: parentNameEn ? parentNameEn.trim() : "",
+      parentNameHi: parentNameHi ? parentNameHi.trim() : "",
     };
+    if (body.image !== undefined) updateData.image = body.image || "";
+    if (body.dateOfBirth !== undefined) updateData.dateOfBirth = body.dateOfBirth || "";
 
     if (voterAge === "") {
       updateData.age = null;
@@ -333,12 +471,31 @@ export async function PUT(request) {
       updateData.constituency = updateData.voterConstituency;
     }
 
-    const updated = await VoterData.findByIdAndUpdate(id, updateData, { new: true });
+    const previous = await VoterData.findOne({
+      _id: id,
+      $or: [{ type }, { type: { $exists: false } }],
+    }).lean();
+    const updated = await VoterData.findOneAndUpdate({
+      _id: id,
+      $or: [{ type }, { type: { $exists: false } }],
+    }, updateData, { new: true });
 
     if (!updated) {
       return NextResponse.json({ error: "Voter not found" }, { status: 404 });
     }
 
+    await writeAuditLog({
+      session,
+      action: "Voter record updated",
+      entityType: "voter-data",
+      entityId: updated._id.toString(),
+      details: {
+        type,
+        fields: Object.keys(updateData),
+        before: previous ? voterAuditSnapshot(previous) : null,
+        after: voterAuditSnapshot(updated),
+      },
+    });
     return NextResponse.json(serializeVoter(updated, type), { status: 200 });
   } catch (error) {
     console.error("Failed to update voter:", error);

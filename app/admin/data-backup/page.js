@@ -9,6 +9,7 @@ const COLLECTION_OPTIONS = [
   ['appointments', 'Appointments'],
   ['grievances', 'Grievances'],
   ['notices', 'Public notices'],
+  ['voters', 'Voter records'],
 ];
 
 export default function AdminDataBackupPage() {
@@ -106,7 +107,7 @@ export default function AdminDataBackupPage() {
       </header>
 
       <div role="note" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-        Backups include citizen details and application form data. Uploaded documents, grievance photos/attachments, and private internal notes are excluded. Keep downloaded files private. Each collection is limited to 5,000 records and restore files to 10 MB.
+        Backups include citizen details, application form data, and voter records. Voter photos, uploaded documents, grievance photos/attachments, and private internal notes are excluded. Keep downloaded files private. Each collection is limited to 5,000 records and restore files to 10 MB.
       </div>
 
       {error && <p role="alert" className="rounded-lg bg-red-100 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">{error}</p>}
