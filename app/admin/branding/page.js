@@ -88,6 +88,7 @@ export default function BrandingManagerPage() {
       }
 
       setAssets((current) => ({ ...current, [key]: data.asset }));
+      window.dispatchEvent(new CustomEvent('site-branding-updated', { detail: { key, asset: data.asset } }));
       setSelectedFiles((current) => ({ ...current, [key]: null }));
       setMessage(`${ASSET_FIELDS.find((field) => field.key === key)?.title} updated successfully.`);
       setMessageType('success');
@@ -122,6 +123,7 @@ export default function BrandingManagerPage() {
         delete next[key];
         return next;
       });
+      window.dispatchEvent(new CustomEvent('site-branding-updated', { detail: { key, asset: null } }));
       setMessage(`${field?.title} removed. The site default will be used.`);
       setMessageType('success');
     } catch (error) {

@@ -23,6 +23,16 @@ export default function SiteFooter() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleBrandingUpdate = (event) => {
+      const { key, asset } = event.detail || {};
+      if (!key) return;
+      setBranding((current) => ({ ...current, [key]: asset }));
+    };
+    window.addEventListener('site-branding-updated', handleBrandingUpdate);
+    return () => window.removeEventListener('site-branding-updated', handleBrandingUpdate);
+  }, []);
+
   const lightLogo = branding.logo?.url || '/favicon.png';
   const darkLogo = branding.darkLogo?.url || lightLogo;
 

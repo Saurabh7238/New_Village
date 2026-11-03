@@ -58,6 +58,16 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
+    const handleBrandingUpdate = (event) => {
+      const { key, asset } = event.detail || {};
+      if (!key) return;
+      setSiteBranding((current) => ({ ...current, [key]: asset }));
+    };
+    window.addEventListener('site-branding-updated', handleBrandingUpdate);
+    return () => window.removeEventListener('site-branding-updated', handleBrandingUpdate);
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       const nextScrolled = window.scrollY > 10;
       setScrolled((current) => (current === nextScrolled ? current : nextScrolled));
@@ -302,8 +312,8 @@ export default function Header() {
       </div>
 
       <div className="mx-auto flex max-w-6xl flex-nowrap items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 lg:px-8">
-        <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
-          <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12">
+        <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 sm:h-12 sm:w-12">
             <Image
               src={siteBranding.darkLogo?.url || siteBranding.logo?.url || '/favicon.png'}
               alt="Chiutahara Heritage Village logo"
