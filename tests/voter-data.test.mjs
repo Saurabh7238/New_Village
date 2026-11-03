@@ -14,6 +14,7 @@ import {
   getVoterRelationship,
   getVoterSvnNo,
   getVoterRelationType,
+  hasVoterValue,
 } from "../lib/voterDisplay.js";
 
 test("serializeVoter returns canonical fields plus legacy aliases", () => {
@@ -100,4 +101,12 @@ test("voter name and guardian follow selected language with fallback", () => {
   assert.equal(getVoterRelationship({ ...voter, relationship: "Parent Name" }, "hi"), "अभिभावक नाम");
   assert.equal(getVoterName({ elector_name_en: "English only" }, "hi"), "English only");
   assert.equal(getVoterGuardian({ parent_name_en: "Guardian only" }, "hi"), "Guardian only");
+});
+
+test("optional voter values omit blanks without hiding zero", () => {
+  assert.equal(hasVoterValue(""), false);
+  assert.equal(hasVoterValue("  "), false);
+  assert.equal(hasVoterValue(null), false);
+  assert.equal(hasVoterValue(undefined), false);
+  assert.equal(hasVoterValue(0), true);
 });

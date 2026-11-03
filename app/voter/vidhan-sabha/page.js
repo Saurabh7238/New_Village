@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import {
   parseVoterListResponse,
+  hasVoterValue,
   getVoterName,
   getVoterId,
   getVoterGuardian,
@@ -123,6 +124,14 @@ export default function VidhanSabhaPage() {
         {filteredVoters.map((voter, index) => {
           const imageSrc = getVoterImage(voter);
           const age = getVoterAge(voter);
+          const serialNumber = getVoterSerialNumber(voter);
+          const voterId = getVoterId(voter);
+          const svnNumber = getVoterSvnNo(voter);
+          const constituency = getVoterConstituency(voter);
+          const houseNumber = getVoterHouseNo(voter);
+          const ward = getVoterWard(voter);
+          const guardian = getVoterGuardian(voter, language);
+          const gender = getVoterGender(voter);
           return (
             <div
               key={voter.id || `voter-${index}`}
@@ -139,33 +148,15 @@ export default function VidhanSabhaPage() {
                 />
               )}
               <h2 className="text-lg font-semibold text-purple-700">{getVoterName(voter, language)}</h2>
-              <p className="text-sm text-gray-600">
-                Serial No.: {getVoterSerialNumber(voter) || "N/A"}
-              </p>
-              <p className="text-sm text-gray-600">
-                {t.voterId}: {getVoterId(voter) || "N/A"}
-              </p>
-              <p className="text-sm text-gray-600">
-                SVN No.: {getVoterSvnNo(voter) || "N/A"}
-              </p>
-              <p className="text-sm text-gray-600">
-                {t.constituency}: {getVoterConstituency(voter) || "Unknown"}
-              </p>
-              <p className="text-sm text-gray-600">
-                House No.: {getVoterHouseNo(voter) || "N/A"}
-              </p>
-              <p className="text-sm text-gray-600">
-                Ward/Constituency: {getVoterWard(voter) || getVoterConstituency(voter) || "N/A"}
-              </p>
-              <p className="text-sm text-gray-600">
-                {t.guardian}: {getVoterGuardian(voter, language) || "N/A"}
-              </p>
-              <p className="text-sm text-gray-600">
-                {t.gender}: {normalizeGender(voter)}
-              </p>
-              <p className="text-sm text-gray-600">
-                {t.age}: {age !== null ? age : "N/A"}
-              </p>
+              {hasVoterValue(serialNumber) && <p className="text-sm text-gray-600">Serial No.: {serialNumber}</p>}
+              {hasVoterValue(voterId) && <p className="text-sm text-gray-600">{t.voterId}: {voterId}</p>}
+              {hasVoterValue(svnNumber) && <p className="text-sm text-gray-600">SVN No.: {svnNumber}</p>}
+              {hasVoterValue(constituency) && <p className="text-sm text-gray-600">{t.constituency}: {constituency}</p>}
+              {hasVoterValue(houseNumber) && <p className="text-sm text-gray-600">House No.: {houseNumber}</p>}
+              {hasVoterValue(ward) && <p className="text-sm text-gray-600">Ward: {ward}</p>}
+              {hasVoterValue(guardian) && <p className="text-sm text-gray-600">{t.guardian}: {guardian}</p>}
+              {hasVoterValue(gender) && <p className="text-sm text-gray-600">{t.gender}: {normalizeGender(voter)}</p>}
+              {age !== null && <p className="text-sm text-gray-600">{t.age}: {age}</p>}
             </div>
           );
         })}

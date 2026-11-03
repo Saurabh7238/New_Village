@@ -5,6 +5,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useLanguage } from "@/app/language-provider";
 import {
   parseVoterListResponse,
+  hasVoterValue,
   getVoterName,
   getVoterId,
   getVoterGuardian,
@@ -120,6 +121,26 @@ export default function VoterSearchPage() {
     return matchesSearchTerm && matchesConstituency && matchesType;
   });
 
+  const optionalColumns = [
+    { key: "serial", label: "Serial Number", value: getVoterSerialNumber },
+    { key: "svn", label: "SVN No.", value: getVoterSvnNo },
+    { key: "house", label: "House No.", value: getVoterHouseNo },
+    { key: "guardian", label: "Guardian", value: (voter) => getVoterGuardian(voter, language) },
+    { key: "gender", label: "Gender", value: getVoterGender, display: normalizeGender },
+    { key: "age", label: "Age", value: getVoterAge },
+    {
+      key: "ward",
+      label: "Ward/Constituency",
+      value: (voter) => getVoterWard(voter) || getVoterConstituency(voter),
+    },
+  ].filter((column) => voters.some((voter) => hasVoterValue(column.value(voter))));
+  const columns = [
+    ...optionalColumns.filter((column) => column.key === "serial"),
+    { key: "name", label: "Name", value: (voter) => getVoterName(voter, language) },
+    ...optionalColumns.filter((column) => column.key !== "serial"),
+    { key: "type", label: "Type", value: (voter) => VOTER_TYPE_LABELS[voter.type] || voter.type },
+  ];
+
   // Show loading spinner while fetching voter data
   if (isLoading) {
     return <LoadingSpinner message="Loading Voter Details..." />;
@@ -180,33 +201,26 @@ export default function VoterSearchPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-blue-50 dark:bg-gray-700 border-b dark:border-gray-600">
                     <tr>
-                      <th className="p-4 text-left font-semibold">Serial Number</th>
-                      <th className="p-4 text-left font-semibold">Name</th>
-                      <th className="p-4 text-left font-semibold">SVN No.</th>
-                      <th className="p-4 text-left font-semibold">House No.</th>
-                      <th className="p-4 text-left font-semibold">Guardian</th>
-                      <th className="p-4 text-left font-semibold">Gender</th>
-                      <th className="p-4 text-left font-semibold">Age</th>
-                      <th className="p-4 text-left font-semibold">Ward/Constituency</th>
-                      <th className="p-4 text-left font-semibold">Type</th>
+                      {columns.map((column) => (
+                        <th key={column.key} className="p-4 text-left font-semibold">{column.label}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {filteredVoters.map((voter) => (
                       <tr key={voter.id || voter._id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="p-4 text-sm">{getVoterSerialNumber(voter) || "N/A"}</td>
-                        <td className="p-4 text-sm font-medium">{getVoterName(voter, language)}</td>
-                        <td className="p-4 text-sm">{getVoterSvnNo(voter) || "N/A"}</td>
-                        <td className="p-4 text-sm">{getVoterHouseNo(voter) || "N/A"}</td>
-                        <td className="p-4 text-sm">{getVoterGuardian(voter, language) || "N/A"}</td>
-                        <td className="p-4 text-sm">{normalizeGender(voter)}</td>
-                        <td className="p-4 text-sm">{getVoterAge(voter) !== null ? getVoterAge(voter) : "N/A"}</td>
-                        <td className="p-4 text-sm">{getVoterWard(voter) || getVoterConstituency(voter) || "N/A"}</td>
-                        <td className="p-4 text-sm">
-                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-medium">
-                            {VOTER_TYPE_LABELS[voter.type] || voter.type}
-                          </span>
-                        </td>
+                        {columns.map((column) => {
+                          const value = column.value(voter);
+                          return (
+                            <td key={column.key} className={`p-4 text-sm ${column.key === "name" ? "font-medium" : ""}`}>
+                              {column.key === "type" ? (
+                                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-medium">
+                                  {value}
+                                </span>
+                              ) : column.display ? column.display(voter) : value}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>
@@ -226,34 +240,34 @@ export default function VoterSearchPage() {
                     </span>
                   </div>
                   <div className="space-y-2 text-xs">
-                    <div>
+                    {hasVoterValue(getVoterSerialNumber(voter)) && <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">Serial No.:</span>
-                      <p className="text-gray-600 dark:text-gray-400">{getVoterSerialNumber(voter) || "N/A"}</p>
-                    </div>
-                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">{getVoterSerialNumber(voter)}</p>
+                    </div>}
+                    {hasVoterValue(getVoterSvnNo(voter)) && <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">SVN No.:</span>
-                      <p className="text-gray-600 dark:text-gray-400">{getVoterSvnNo(voter) || "N/A"}</p>
-                    </div>
-                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">{getVoterSvnNo(voter)}</p>
+                    </div>}
+                    {hasVoterValue(getVoterHouseNo(voter)) && <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">House No.:</span>
-                      <p className="text-gray-600 dark:text-gray-400">{getVoterHouseNo(voter) || "N/A"}</p>
-                    </div>
-                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">{getVoterHouseNo(voter)}</p>
+                    </div>}
+                    {hasVoterValue(getVoterGuardian(voter, language)) && <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">Guardian:</span>
-                      <p className="text-gray-600 dark:text-gray-400">{getVoterGuardian(voter, language) || "N/A"}</p>
-                    </div>
-                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">{getVoterGuardian(voter, language)}</p>
+                    </div>}
+                    {hasVoterValue(getVoterGender(voter)) && <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">Gender:</span>
                       <p className="text-gray-600 dark:text-gray-400">{normalizeGender(voter)}</p>
-                    </div>
-                    <div>
+                    </div>}
+                    {getVoterAge(voter) !== null && <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">Age:</span>
-                      <p className="text-gray-600 dark:text-gray-400">{getVoterAge(voter) !== null ? getVoterAge(voter) : "N/A"}</p>
-                    </div>
-                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">{getVoterAge(voter)}</p>
+                    </div>}
+                    {hasVoterValue(getVoterWard(voter) || getVoterConstituency(voter)) && <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">Ward/Constituency:</span>
-                      <p className="text-gray-600 dark:text-gray-400">{getVoterWard(voter) || getVoterConstituency(voter) || "N/A"}</p>
-                    </div>
+                      <p className="text-gray-600 dark:text-gray-400">{getVoterWard(voter) || getVoterConstituency(voter)}</p>
+                    </div>}
                   </div>
                 </div>
               ))}

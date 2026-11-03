@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import {
   parseVoterListResponse,
+  hasVoterValue,
   getVoterName,
   getVoterId,
   getVoterGuardian,
@@ -361,10 +362,12 @@ export default function GramPanchayatPage() {
                       </p>
                     )}
 
-                    <p className="text-gray-700">
-                      <span className="font-semibold">{t.houseNo}:</span>{" "}
-                      {getVoterHouseNo(voter) || "N/A"}
-                    </p>
+                    {hasVoterValue(getVoterHouseNo(voter)) && (
+                      <p className="text-gray-700">
+                        <span className="font-semibold">{t.houseNo}:</span>{" "}
+                        {getVoterHouseNo(voter)}
+                      </p>
+                    )}
 
                     {booth && (
 
@@ -374,15 +377,19 @@ export default function GramPanchayatPage() {
                       </p>
                     )}
 
-                    <p className="text-gray-700">
-                      <span className="font-semibold">{t.gender}:</span>{" "}
-                      {normalizeGender(voter)}
-                    </p>
+                    {hasVoterValue(getVoterGender(voter)) && (
+                      <p className="text-gray-700">
+                        <span className="font-semibold">{t.gender}:</span>{" "}
+                        {normalizeGender(voter)}
+                      </p>
+                    )}
 
-                    <p className="text-gray-700">
-                      <span className="font-semibold">{t.age}:</span>{" "}
-                      {age !== null ? age : "N/A"}
-                    </p>
+                    {age !== null && (
+                      <p className="text-gray-700">
+                        <span className="font-semibold">{t.age}:</span>{" "}
+                        {age}
+                      </p>
+                    )}
 
                     {dob && (
                       <p className="text-gray-700">
