@@ -10,6 +10,7 @@ import User from '@/models/User';
 import CitizenNotification from '@/models/CitizenNotification';
 import ServiceNotification from '@/models/ServiceNotification';
 import { writeAuditLog } from '@/lib/writeAuditLog';
+import { sendTrackedEmail } from '@/lib/trackedEmail';
 
 export async function POST(request) {
   await connectDB();
@@ -112,11 +113,23 @@ export async function POST(request) {
       relatedId: newQuery._id,
     });
 
+    const emailDelivery = await sendTrackedEmail({
+      userId: citizen._id,
+      category: 'grievance',
+      eventKey: `grievance:${newQuery._id}:submitted`,
+      relatedType: 'query',
+      relatedId: newQuery._id,
+      subject: `Query ${queryId} submitted`,
+      text: `Your query ${queryId} has been submitted successfully and is pending review.\n\nSign in to the Chiutahara Portal to view the latest details.`,
+      allowWithoutPreference: true,
+    });
+
     return NextResponse.json({
       message: 'Query submitted successfully',
       queryId: newQuery.queryId,
       _id: newQuery._id,
-      createdAt: newQuery.createdAt
+      createdAt: newQuery.createdAt,
+      emailDelivery,
     }, { status: 201 });
   } catch (error) {
     console.error('Query creation error:', error);

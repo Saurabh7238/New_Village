@@ -15,6 +15,7 @@ export default function QueryDetailPage() {
   const [query, setQuery] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sendEmail, setSendEmail] = useState(true);
   const [message, setMessage] = useState("");
   const [photoPreview, setPhotoPreview] = useState(null);
   const attachmentList = (() => {
@@ -111,6 +112,7 @@ export default function QueryDetailPage() {
           internalNotes: formData.internalNotes,
           escalate: formData.escalate,
           resolutionPhoto: photoPreview,
+          sendEmail,
           auditEntry: {
             action: "Query updated",
             changedBy: session?.user?.name || "Admin",
@@ -120,7 +122,18 @@ export default function QueryDetailPage() {
       });
 
       if (res.ok) {
-        setMessage("Query saved successfully");
+        const data = await res.json();
+        const delivery = data.emailDelivery;
+        const emailMessage = delivery?.status === 'sent'
+          ? 'Email sent.'
+          : delivery?.status === 'disabled'
+            ? 'Email disabled for this update.'
+            : delivery?.status === 'skipped'
+              ? `Email not sent: ${delivery.reason}`
+              : delivery?.status === 'failed'
+                ? `Email failed: ${delivery.error}`
+                : 'No email was needed.';
+        setMessage(`Query saved successfully. ${emailMessage}`);
         fetchQuery();
       } else {
         const data = await res.json();
@@ -167,7 +180,7 @@ export default function QueryDetailPage() {
         </button>
 
         {message && (
-          <div className={`mb-6 p-4 rounded-lg ${message.includes("Error") ? "bg-red-100 text-red-800 dark:bg-red-900" : "bg-green-100 text-green-800 dark:bg-green-900"}`}>
+          <div className={`mb-6 p-4 rounded-lg ${message.includes("Error") || message.includes("failed") ? "bg-red-100 text-red-800 dark:bg-red-900" : message.includes("not sent") || message.includes("disabled") ? "bg-amber-100 text-amber-800 dark:bg-amber-900" : "bg-green-100 text-green-800 dark:bg-green-900"}`}>
             {message}
           </div>
         )}
@@ -387,12 +400,25 @@ export default function QueryDetailPage() {
                 </label>
               </div>
 
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="send-update-email"
+                  checked={sendEmail}
+                  onChange={(event) => setSendEmail(event.target.checked)}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="send-update-email" className={`text-sm font-semibold ${labelClass}`}>
+                  Send email for this update (overrides citizen preference)
+                </label>
+              </div>
+
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold disabled:opacity-50 mt-6"
               >
-                {saving ? "Saving..." : "💾 Save Changes"}
+                {saving ? "Updating..." : "💾 Save Changes"}
               </button>
             </div>
           </div>

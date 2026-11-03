@@ -44,7 +44,7 @@ export async function PUT(request) {
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
 
   try {
-    const { id, status, adminRemarks = '', adminDocuments, requestedDocuments } = await request.json();
+    const { id, status, adminRemarks = '', adminDocuments, requestedDocuments, sendEmail = true } = await request.json();
     if (!id || !STATUSES.includes(status)) return NextResponse.json({ message: 'A valid application and status are required.' }, { status: 400 });
 
     await connectDB();
@@ -85,6 +85,7 @@ export async function PUT(request) {
     }
     await writeAuditLog({ session, action: 'Application updated', details: { applicationId: application._id.toString(), applicationNumber: application.applicationNumber, status, requestedDocuments: nextRequestedDocuments } });
 
+    let emailDelivery = { status: 'not-needed' };
     if (statusChanged || remarksChanged || documentsChanged || requestedDocumentsChanged) {
       await ServiceNotification.findOneAndUpdate(
         { relatedType: 'application', relatedId: application._id },
@@ -118,7 +119,7 @@ export async function PUT(request) {
             ? 'The panchayat office added a document to your application.'
             : '',
         ].filter(Boolean).join('\n\n');
-        await sendTrackedEmail({
+        emailDelivery = sendEmail ? await sendTrackedEmail({
           userId: application.userId,
           category: 'application',
           eventKey: `application:${application._id}:response:${application.updatedAt.toISOString()}`,
@@ -126,7 +127,8 @@ export async function PUT(request) {
           relatedId: application._id,
           subject: `Application ${application.applicationNumber} update`,
           text: `${responseDetails}\n\nSign in to the Chiutahara Portal to view the latest details.`,
-        });
+          allowWithoutPreference: true,
+        }) : { status: 'disabled' };
       }
 
       // Emit Socket.io events for real-time updates
@@ -137,7 +139,7 @@ export async function PUT(request) {
       }
     }
 
-    return NextResponse.json({ message: 'Application updated successfully.' });
+    return NextResponse.json({ message: 'Application updated successfully.', emailDelivery });
   } catch (error) {
     console.error('Admin application update error:', error);
     return NextResponse.json({ message: 'Unable to update application.' }, { status: 500 });

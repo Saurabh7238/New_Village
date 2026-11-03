@@ -6,6 +6,7 @@ const NotificationDeliverySchema = new mongoose.Schema({
   category: { type: String, enum: ['notice', 'application', 'appointment', 'grievance'], required: true, index: true },
   relatedType: { type: String, required: true },
   relatedId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  allowWithoutPreference: { type: Boolean, default: false },
   recipientEmailMasked: { type: String, default: '' },
   subject: { type: String, required: true, maxlength: 200 },
   text: { type: String, required: true, maxlength: 4000 },

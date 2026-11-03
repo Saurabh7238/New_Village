@@ -6,6 +6,7 @@ import CitizenNotification from '@/models/CitizenNotification';
 import ServiceNotification from '@/models/ServiceNotification';
 import { requireAuthenticatedSession } from '@/lib/sessionAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
+import { sendTrackedEmail } from '@/lib/trackedEmail';
 
 export async function GET(request) {
   const session = await requireAuthenticatedSession();
@@ -39,7 +40,17 @@ export async function POST(request) {
     await writeAuditLog({ session, action: 'Appointment requested', details: { appointmentId: appointment._id.toString(), appointmentNumber } });
     await ServiceNotification.create({ userId: user._id, serviceType: 'appointment', relatedType: 'appointment', relatedId: appointment._id, queryRaised: appointment.createdAt });
     await CitizenNotification.create({ userId: user._id, title: `${appointmentNumber} booked`, message: `Your appointment request ${appointmentNumber} has been sent to the Panchayat office. The administrator will set your date and time.`, type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });
-    return NextResponse.json({ message: 'Appointment requested successfully.', appointmentNumber, id: appointment._id.toString() }, { status: 201 });
+    const emailDelivery = await sendTrackedEmail({
+      userId: user._id,
+      category: 'appointment',
+      eventKey: `appointment:${appointment._id}:submitted`,
+      relatedType: 'appointment',
+      relatedId: appointment._id,
+      subject: `Appointment ${appointmentNumber} requested`,
+      text: `Your appointment request ${appointmentNumber} has been sent to the Panchayat office. The administrator will set your date and time.\n\nSign in to the Chiutahara Portal to view the latest details.`,
+      allowWithoutPreference: true,
+    });
+    return NextResponse.json({ message: 'Appointment requested successfully.', appointmentNumber, id: appointment._id.toString(), emailDelivery }, { status: 201 });
   } catch (error) {
     console.error('Appointment creation error:', error);
     return NextResponse.json({ message: 'Unable to book the appointment.' }, { status: 500 });

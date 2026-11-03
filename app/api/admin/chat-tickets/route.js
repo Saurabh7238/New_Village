@@ -34,7 +34,7 @@ export async function PATCH(request) {
     const session = await requireAdminSession();
     if (!session) return Response.json({ error: "Admin access required." }, { status: 403 });
 
-    const { id, status } = await request.json();
+    const { id, status, sendEmail = true } = await request.json();
     if (!mongoose.Types.ObjectId.isValid(id) || !TICKET_STATUSES.includes(status)) {
       return Response.json({ error: "A valid ticket record and status are required." }, { status: 400 });
     }
@@ -59,7 +59,7 @@ export async function PATCH(request) {
           relatedType: "chat-ticket",
           relatedId: ticket._id,
         });
-        await sendTrackedEmail({
+        const emailDelivery = sendEmail ? await sendTrackedEmail({
           userId: user._id,
           category: "grievance",
           eventKey: `chat-ticket:${ticket._id}:${ticket.status}:${ticket.updatedAt.toISOString()}`,
@@ -67,11 +67,13 @@ export async function PATCH(request) {
           relatedId: ticket._id,
           subject: `Support ticket ${ticket.ticketId}: ${ticket.status}`,
           text: `Your support ticket ${ticket.ticketId} for ${ticket.service} is now ${ticket.status}. Sign in to the Chiutahara Portal to view the latest details.`,
-        });
+          allowWithoutPreference: true,
+        }) : { status: 'disabled' };
+        return Response.json({ ticket, emailDelivery });
       }
     }
 
-    return Response.json(ticket);
+    return Response.json({ ticket, emailDelivery: { status: 'not-needed' } });
   } catch (error) {
     console.error("Failed to update chatbot ticket:", error);
     return Response.json({ error: "Failed to update ticket status." }, { status: 500 });

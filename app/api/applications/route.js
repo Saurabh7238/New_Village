@@ -10,6 +10,7 @@ import { writeAuditLog } from '@/lib/writeAuditLog';
 import CitizenDocument from '@/models/CitizenDocument';
 import { validateApplicationForm } from '@/lib/applicationValidation';
 import { dataUrlByteLength, hasDocumentQuota, MAX_USER_DOCUMENT_BYTES } from '@/lib/documentQuota';
+import { sendTrackedEmail } from '@/lib/trackedEmail';
 
 const SERVICE_TYPES = ['birth-certificate', 'death-certificate', 'aadhaar-request', 'voter-request', 'other'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -106,8 +107,19 @@ export async function POST(request) {
         relatedId: application._id,
       }))) : Promise.resolve()
     ]);
-    
-    return NextResponse.json({ message: 'Application submitted successfully.', applicationNumber, id: application._id.toString(), createdAt: application.createdAt }, { status: 201 });
+
+    const emailDelivery = await sendTrackedEmail({
+      userId: user._id,
+      category: 'application',
+      eventKey: `application:${application._id}:submitted`,
+      relatedType: 'application',
+      relatedId: application._id,
+      subject: `Application ${applicationNumber} submitted`,
+      text: `Your ${serviceType.replace(/-/g, ' ')} application ${applicationNumber} has been submitted successfully and is pending review.\n\nSign in to the Chiutahara Portal to view the latest details.`,
+      allowWithoutPreference: true,
+    });
+
+    return NextResponse.json({ message: 'Application submitted successfully.', applicationNumber, id: application._id.toString(), createdAt: application.createdAt, emailDelivery }, { status: 201 });
   } catch (error) {
     console.error('Application creation error:', error);
     return NextResponse.json({ message: error.message || 'Unable to submit the application.' }, { status: 400 });

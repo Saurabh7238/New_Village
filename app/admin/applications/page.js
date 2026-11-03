@@ -17,6 +17,7 @@ function AdminApplicationsContent() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
+  const [sendEmailById, setSendEmailById] = useState({});
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const searchParams = useSearchParams();
@@ -96,6 +97,7 @@ function AdminApplicationsContent() {
       id: application.id,
       status: application.status,
       adminRemarks: application.adminRemarks,
+      sendEmail: sendEmailById[application.id] !== false,
     };
     if (application.adminDocuments !== undefined) {
       payload.adminDocuments = application.adminDocuments;
@@ -103,17 +105,39 @@ function AdminApplicationsContent() {
     if (application.requestedDocuments !== undefined) {
       payload.requestedDocuments = String(application.requestedDocuments).split(',').map((document) => document.trim()).filter(Boolean);
     }
-    const response = await fetch('/api/admin/applications', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    setSavingId(null);
-    if (response.ok) {
-      addToast('Application updated successfully.', 'success');
-      loadApplications();
-    } else {
+    try {
+      const response = await fetch('/api/admin/applications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const result = data.emailDelivery;
+        const emailMessage = result?.status === 'sent'
+          ? 'Email sent.'
+          : result?.status === 'disabled'
+            ? 'Email disabled for this update.'
+            : result?.status === 'skipped'
+              ? `Email not sent: ${result.reason}`
+              : result?.status === 'failed'
+                ? `Email failed: ${result.error}`
+                : 'No email was needed.';
+        const toastType = result?.status === 'failed'
+          ? 'error'
+          : ['disabled', 'skipped'].includes(result?.status)
+            ? 'warning'
+            : result?.status === 'sent' ? 'success' : 'info';
+        addToast(`Application updated. ${emailMessage}`, toastType);
+        loadApplications();
+      } else {
+        addToast('Unable to update application.', 'error');
+      }
+    } catch (error) {
+      console.error('Application update error:', error);
       addToast('Unable to update application.', 'error');
+    } finally {
+      setSavingId(null);
     }
   };
 
@@ -319,7 +343,7 @@ function AdminApplicationsContent() {
                           disabled={savingId === application.id}
                           className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50 whitespace-nowrap"
                         >
-                          {savingId === application.id ? 'Saving...' : 'Save'}
+                          {savingId === application.id ? 'Updating...' : 'Update'}
                         </button>
                         <button
                           onClick={() => remove(application)}
@@ -329,6 +353,14 @@ function AdminApplicationsContent() {
                           Delete
                         </button>
                       </div>
+                      <label className="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={sendEmailById[application.id] !== false}
+                          onChange={(event) => setSendEmailById((current) => ({ ...current, [application.id]: event.target.checked }))}
+                        />
+                        Send email for this update (overrides citizen preference)
+                      </label>
                       <div className="space-y-1">
                         <label className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                           Admin docs (1 or more)
@@ -456,9 +488,17 @@ function AdminApplicationsContent() {
                     disabled={savingId === application.id}
                     className="flex-1 rounded bg-green-600 px-2 py-2 text-xs text-white hover:bg-green-700 disabled:opacity-50 font-medium"
                   >
-                    {savingId === application.id ? 'Saving...' : 'Save'}
+                    {savingId === application.id ? 'Updating...' : 'Update'}
                   </button>
                 </div>
+                <label className="mt-2 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={sendEmailById[application.id] !== false}
+                    onChange={(event) => setSendEmailById((current) => ({ ...current, [application.id]: event.target.checked }))}
+                  />
+                  Send email for this update (overrides citizen preference)
+                </label>
               </div>
             </div>
           ))}

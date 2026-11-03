@@ -81,7 +81,7 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const { status, priority, assignedTo, adminRemarks, internalNotes, escalate, resolutionPhoto, auditEntry } = await request.json();
+    const { status, priority, assignedTo, adminRemarks, internalNotes, escalate, resolutionPhoto, auditEntry, sendEmail = true } = await request.json();
 
     const updateData = {};
     if (status) updateData.status = status;
@@ -140,8 +140,9 @@ export async function PUT(request, { params }) {
       previousQuery.status !== query.status
       || previousQuery.adminRemarks !== query.adminRemarks
     );
+    let emailDelivery = { status: 'not-needed' };
     if (queryResponseChanged && query.userId) {
-      await sendTrackedEmail({
+      emailDelivery = sendEmail ? await sendTrackedEmail({
         userId: query.userId,
         category: 'grievance',
         eventKey: `grievance:${query._id}:response:${query.updatedAt.toISOString()}`,
@@ -149,10 +150,11 @@ export async function PUT(request, { params }) {
         relatedId: query._id,
         subject: `Grievance ${query.queryId} update`,
         text: `Your grievance ${query.queryId} is now ${query.status}.${query.adminRemarks ? `\n\nAdministrator response: ${query.adminRemarks}` : ''}\n\nSign in to the Chiutahara Portal to view the latest details.`,
-      });
+        allowWithoutPreference: true,
+      }) : { status: 'disabled' };
     }
 
-    return NextResponse.json(query, { status: 200 });
+    return NextResponse.json({ ...query.toObject(), emailDelivery }, { status: 200 });
   } catch (error) {
     console.error('Query update error:', error);
     return NextResponse.json(

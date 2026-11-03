@@ -21,6 +21,7 @@ export default function AdminAppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [savingId, setSavingId] = useState(null);
+  const [sendEmailById, setSendEmailById] = useState({});
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
@@ -63,11 +64,21 @@ export default function AdminAppointmentsPage() {
           adminRemarks: appointment.adminRemarks,
           appointmentDate: dateValue(appointment.appointmentDate),
           appointmentTime: appointment.appointmentTime,
+          sendEmail: sendEmailById[appointment.id] !== false,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
-      setMessage(`Appointment ${appointment.appointmentNumber} updated and the citizen was notified.`);
+      const emailMessage = data.emailDelivery?.status === 'sent'
+        ? 'Email sent.'
+        : data.emailDelivery?.status === 'disabled'
+          ? 'Email disabled for this update.'
+          : data.emailDelivery?.status === 'skipped'
+            ? `Email not sent: ${data.emailDelivery.reason}`
+            : data.emailDelivery?.status === 'failed'
+              ? `Email failed: ${data.emailDelivery.error}`
+              : 'No email was needed.';
+      setMessage(`Appointment ${appointment.appointmentNumber} updated. ${emailMessage}`);
       fetchAppointments();
     } catch (error) {
       setMessage(error.message || 'Unable to update appointment.');
@@ -135,9 +146,11 @@ export default function AdminAppointmentsPage() {
         {message && (
           <p
             className={`mb-4 rounded p-3 text-sm ${
-              message.includes('Unable')
+              message.includes('Unable') || message.includes('failed')
                 ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
-                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+                : message.includes('not sent') || message.includes('disabled')
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100'
+                  : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
             }`}
           >
             {message}
@@ -260,13 +273,17 @@ export default function AdminAppointmentsPage() {
                     </td>
                     <td className="p-3 text-center">
                       <div className="flex flex-col gap-2">
+                        {!showArchived && <label className="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
+                          <input type="checkbox" checked={sendEmailById[appointment.id] !== false} onChange={(event) => setSendEmailById((current) => ({ ...current, [appointment.id]: event.target.checked }))} />
+                          Send email (overrides citizen preference)
+                        </label>}
                         {showArchived ? <button onClick={() => restoreAppointment(appointment)} disabled={savingId === appointment.id} className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap">Restore</button> : <>
                         <button
                           onClick={() => saveAppointment(appointment)}
                           disabled={savingId === appointment.id}
                           className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50 whitespace-nowrap"
                         >
-                          {savingId === appointment.id ? 'Saving...' : 'Save'}
+                          {savingId === appointment.id ? 'Updating...' : 'Update'}
                         </button>
                         <button
                           onClick={() => deleteAppointment(appointment)}
@@ -374,13 +391,17 @@ export default function AdminAppointmentsPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
+                    {!showArchived && <label className="col-span-2 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                      <input type="checkbox" checked={sendEmailById[appointment.id] !== false} onChange={(event) => setSendEmailById((current) => ({ ...current, [appointment.id]: event.target.checked }))} />
+                      Send email for this update (overrides citizen preference)
+                    </label>}
                     {showArchived ? <button onClick={() => restoreAppointment(appointment)} disabled={savingId === appointment.id} className="col-span-2 w-full rounded bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 font-medium">Restore</button> : <>
                     <button
                       onClick={() => saveAppointment(appointment)}
                       disabled={savingId === appointment.id}
                       className="w-full rounded bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700 disabled:opacity-50 font-medium"
                     >
-                      {savingId === appointment.id ? 'Saving...' : 'Save'}
+                      {savingId === appointment.id ? 'Updating...' : 'Update'}
                     </button>
                     <button
                       onClick={() => deleteAppointment(appointment)}

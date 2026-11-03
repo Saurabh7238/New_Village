@@ -38,7 +38,7 @@ export async function PUT(request) {
   const session = await requireAdminSession();
   if (!session) return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
   try {
-    const { id, status, adminRemarks, scheduledDate, scheduledTime, appointmentDate, appointmentTime } = await request.json();
+    const { id, status, adminRemarks, scheduledDate, scheduledTime, appointmentDate, appointmentTime, sendEmail = true } = await request.json();
     if (!id || !STATUSES.includes(status)) return NextResponse.json({ message: 'A valid appointment and status are required.' }, { status: 400 });
     const update = { status, adminRemarks: String(adminRemarks || '').slice(0, 2000), reviewedBy: session.user.id };
     // appointmentDate/time are accepted for compatibility with the existing admin form.
@@ -78,8 +78,9 @@ export async function PUT(request) {
       || previousAppointment.scheduledDate?.getTime() !== appointment.scheduledDate?.getTime()
       || previousAppointment.scheduledTime !== appointment.scheduledTime
     );
+    let emailDelivery = { status: 'not-needed' };
     if (appointmentDetailsChanged) {
-      await sendTrackedEmail({
+      emailDelivery = sendEmail ? await sendTrackedEmail({
         userId: appointment.userId,
         category: 'appointment',
         eventKey: `appointment:${appointment._id}:response:${appointment.updatedAt.toISOString()}`,
@@ -87,9 +88,10 @@ export async function PUT(request) {
         relatedId: appointment._id,
         subject: `Appointment ${appointment.appointmentNumber} update`,
         text: `Your appointment request ${appointment.appointmentNumber} is now ${appointment.status}.${appointment.adminRemarks ? `\n\nAdministrator response: ${appointment.adminRemarks}` : ''}${schedule}\n\nSign in to the Chiutahara Portal to view the latest details.`,
-      });
+        allowWithoutPreference: true,
+      }) : { status: 'disabled' };
     }
-    return NextResponse.json({ message: 'Appointment updated successfully.', appointment });
+    return NextResponse.json({ message: 'Appointment updated successfully.', appointment, emailDelivery });
   } catch (error) {
     console.error('Admin appointment update error:', error);
     return NextResponse.json({ message: 'Unable to update appointment.' }, { status: 500 });

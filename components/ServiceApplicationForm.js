@@ -160,7 +160,15 @@ export default function ServiceApplicationForm({
       .then((payload) => setApplications(payload?.applications || []))
       .catch(() => setApplications([]));
 
-    addToast(`Submitted successfully. Your reference number is ${data.applicationNumber}.`, 'success', 5000);
+    const delivery = data.emailDelivery;
+    const emailStatus = delivery?.status === 'sent'
+      ? ' A confirmation email was sent.'
+      : delivery?.status === 'skipped'
+        ? ` Confirmation email not sent: ${delivery.reason}`
+        : delivery?.status === 'failed'
+          ? ` Confirmation email failed: ${delivery.error}`
+          : '';
+    addToast(`Submitted successfully. Your reference number is ${data.applicationNumber}.${emailStatus}`, delivery?.status === 'failed' || delivery?.status === 'skipped' ? 'warning' : 'success', 7000);
   }
 
   async function saveDraft() {

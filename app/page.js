@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowDown, ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, MessageCircle, Route, School, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowDown, ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, Landmark, MessageCircle, Route, School, ShieldCheck, Sparkles, X } from "lucide-react";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import DottedSpinner from "@/components/DottedSpinner";
 import { useLanguage } from "@/app/language-provider";
@@ -19,6 +19,7 @@ const INFRA_TYPE_ICONS = {
   "Primary School": School,
   "Primary Health Center": Hospital,
   "Water Pump": Droplets,
+  "Community Hall": Landmark,
 };
 
 const FEATURED_INFRA_TYPES = [
@@ -26,6 +27,7 @@ const FEATURED_INFRA_TYPES = [
   "Primary School",
   "Primary Health Center",
   "Water Pump",
+  "Community Hall",
 ];
 
 const DEFAULT_SLIDES = [

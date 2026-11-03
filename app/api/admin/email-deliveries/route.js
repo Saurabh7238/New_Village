@@ -64,6 +64,7 @@ export async function POST(request) {
       relatedId: delivery.relatedId,
       subject: delivery.subject,
       text: delivery.text,
+      allowWithoutPreference: delivery.allowWithoutPreference === true,
     });
     await writeAuditLog({
       session,

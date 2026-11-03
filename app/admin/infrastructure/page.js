@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useToast, ToastContainer } from "@/components/Toast";
 import { INFRA_TYPES, INFRA_STATUSES } from "@/lib/infrastructureDisplay";
 
@@ -18,7 +20,10 @@ const DETAIL_FIELDS = {
 
 export default function AdminInfrastructurePage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [infrastructureList, setInfrastructureList] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [infraForm, setInfraForm] = useState({
     title: '', description: '', type: INFRA_TYPES[0], status: INFRA_STATUSES[0],
     location: { latitude: '', longitude: '', address: '', ward: '', village: '', landmark: '' },
@@ -31,6 +36,8 @@ export default function AdminInfrastructurePage() {
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
+    const requestedType = new URLSearchParams(window.location.search).get("type");
+    if (INFRA_TYPES.includes(requestedType)) setInfraTypeFilter(requestedType);
     fetch("/api/infrastructure")
       .then((res) => res.json())
       .then((data) => setInfrastructureList(Array.isArray(data) ? data : []))
@@ -87,6 +94,7 @@ export default function AdminInfrastructurePage() {
     };
     if (editingInfraId) payload.id = editingInfraId;
 
+    setSaving(true);
     try {
       const res = await fetch("/api/infrastructure", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const result = await res.json();
@@ -100,11 +108,14 @@ export default function AdminInfrastructurePage() {
     } catch (error) {
       console.error("Error:", error);
       addToast("Unable to save infrastructure.", "error");
+    } finally {
+      setSaving(false);
     }
   };
 
   const deleteInfrastructure = async (id) => {
     if (!confirm("Delete this item?")) return;
+    setDeletingId(id);
     try {
       const res = await fetch("/api/infrastructure", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
       if (res.ok) {
@@ -117,7 +128,15 @@ export default function AdminInfrastructurePage() {
     } catch (error) {
       console.error("Error:", error);
       addToast("Unable to delete infrastructure.", "error");
+    } finally {
+      setDeletingId(null);
     }
+  };
+
+  const selectInfrastructureSection = (type) => {
+    setInfraTypeFilter(type);
+    setEditingInfraId(null);
+    router.push(type === "all" ? "/admin/infrastructure" : `/admin/infrastructure?type=${encodeURIComponent(type)}`);
   };
 
   const filteredInfrastructure = infraTypeFilter === "all" ? infrastructureList : infrastructureList.filter((item) => item.type === infraTypeFilter);
@@ -159,6 +178,24 @@ export default function AdminInfrastructurePage() {
           <div className="rounded-lg border bg-white p-4 dark:border-gray-700 dark:bg-gray-800"><p className="text-sm text-gray-500">Maintenance overdue</p><p className="text-2xl font-bold text-red-600">{overdueMaintenance}</p></div>
         </section>
 
+        <nav aria-label="Infrastructure sections" className="mb-6 flex flex-wrap gap-2">
+          <Link
+            href="/admin/infrastructure"
+            className={`rounded-full border px-3 py-2 text-sm font-medium ${infraTypeFilter === "all" ? "border-orange-600 bg-orange-600 text-white" : "border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800"}`}
+          >
+            All infrastructure
+          </Link>
+          {INFRA_TYPES.map((type) => (
+            <Link
+              key={type}
+              href={`/admin/infrastructure?type=${encodeURIComponent(type)}`}
+              className={`rounded-full border px-3 py-2 text-sm font-medium ${infraTypeFilter === type ? "border-orange-600 bg-orange-600 text-white" : "border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800"}`}
+            >
+              {type}
+            </Link>
+          ))}
+        </nav>
+
         <form onSubmit={submitInfrastructure} className="mb-8 space-y-4 p-6 border rounded-lg bg-white dark:bg-gray-800">
           <h3 className="text-xl font-semibold text-orange-700 dark:text-yellow-400">{editingInfraId ? "Update" : "Add"} Infrastructure</h3>
           <input name="title" type="text" placeholder="Title" value={infraForm.title} onChange={handleInfraInputChange} className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
@@ -197,7 +234,7 @@ export default function AdminInfrastructurePage() {
           </div>
           {DETAIL_FIELDS[infraForm.type]?.length > 0 && <div className="grid md:grid-cols-3 gap-4">{DETAIL_FIELDS[infraForm.type].map((name) => <input key={name} name={name} type="text" placeholder={name.replace(/[A-Z]/g, (letter) => ` ${letter}`).replace(/^./, (letter) => letter.toUpperCase())} value={infraForm.details?.[name] || ''} onChange={handleDetailChange} className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" />)}</div>}
           <div className="flex gap-4">
-            <button type="submit" className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">{editingInfraId ? "Update" : "Add"}</button>
+            <button type="submit" disabled={saving} className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 disabled:opacity-50">{saving ? "Updating..." : editingInfraId ? "Update" : "Add"}</button>
             {editingInfraId && (<button type="button" onClick={resetInfraForm} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel</button>)}
           </div>
         </form>
@@ -205,7 +242,7 @@ export default function AdminInfrastructurePage() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl font-bold">{infraTypeFilter === "all" ? "All Infrastructure" : infraTypeFilter} ({filteredInfrastructure.length})</h2>
           <div className="flex gap-2">
-            <select value={infraTypeFilter} onChange={(event) => setInfraTypeFilter(event.target.value)} className="rounded border p-2 text-sm dark:bg-gray-700">
+            <select value={infraTypeFilter} onChange={(event) => selectInfrastructureSection(event.target.value)} className="rounded border p-2 text-sm dark:bg-gray-700">
               <option value="all">All types</option>
               {INFRA_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
             </select>
@@ -223,7 +260,7 @@ export default function AdminInfrastructurePage() {
               </div>
               <div className="flex space-x-3 shrink-0">
                 <button onClick={() => { setEditingInfraId(item._id); setInfraForm({ ...item, installationDate: item.installationDate ? String(item.installationDate).slice(0, 10) : '', completionDate: item.completionDate ? String(item.completionDate).slice(0, 10) : '', inaugurationDate: item.inaugurationDate ? String(item.inaugurationDate).slice(0, 10) : '', expectedCompletionDate: item.expectedCompletionDate ? String(item.expectedCompletionDate).slice(0, 10) : '', lastMaintenanceDate: item.lastMaintenanceDate ? String(item.lastMaintenanceDate).slice(0, 10) : '', nextMaintenanceDate: item.nextMaintenanceDate ? String(item.nextMaintenanceDate).slice(0, 10) : '' }); }} className="text-blue-500 hover:text-blue-700 text-sm">Edit</button>
-                <button onClick={() => deleteInfrastructure(item._id)} className="text-red-500 hover:text-red-700 text-sm">Delete</button>
+                <button onClick={() => deleteInfrastructure(item._id)} disabled={deletingId === item._id} className="text-red-500 hover:text-red-700 text-sm disabled:opacity-50">{deletingId === item._id ? "Deleting..." : "Delete"}</button>
               </div>
             </div>
           ))}

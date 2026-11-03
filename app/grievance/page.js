@@ -18,6 +18,7 @@ export default function GrievancePage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [queryId, setQueryId] = useState("");
+  const [emailDelivery, setEmailDelivery] = useState(null);
   const [captcha, setCaptcha] = useState({ num1: 0, num2: 0, answer: "" });
   const [captchaCorrect, setCaptchaCorrect] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", mobile: "", ward: "", category: "Water", subject: "", description: "", address: "", photo: null });
@@ -122,6 +123,7 @@ export default function GrievancePage() {
       if (res.ok) {
         window.sessionStorage.removeItem('pendingQuery');
         setQueryId(data.queryId);
+        setEmailDelivery(data.emailDelivery || null);
         addToast(`Query submitted successfully. Your query ID is ${data.queryId}.`, 'success', 5000);
         setStep("success");
       } else {
@@ -175,8 +177,18 @@ export default function GrievancePage() {
               <p className="text-2xl font-bold text-green-600 mb-4">{queryId}</p>
               <p className={`text-sm ${labelClass}`}>SAVE THIS ID</p>
             </div>
+            <p className={`mb-4 rounded-lg p-3 text-sm ${emailDelivery?.status === 'sent' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : emailDelivery?.status === 'failed' || emailDelivery?.status === 'skipped' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200'}`}>
+              {emailDelivery?.status === 'sent'
+                ? 'A confirmation email was sent to your registered email address.'
+                : emailDelivery?.status === 'skipped'
+                  ? `Confirmation email was not sent: ${emailDelivery.reason}`
+                  : emailDelivery?.status === 'failed'
+                    ? `Confirmation email could not be sent: ${emailDelivery.error}`
+                    : 'Email delivery status is not available.'}
+            </p>
             <div className="space-y-3">
               <button onClick={() => router.push(`/track?id=${queryId}`)} className="w-full px-4 py-3 bg-blue-600 text-white rounded font-semibold">📍 Track Query</button>
+              <button onClick={() => router.push('/dashboard')} className="w-full px-4 py-3 bg-teal-700 text-white rounded font-semibold">Open Citizen Dashboard</button>
               <button onClick={() => window.location.href = "/"} className="w-full px-4 py-3 bg-green-600 text-white rounded font-semibold">🏠 Home</button>
             </div>
           </div>

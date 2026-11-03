@@ -11,6 +11,9 @@ export default function AdminChatTicketsPage() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [updatingTicketId, setUpdatingTicketId] = useState(null);
+  const [sendEmailById, setSendEmailById] = useState({});
+  const [updateMessage, setUpdateMessage] = useState("");
 
   const loadTickets = useCallback(async () => {
     try {
@@ -32,17 +35,31 @@ export default function AdminChatTicketsPage() {
 
   const updateStatus = async (id, nextStatus) => {
     setError("");
+    setUpdateMessage("");
+    setUpdatingTicketId(id);
     try {
       const response = await fetch("/api/admin/chat-tickets", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status: nextStatus }),
+        body: JSON.stringify({ id, status: nextStatus, sendEmail: sendEmailById[id] !== false }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not update ticket.");
       setTickets((current) => current.map((ticket) => ticket._id === id ? { ...ticket, status: nextStatus } : ticket));
+      const delivery = data.emailDelivery;
+      setUpdateMessage(delivery?.status === "sent"
+        ? "Ticket updated. Email sent."
+        : delivery?.status === "disabled"
+          ? "Ticket updated. Email disabled for this update."
+          : delivery?.status === "skipped"
+            ? `Ticket updated. Email not sent: ${delivery.reason}`
+            : delivery?.status === "failed"
+              ? `Ticket updated, but email failed: ${delivery.error}`
+              : "Ticket updated. No email was needed.");
     } catch (updateError) {
       setError(updateError.message);
+    } finally {
+      setUpdatingTicketId(null);
     }
   };
 
@@ -58,6 +75,7 @@ export default function AdminChatTicketsPage() {
           <button onClick={() => { setLoading(true); loadTickets(); }} className="rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800">Refresh</button>
         </div>
         {error && <p role="alert" className="mb-4 rounded-lg bg-red-100 p-3 text-red-800">{error}</p>}
+        {updateMessage && <p role="status" className={`mb-4 rounded-lg p-3 ${updateMessage.includes("failed") ? "bg-red-100 text-red-800" : updateMessage.includes("not sent") || updateMessage.includes("disabled") ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800"}`}>{updateMessage}</p>}
         {tickets.length === 0 ? <p className="rounded-xl bg-white p-6 dark:bg-slate-900">No chatbot tickets yet.</p> : (
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <table className="min-w-[800px] w-full text-left text-sm">
@@ -72,9 +90,14 @@ export default function AdminChatTicketsPage() {
                     <td className="px-4 py-3">{new Date(ticket.createdAt).toLocaleString("en-IN")}</td>
                     <td className="px-4 py-3">
                       <label className="sr-only" htmlFor={`status-${ticket._id}`}>Status for {ticket.ticketId}</label>
-                      <select id={`status-${ticket._id}`} value={ticket.status} onChange={(event) => updateStatus(ticket._id, event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-600 dark:bg-slate-800">
+                      <select id={`status-${ticket._id}`} value={ticket.status} disabled={updatingTicketId === ticket._id} onChange={(event) => updateStatus(ticket._id, event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800">
                         {TICKET_STATUSES.map((ticketStatus) => <option key={ticketStatus}>{ticketStatus}</option>)}
                       </select>
+                      <label className="mt-2 flex items-center gap-2 text-xs">
+                        <input type="checkbox" checked={sendEmailById[ticket._id] !== false} onChange={(event) => setSendEmailById((current) => ({ ...current, [ticket._id]: event.target.checked }))} />
+                        Send email for this update (overrides citizen preference)
+                      </label>
+                      {updatingTicketId === ticket._id && <span role="status" className="ml-2 text-xs font-semibold text-teal-700 dark:text-teal-300">Updating...</span>}
                     </td>
                   </tr>
                 ))}
