@@ -44,7 +44,7 @@ export default function LokSabhaPage() {
   ];
 
   const filteredVoters = voters.filter((voter) => {
-    const name = getVoterName(voter).toLowerCase();
+    const name = `${getVoterName(voter, language)} ${voter.elector_name_en || ""} ${voter.elector_name_hi || ""}`.toLowerCase();
     const id = getVoterId(voter).toLowerCase();
     const constituency = getVoterConstituency(voter).toLowerCase();
     const searchLower = search.toLowerCase();
@@ -88,10 +88,10 @@ export default function LokSabhaPage() {
   const normalizeGender = (voter) => {
     const g = getVoterGender(voter);
     if (!g) return "N/A";
-    if (language === "hi") return g;
     const category = classifyVoterGender(voter);
-    if (category === "male") return "Male";
-    if (category === "female") return "Female";
+    if (category === "male") return language === "hi" ? "पुरुष" : "Male";
+    if (category === "female") return language === "hi" ? "महिला" : "Female";
+    if (language === "hi") return g;
     return g;
   };
 
@@ -136,7 +136,7 @@ export default function LokSabhaPage() {
               {imageSrc && (
                 <Image
                   src={imageSrc}
-                  alt={getVoterName(voter)}
+                  alt={getVoterName(voter, language)}
                   width={400}
                   height={240}
                   unoptimized
@@ -144,7 +144,7 @@ export default function LokSabhaPage() {
                 />
               )}
               <h2 className="text-lg font-semibold text-blue-700">
-                {getVoterName(voter)}
+                {getVoterName(voter, language)}
               </h2>
               <p className="text-sm text-gray-600">
                 Serial No.: {getVoterSerialNumber(voter) || "N/A"}
@@ -165,7 +165,7 @@ export default function LokSabhaPage() {
                 Ward/Constituency: {getVoterWard(voter) || getVoterConstituency(voter) || "N/A"}
               </p>
               <p className="text-sm text-gray-600">
-                {t.guardian}: {getVoterGuardian(voter) || "N/A"}
+                {t.guardian}: {getVoterGuardian(voter, language) || "N/A"}
               </p>
               <p className="text-sm text-gray-600">
                 {t.gender}: {normalizeGender(voter)}

@@ -42,7 +42,7 @@ export default function VidhanSabhaPage() {
   ];
 
   const filteredVoters = voters.filter((voter) => {
-    const name = getVoterName(voter).toLowerCase();
+    const name = `${getVoterName(voter, language)} ${voter.elector_name_en || ""} ${voter.elector_name_hi || ""}`.toLowerCase();
     const id = getVoterId(voter).toLowerCase();
     const matchesSearch =
       name.includes(search.toLowerCase()) || id.includes(search.toLowerCase());
@@ -85,10 +85,10 @@ export default function VidhanSabhaPage() {
   const normalizeGender = (voter) => {
     const g = getVoterGender(voter);
     if (!g) return "N/A";
-    if (language === "hi") return g;
     const category = classifyVoterGender(voter);
-    if (category === "male") return "Male";
-    if (category === "female") return "Female";
+    if (category === "male") return language === "hi" ? "पुरुष" : "Male";
+    if (category === "female") return language === "hi" ? "महिला" : "Female";
+    if (language === "hi") return g;
     return g;
   };
 
@@ -131,14 +131,14 @@ export default function VidhanSabhaPage() {
               {imageSrc && (
                 <Image
                   src={imageSrc}
-                  alt={getVoterName(voter)}
+                  alt={getVoterName(voter, language)}
                   width={400}
                   height={240}
                   unoptimized
                   className="w-full h-48 object-cover rounded mb-4"
                 />
               )}
-              <h2 className="text-lg font-semibold text-purple-700">{getVoterName(voter)}</h2>
+              <h2 className="text-lg font-semibold text-purple-700">{getVoterName(voter, language)}</h2>
               <p className="text-sm text-gray-600">
                 Serial No.: {getVoterSerialNumber(voter) || "N/A"}
               </p>
@@ -158,7 +158,7 @@ export default function VidhanSabhaPage() {
                 Ward/Constituency: {getVoterWard(voter) || getVoterConstituency(voter) || "N/A"}
               </p>
               <p className="text-sm text-gray-600">
-                {t.guardian}: {getVoterGuardian(voter) || "N/A"}
+                {t.guardian}: {getVoterGuardian(voter, language) || "N/A"}
               </p>
               <p className="text-sm text-gray-600">
                 {t.gender}: {normalizeGender(voter)}

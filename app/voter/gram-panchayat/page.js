@@ -55,7 +55,7 @@ export default function GramPanchayatPage() {
   ].sort();
 
   const filteredVoters = voters.filter((voter) => {
-    const name = getVoterName(voter).toLowerCase();
+    const name = `${getVoterName(voter, language)} ${voter.elector_name_en || ""} ${voter.elector_name_hi || ""}`.toLowerCase();
     const id = getVoterId(voter).toLowerCase();
     const searchLower = search.toLowerCase();
     const matchesSearch =
@@ -171,10 +171,10 @@ export default function GramPanchayatPage() {
   const normalizeGender = (voter) => {
     const g = getVoterGender(voter);
     if (!g) return "N/A";
-    if (language === "hi") return g;
     const category = classifyVoterGender(voter);
-    if (category === "male") return t.male;
-    if (category === "female") return t.female;
+    if (category === "male") return language === "hi" ? t.male : "Male";
+    if (category === "female") return language === "hi" ? t.female : "Female";
+    if (language === "hi") return g;
     return g;
   };
 
@@ -317,7 +317,7 @@ export default function GramPanchayatPage() {
             const serialNo = getVoterSerialNumber(voter);
             const epicNo = getVoterId(voter);
             const booth = getVoterPoolingBooth(voter);
-            const relationship = getVoterRelationship(voter);
+            const relationship = getVoterRelationship(voter, language);
             const ward = getVoterWard(voter);
 
             return (
@@ -328,7 +328,7 @@ export default function GramPanchayatPage() {
                 {imageSrc && (
                   <Image
                     src={imageSrc}
-                    alt={getVoterName(voter)}
+                    alt={getVoterName(voter, language)}
                     width={400}
                     height={240}
                     unoptimized
@@ -343,7 +343,7 @@ export default function GramPanchayatPage() {
                   )}
 
                   <h2 className="text-lg font-bold text-green-700 mb-3">
-                    {getVoterName(voter)}
+                    {getVoterName(voter, language)}
                   </h2>
 
                   <div className="space-y-2 text-sm">
@@ -391,10 +391,10 @@ export default function GramPanchayatPage() {
                       </p>
                     )}
 
-                    {getVoterGuardian(voter) && (
+                    {getVoterGuardian(voter, language) && (
                       <p className="text-gray-700">
                         <span className="font-semibold">{t.guardian}:</span>{" "}
-                        {getVoterGuardian(voter)}
+                        {getVoterGuardian(voter, language)}
                       </p>
                     )}
                   </div>

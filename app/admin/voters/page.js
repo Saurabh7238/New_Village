@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useLanguage } from "@/app/language-provider";
 import { useToast, ToastContainer } from "@/components/Toast";
 import {
   getVoterName,
@@ -25,6 +26,7 @@ const VOTER_TYPE_LABELS = {
 
 export default function AdminVotersPage() {
   const { data: session, status } = useSession();
+  const { language } = useLanguage();
   const [voterList, setVoterList] = useState([]);
   const [voterType, setVoterType] = useState("gram-panchayat");
   const [voterName, setVoterName] = useState("");
@@ -70,8 +72,8 @@ export default function AdminVotersPage() {
   }, [voterType, status, session?.user?.role]);
 
   const filteredVoters = voterList.filter((voter) => {
-    const name = getVoterName(voter).toLowerCase();
-    const guardian = getVoterGuardian(voter)?.toLowerCase() || "";
+    const name = `${getVoterName(voter, language)} ${voter.elector_name_en || ""} ${voter.elector_name_hi || ""}`.toLowerCase();
+    const guardian = `${getVoterGuardian(voter, language) || ""} ${voter.parent_name_en || ""} ${voter.parent_name_hi || ""}`.toLowerCase();
     const search = searchTerm.toLowerCase();
     return (
       (voterName === "" || name.includes(voterName.toLowerCase())) &&
@@ -375,16 +377,10 @@ export default function AdminVotersPage() {
                       </td>
                       <td className="p-3 text-xs">{getVoterSerialNumber(voter)}</td>
                       <td className="p-3 text-xs">
-                        {getVoterName(voter)}
-                        {voter.elector_name_hi && voter.elector_name_hi !== getVoterName(voter) && (
-                          <span className="block text-gray-500">{voter.elector_name_hi}</span>
-                        )}
+                        {getVoterName(voter, language)}
                       </td>
                       <td className="p-3 text-xs">
-                        {getVoterGuardian(voter)}
-                        {voter.parent_name_hi && voter.parent_name_hi !== getVoterGuardian(voter) && (
-                          <span className="block text-gray-500">{voter.parent_name_hi}</span>
-                        )}
+                        {getVoterGuardian(voter, language)}
                       </td>
                       <td className="p-3 text-xs font-mono">{getVoterId(voter)}</td>
                       <td className="p-3 text-xs">{getVoterHouseNo(voter)}</td>
@@ -430,17 +426,11 @@ export default function AdminVotersPage() {
                           className="h-4 w-4"
                         />
                         <div>
-                          <p className="font-bold text-green-700">{getVoterName(voter)}</p>
-                          {voter.elector_name_hi && voter.elector_name_hi !== getVoterName(voter) && (
-                            <p className="text-gray-500">{voter.elector_name_hi}</p>
-                          )}
+                          <p className="font-bold text-green-700">{getVoterName(voter, language)}</p>
                         </div>
                       </div>
                       <p className="text-gray-600 dark:text-gray-400">
-                        Guardian: {getVoterGuardian(voter)}
-                        {voter.parent_name_hi && voter.parent_name_hi !== getVoterGuardian(voter) && (
-                          <span className="block">{voter.parent_name_hi}</span>
-                        )}
+                        {language === "hi" ? "अभिभावक" : "Guardian"}: {getVoterGuardian(voter, language)}
                       </p>
                     </div>
                     <button

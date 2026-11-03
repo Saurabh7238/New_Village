@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useLanguage } from "@/app/language-provider";
 import {
   parseVoterListResponse,
   getVoterName,
@@ -50,6 +51,7 @@ export default function VoterSearchPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [viewType, setViewType] = useState("table");
   const [dbError, setDbError] = useState(null);
+  const { language } = useLanguage();
 
   useEffect(() => {
     setIsLoading(true);
@@ -93,15 +95,15 @@ export default function VoterSearchPage() {
     const g = getVoterGender(voter);
     if (!g) return "N/A";
     const category = classifyVoterGender(voter);
-    if (category === "male") return "पुरुष";
-    if (category === "female") return "महिला";
+    if (category === "male") return language === "hi" ? "पुरुष" : "Male";
+    if (category === "female") return language === "hi" ? "महिला" : "Female";
     return g;
   };
 
   const filteredVoters = voters.filter((voter) => {
-    const name = getVoterName(voter).toLowerCase();
+    const name = `${getVoterName(voter, language)} ${voter.elector_name_en || ""} ${voter.elector_name_hi || ""}`.toLowerCase();
     const id = getVoterId(voter).toLowerCase();
-    const guardian = getVoterGuardian(voter)?.toLowerCase() || "";
+    const guardian = `${getVoterGuardian(voter, language) || ""} ${voter.parent_name_en || ""} ${voter.parent_name_hi || ""}`.toLowerCase();
     const constituency = getVoterConstituency(voter).toLowerCase();
     const searchLower = searchTerm.toLowerCase();
 
@@ -193,10 +195,10 @@ export default function VoterSearchPage() {
                     {filteredVoters.map((voter) => (
                       <tr key={voter.id || voter._id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="p-4 text-sm">{getVoterSerialNumber(voter) || "N/A"}</td>
-                        <td className="p-4 text-sm font-medium">{getVoterName(voter)}</td>
+                        <td className="p-4 text-sm font-medium">{getVoterName(voter, language)}</td>
                         <td className="p-4 text-sm">{getVoterSvnNo(voter) || "N/A"}</td>
                         <td className="p-4 text-sm">{getVoterHouseNo(voter) || "N/A"}</td>
-                        <td className="p-4 text-sm">{getVoterGuardian(voter) || "N/A"}</td>
+                        <td className="p-4 text-sm">{getVoterGuardian(voter, language) || "N/A"}</td>
                         <td className="p-4 text-sm">{normalizeGender(voter)}</td>
                         <td className="p-4 text-sm">{getVoterAge(voter) !== null ? getVoterAge(voter) : "N/A"}</td>
                         <td className="p-4 text-sm">{getVoterWard(voter) || getVoterConstituency(voter) || "N/A"}</td>
@@ -217,7 +219,7 @@ export default function VoterSearchPage() {
                 <div key={voter.id || voter._id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border dark:border-gray-700">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-sm mb-1">{getVoterName(voter)}</h3>
+                      <h3 className="font-semibold text-sm mb-1">{getVoterName(voter, language)}</h3>
                     </div>
                     <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-medium whitespace-nowrap ml-2">
                       {VOTER_TYPE_LABELS[voter.type] || voter.type}
@@ -238,7 +240,7 @@ export default function VoterSearchPage() {
                     </div>
                     <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">Guardian:</span>
-                      <p className="text-gray-600 dark:text-gray-400">{getVoterGuardian(voter) || "N/A"}</p>
+                      <p className="text-gray-600 dark:text-gray-400">{getVoterGuardian(voter, language) || "N/A"}</p>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">Gender:</span>

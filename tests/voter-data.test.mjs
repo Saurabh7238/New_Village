@@ -84,3 +84,20 @@ test("display helpers prefer canonical voter fields", () => {
   assert.equal(getVoterSvnNo(voter), "SVN-44");
   assert.equal(getVoterRelationType(voter), "D/O");
 });
+
+test("voter name and guardian follow selected language with fallback", () => {
+  const voter = {
+    elector_name_en: "Example Name",
+    elector_name_hi: "उदाहरण नाम",
+    parent_name_en: "Parent Name",
+    parent_name_hi: "अभिभावक नाम",
+  };
+
+  assert.equal(getVoterName(voter, "en"), "Example Name");
+  assert.equal(getVoterName(voter, "hi"), "उदाहरण नाम");
+  assert.equal(getVoterGuardian(voter, "en"), "Parent Name");
+  assert.equal(getVoterGuardian(voter, "hi"), "अभिभावक नाम");
+  assert.equal(getVoterRelationship({ ...voter, relationship: "Parent Name" }, "hi"), "अभिभावक नाम");
+  assert.equal(getVoterName({ elector_name_en: "English only" }, "hi"), "English only");
+  assert.equal(getVoterGuardian({ parent_name_en: "Guardian only" }, "hi"), "Guardian only");
+});
