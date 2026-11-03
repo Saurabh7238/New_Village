@@ -18,7 +18,7 @@ export async function POST(request) {
         const { 
             id, // only present for PUT requests
             title, description, type, status, location, cost, 
-            installationDate, expectedCompletionDate, lastMaintenanceDate, nextMaintenanceDate,
+            installationDate, completionDate, inaugurationDate, expectedCompletionDate, lastMaintenanceDate, nextMaintenanceDate,
             completionPercentage, fundingScheme, approvedBudget, amountSpent, implementingAgency,
             image, beforeImage, afterImage, details // 'details' is the object with specific data
         } = data;
@@ -30,7 +30,7 @@ export async function POST(request) {
         // Common payload structure
         const payload = {
             title, description, type, status, location, cost, 
-            installationDate, expectedCompletionDate, lastMaintenanceDate, nextMaintenanceDate,
+            installationDate, completionDate, inaugurationDate, expectedCompletionDate, lastMaintenanceDate, nextMaintenanceDate,
             completionPercentage, fundingScheme, approvedBudget, amountSpent, implementingAgency,
             image, beforeImage, afterImage, details
         };

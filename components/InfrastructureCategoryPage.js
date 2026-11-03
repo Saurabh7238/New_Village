@@ -93,7 +93,7 @@ export default function InfrastructureCategoryPage({ type, title, description })
         ? "Water"
         : type === "Primary Health Center"
           ? "Health/PHC"
-          : type === "Primary School"
+          : ["Primary School", "Anganwadi Center"].includes(type)
             ? "School"
             : type === "Sanitation Unit"
               ? "Drainage"
@@ -156,6 +156,8 @@ export default function InfrastructureCategoryPage({ type, title, description })
               <p className="text-sm text-gray-700">
                 🗓️ Installed: {formatInfraDate(item.installationDate)}
               </p>
+              {item.completionDate && <p className="text-sm text-gray-700">✅ Completed: {formatInfraDate(item.completionDate)}</p>}
+              {item.inaugurationDate && <p className="text-sm text-gray-700">🎉 Inaugurated: {formatInfraDate(item.inaugurationDate)}</p>}
               <p className="text-sm text-gray-700">
                 💰 Cost: {formatInfraCost(item.cost)}
               </p>
@@ -173,45 +175,13 @@ export default function InfrastructureCategoryPage({ type, title, description })
 
               {(item.beforeImage || item.afterImage) && <div className="mt-3 grid grid-cols-2 gap-2">{[item.beforeImage, item.afterImage].map((photo, index) => photo && <Image key={photo} src={photo} alt={index === 0 ? 'Before' : 'After'} width={180} height={110} unoptimized className="h-24 w-full rounded object-cover" />)}</div>}
 
-              {type === "Primary School" && item.details && (
-                <>
-                  {item.details.students != null && (
-                    <p className="text-sm text-gray-700">
-                      👨‍👩‍👧‍👦 Students: {item.details.students}
-                    </p>
-                  )}
-                  {item.details.washrooms != null && (
-                    <p className="text-sm text-gray-700">
-                      🚻 Washrooms: {item.details.washrooms}
-                    </p>
-                  )}
-                  {item.details.handpumps != null && (
-                    <p className="text-sm text-gray-700">
-                      🚰 Handpumps: {item.details.handpumps}
-                    </p>
-                  )}
-                </>
-              )}
-
-              {type === "Primary Health Center" && item.details && (
-                <>
-                  {item.details.doctors != null && (
-                    <p className="text-sm text-gray-700">
-                      👨‍⚕️ Doctors: {item.details.doctors}
-                    </p>
-                  )}
-                  {item.details.beds != null && (
-                    <p className="text-sm text-gray-700">
-                      🛏️ Beds: {item.details.beds}
-                    </p>
-                  )}
-                  {item.details.ambulances != null && (
-                    <p className="text-sm text-gray-700">
-                      🚑 Ambulances: {item.details.ambulances}
-                    </p>
-                  )}
-                </>
-              )}
+              {item.details && Object.entries(item.details)
+                .filter(([, value]) => value !== null && value !== undefined && value !== "")
+                .map(([key, value]) => (
+                  <p key={key} className="text-sm text-gray-700">
+                    {key.replace(/[A-Z]/g, (letter) => ` ${letter}`).replace(/^./, (letter) => letter.toUpperCase())}: {Array.isArray(value) ? value.join(", ") : String(value)}
+                  </p>
+                ))}
             </div>
           ))
         )}

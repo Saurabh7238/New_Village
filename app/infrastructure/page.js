@@ -9,6 +9,7 @@ import {
   FaLightbulb,
   FaWater,
   FaSchool,
+  FaChild,
   FaHospital,
   FaSolarPanel,
   FaWifi,
@@ -27,6 +28,7 @@ import {
 const TYPE_ICONS = {
   "Primary Health Center": FaHospital,
   "Primary School": FaSchool,
+  "Anganwadi Center": FaChild,
   "Sanitation Unit": FaToilet,
   "Community Hall": FaStore,
   "Water Pump": FaWater,

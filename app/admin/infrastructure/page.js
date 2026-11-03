@@ -7,10 +7,13 @@ import { INFRA_TYPES, INFRA_STATUSES } from "@/lib/infrastructureDisplay";
 
 const DETAIL_FIELDS = {
   "Primary School": ["students", "classrooms", "teachers", "washrooms", "handpumps"],
+  "Anganwadi Center": ["children", "workers", "helpers", "rooms", "handpumps"],
   "Primary Health Center": ["doctors", "beds", "ambulances", "openingHours", "medicines"],
   Road: ["length", "width", "material", "condition"],
   "Street Light": ["totalLights", "workingLights", "faultyLights"],
   "Water Pump": ["capacity", "connectedHouseholds", "condition"],
+  "Community Hall": ["rooms", "capacity"],
+  "Sanitation Unit": ["toiletSeats", "handwashingStations"],
 };
 
 export default function AdminInfrastructurePage() {
@@ -19,7 +22,7 @@ export default function AdminInfrastructurePage() {
   const [infraForm, setInfraForm] = useState({
     title: '', description: '', type: INFRA_TYPES[0], status: INFRA_STATUSES[0],
     location: { latitude: '', longitude: '', address: '', ward: '', village: '', landmark: '' },
-    cost: '', installationDate: '', expectedCompletionDate: '', lastMaintenanceDate: '', nextMaintenanceDate: '',
+    cost: '', installationDate: '', completionDate: '', inaugurationDate: '', expectedCompletionDate: '', lastMaintenanceDate: '', nextMaintenanceDate: '',
     completionPercentage: 0, fundingScheme: '', approvedBudget: '', amountSpent: '', implementingAgency: '',
     image: '', beforeImage: '', afterImage: '', details: {}
   });
@@ -36,7 +39,7 @@ export default function AdminInfrastructurePage() {
 
   const resetInfraForm = () => {
     setEditingInfraId(null);
-    setInfraForm({ title: '', description: '', type: infraTypeFilter !== "all" ? infraTypeFilter : INFRA_TYPES[0], status: INFRA_STATUSES[0], location: { latitude: '', longitude: '', address: '', ward: '', village: '', landmark: '' }, cost: '', installationDate: '', expectedCompletionDate: '', lastMaintenanceDate: '', nextMaintenanceDate: '', completionPercentage: 0, fundingScheme: '', approvedBudget: '', amountSpent: '', implementingAgency: '', image: '', beforeImage: '', afterImage: '', details: {} });
+    setInfraForm({ title: '', description: '', type: infraTypeFilter !== "all" ? infraTypeFilter : INFRA_TYPES[0], status: INFRA_STATUSES[0], location: { latitude: '', longitude: '', address: '', ward: '', village: '', landmark: '' }, cost: '', installationDate: '', completionDate: '', inaugurationDate: '', expectedCompletionDate: '', lastMaintenanceDate: '', nextMaintenanceDate: '', completionPercentage: 0, fundingScheme: '', approvedBudget: '', amountSpent: '', implementingAgency: '', image: '', beforeImage: '', afterImage: '', details: {} });
   };
 
   const handleInfraInputChange = (e) => {
@@ -78,7 +81,7 @@ export default function AdminInfrastructurePage() {
       location: { ...infraForm.location, ...(infraForm.location.latitude && { latitude: parseFloat(infraForm.location.latitude) }), ...(infraForm.location.longitude && { longitude: parseFloat(infraForm.location.longitude) }) },
       ...(infraForm.image && { image: infraForm.image }), ...(infraForm.beforeImage && { beforeImage: infraForm.beforeImage }), ...(infraForm.afterImage && { afterImage: infraForm.afterImage }),
       ...(infraForm.cost !== '' && { cost: parseFloat(infraForm.cost) }), ...(infraForm.approvedBudget !== '' && { approvedBudget: parseFloat(infraForm.approvedBudget) }), ...(infraForm.amountSpent !== '' && { amountSpent: parseFloat(infraForm.amountSpent) }),
-      ...(infraForm.installationDate && { installationDate: new Date(infraForm.installationDate) }), ...(infraForm.expectedCompletionDate && { expectedCompletionDate: new Date(infraForm.expectedCompletionDate) }),
+      ...(infraForm.installationDate && { installationDate: new Date(infraForm.installationDate) }), ...(infraForm.completionDate && { completionDate: new Date(infraForm.completionDate) }), ...(infraForm.inaugurationDate && { inaugurationDate: new Date(infraForm.inaugurationDate) }), ...(infraForm.expectedCompletionDate && { expectedCompletionDate: new Date(infraForm.expectedCompletionDate) }),
       ...(infraForm.lastMaintenanceDate && { lastMaintenanceDate: new Date(infraForm.lastMaintenanceDate) }), ...(infraForm.nextMaintenanceDate && { nextMaintenanceDate: new Date(infraForm.nextMaintenanceDate) }),
       completionPercentage: Number(infraForm.completionPercentage) || 0, fundingScheme: infraForm.fundingScheme, implementingAgency: infraForm.implementingAgency, details: infraForm.details,
     };
@@ -169,7 +172,7 @@ export default function AdminInfrastructurePage() {
             <input name="amountSpent" type="number" min="0" placeholder="Amount spent (₹)" value={infraForm.amountSpent} onChange={handleInfraInputChange} className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
           </div>
           <div className="grid md:grid-cols-3 gap-4">
-            {['installationDate', 'expectedCompletionDate', 'nextMaintenanceDate'].map((name) => <input key={name} name={name} type="date" value={infraForm[name] || ''} onChange={handleInfraInputChange} className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" />)}
+            {['installationDate', 'completionDate', 'inaugurationDate', 'expectedCompletionDate', 'nextMaintenanceDate'].map((name) => <label key={name} className="text-sm">{name.replace(/[A-Z]/g, (letter) => ` ${letter}`).replace(/^./, (letter) => letter.toUpperCase())}<input name={name} type="date" value={infraForm[name] ? String(infraForm[name]).slice(0, 10) : ''} onChange={handleInfraInputChange} className="mt-1 border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" /></label>)}
           </div>
           <div className="grid md:grid-cols-3 gap-4">
             <input name="latitude" type="text" placeholder="Latitude" value={infraForm.location.latitude} onChange={handleInfraLocationChange} className="border p-2 w-full rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
@@ -219,7 +222,7 @@ export default function AdminInfrastructurePage() {
                 {item.nextMaintenanceDate && <p className="text-xs text-orange-600 dark:text-orange-300">Next maintenance: {new Date(item.nextMaintenanceDate).toLocaleDateString()}</p>}
               </div>
               <div className="flex space-x-3 shrink-0">
-                <button onClick={() => { setEditingInfraId(item._id); setInfraForm(item); }} className="text-blue-500 hover:text-blue-700 text-sm">Edit</button>
+                <button onClick={() => { setEditingInfraId(item._id); setInfraForm({ ...item, installationDate: item.installationDate ? String(item.installationDate).slice(0, 10) : '', completionDate: item.completionDate ? String(item.completionDate).slice(0, 10) : '', inaugurationDate: item.inaugurationDate ? String(item.inaugurationDate).slice(0, 10) : '', expectedCompletionDate: item.expectedCompletionDate ? String(item.expectedCompletionDate).slice(0, 10) : '', lastMaintenanceDate: item.lastMaintenanceDate ? String(item.lastMaintenanceDate).slice(0, 10) : '', nextMaintenanceDate: item.nextMaintenanceDate ? String(item.nextMaintenanceDate).slice(0, 10) : '' }); }} className="text-blue-500 hover:text-blue-700 text-sm">Edit</button>
                 <button onClick={() => deleteInfrastructure(item._id)} className="text-red-500 hover:text-red-700 text-sm">Delete</button>
               </div>
             </div>

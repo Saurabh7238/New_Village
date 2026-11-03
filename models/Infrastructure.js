@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { INFRA_TYPES, INFRA_STATUSES } from '@/lib/infrastructureDisplay';
+import { INFRA_TYPES, INFRA_STATUSES } from '../lib/infrastructureDisplay.js';
 
 const InfrastructureSchema = new mongoose.Schema({
     title: { 
@@ -35,6 +35,8 @@ const InfrastructureSchema = new mongoose.Schema({
     installationDate: { 
         type: Date 
     },
+    completionDate: { type: Date },
+    inaugurationDate: { type: Date },
     expectedCompletionDate: { type: Date },
     lastMaintenanceDate: { type: Date },
     nextMaintenanceDate: { type: Date },
