@@ -5,6 +5,7 @@ import CitizenNotification from "@/models/CitizenNotification";
 import dbConnect from "@/lib/dbConnect";
 import { requireAdminSession } from "@/lib/adminAuth";
 import { sendTrackedEmail } from "@/lib/trackedEmail";
+import { writeAuditLog } from "@/lib/writeAuditLog";
 
 const TICKET_STATUSES = ["Open", "In Progress", "Resolved", "Closed"];
 
@@ -49,6 +50,13 @@ export async function PATCH(request) {
     if (!ticket) return Response.json({ error: "Ticket not found." }, { status: 404 });
 
     if (previousTicket?.status !== ticket.status) {
+      await writeAuditLog({
+        session,
+        action: 'Chat support ticket updated',
+        entityType: 'chat-ticket',
+        entityId: ticket._id.toString(),
+        details: { ticketId: ticket.ticketId, status: ticket.status },
+      });
       const user = await User.findOne({ email: ticket.userId }).select("_id").lean();
       if (user) {
         await CitizenNotification.create({

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import RequestStatusCard from '@/components/RequestStatusCard';
 import EmptyState from '@/components/EmptyState';
+import { filterRequestHistory } from '@/lib/requestHistory';
 
 const services = [
   ['aadhaar-request', 'Aadhaar Update'],
@@ -21,6 +22,10 @@ export default function DashboardPage() {
   const [appointments, setAppointments] = useState([]);
   const [queries, setQueries] = useState([]);
   const [selectedRequestType, setSelectedRequestType] = useState('all');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   useEffect(() => { fetch('/api/me').then((r) => r.ok ? r.json() : null).then((data) => setUser(data?.user || null)); }, []);
   useEffect(() => {
@@ -49,11 +54,13 @@ export default function DashboardPage() {
     { title: 'My Queries', type: 'query', count: queries.length, unreadCount: byRelatedType.query || 0 },
     { title: 'My Appointments', type: 'appointment', count: appointments.length, unreadCount: byRelatedType.appointment || 0 },
   ];
-  const visibleRequests = selectedRequestType === 'all'
-    ? recentRequests
-    : selectedRequestType === 'query' || selectedRequestType === 'appointment'
-      ? recentRequests.filter((request) => request.type === selectedRequestType)
-      : recentRequests.filter((request) => request.type === 'application' && request.item.serviceType === selectedRequestType);
+  const visibleRequests = filterRequestHistory(recentRequests, {
+    type: selectedRequestType,
+    status: statusFilter,
+    search,
+    dateFrom,
+    dateTo,
+  });
 
   return <div className="mx-auto max-w-6xl py-4">
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -87,26 +94,43 @@ export default function DashboardPage() {
         ))}
       </div>
     </section>
-    <section id="request-timeline" className="mt-8 scroll-mt-24">
+    <section id="request-timeline" className="mt-8 scroll-mt-24" aria-labelledby="request-timeline-heading">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-bold">Request timeline & receipts</h2>
+          <h2 id="request-timeline-heading" className="text-lg font-bold">Request timeline & receipts</h2>
           <p className="text-sm text-slate-600 dark:text-slate-300">
             {selectedRequestType === 'all' ? 'All your submitted service applications, queries, and appointments.' : `Your ${serviceCards.find((card) => card.type === selectedRequestType)?.title || 'service'} requests.`}
           </p>
         </div>
         <Link href="/dashboard/applications" className="text-sm font-bold text-teal-700 hover:underline dark:text-teal-300">View all applications</Link>
       </div>
+      <div className="mb-4 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-4 dark:border-slate-700 dark:bg-slate-900">
+        <label className="text-sm font-semibold">Search requests
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Reference, service, subject" className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-normal dark:border-slate-600 dark:bg-slate-800" />
+        </label>
+        <label className="text-sm font-semibold">Status
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-normal dark:border-slate-600 dark:bg-slate-800">
+            <option value="all">All statuses</option>
+            {['Pending', 'New', 'Submitted', 'Under Review', 'In Review', 'In Progress', 'Need Documents', 'Updated', 'Approved', 'Rejected', 'Resolved', 'Completed', 'Cancelled'].map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+        </label>
+        <label className="text-sm font-semibold">From date
+          <input type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => setDateFrom(event.target.value)} className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-normal dark:border-slate-600 dark:bg-slate-800" />
+        </label>
+        <label className="text-sm font-semibold">To date
+          <input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => setDateTo(event.target.value)} className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-normal dark:border-slate-600 dark:bg-slate-800" />
+        </label>
+      </div>
       {visibleRequests.length ? (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2" aria-live="polite">
           {visibleRequests.map(({ item, type }) => <RequestStatusCard key={`${type}-${item.id}`} item={item} type={type} />)}
         </div>
       ) : (
-        <EmptyState
+        <div role="status"><EmptyState
           title={selectedRequestType === 'all' ? 'No recent requests' : `No ${serviceCards.find((card) => card.type === selectedRequestType)?.title || 'service'} requests`}
           description="Requests you submit will appear here with their reference number and current status."
           action={<Link href={selectedRequestType === 'query' ? '/grievance' : selectedRequestType === 'appointment' ? '/appointments' : '/dashboard/applications'} className="inline-flex rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">Start a request</Link>}
-        />
+        /></div>
       )}
     </section>
   </div>;

@@ -55,7 +55,18 @@ export async function PUT(request) {
     if (['Approved', 'Rescheduled'].includes(status) && (!update.scheduledDate || !update.scheduledTime)) return NextResponse.json({ message: 'Set a scheduled date and time before approving or rescheduling.' }, { status: 400 });
     await connectDB();
     const previousAppointment = await Appointment.findOne({ _id: id, archivedAt: null }).select('status adminRemarks scheduledDate scheduledTime').lean();
-    const appointment = await Appointment.findOneAndUpdate({ _id: id, archivedAt: null }, { ...update, $push: { statusHistory: { status, remarks: update.adminRemarks, changedBy: session.user.id } } }, { new: true, runValidators: true });
+    const nextScheduledDate = chosenDate ? new Date(chosenDate) : previousAppointment?.scheduledDate;
+    const nextScheduledTime = chosenTime ? String(chosenTime).slice(0, 30) : previousAppointment?.scheduledTime;
+    const historyChanged = previousAppointment && (
+      previousAppointment.status !== status
+      || previousAppointment.adminRemarks !== update.adminRemarks
+      || previousAppointment.scheduledDate?.getTime() !== nextScheduledDate?.getTime()
+      || previousAppointment.scheduledTime !== nextScheduledTime
+    );
+    const appointmentUpdate = historyChanged
+      ? { ...update, $push: { statusHistory: { status, remarks: update.adminRemarks, changedBy: session.user.id } } }
+      : update;
+    const appointment = await Appointment.findOneAndUpdate({ _id: id, archivedAt: null }, appointmentUpdate, { new: true, runValidators: true });
     if (!appointment) return NextResponse.json({ message: 'Appointment not found.' }, { status: 404 });
     await writeAuditLog({ session, action: 'Appointment updated', details: { appointmentId: appointment._id.toString(), appointmentNumber: appointment.appointmentNumber, status } });
     await ServiceNotification.findOneAndUpdate(

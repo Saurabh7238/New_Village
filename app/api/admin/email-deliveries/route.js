@@ -5,6 +5,7 @@ import NotificationDelivery from '@/models/NotificationDelivery';
 import { requireAdminSession } from '@/lib/adminAuth';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 import { sendTrackedEmail } from '@/lib/trackedEmail';
+import { canRetryEmailDelivery } from '@/lib/emailDeliveryStatus';
 
 export async function GET(request) {
   const session = await requireAdminSession();
@@ -16,10 +17,12 @@ export async function GET(request) {
     const page = Math.max(1, Number(searchParams.get('page')) || 1);
     const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit')) || 25));
     const status = searchParams.get('status');
+    const category = searchParams.get('category');
     const filter = {};
     if (['sent', 'failed', 'skipped', 'sending'].includes(status)) filter.status = status;
+    if (['notice', 'application', 'appointment', 'grievance'].includes(category)) filter.category = category;
 
-    const [deliveries, total] = await Promise.all([
+    const [deliveries, total, statusCounts, categoryCounts] = await Promise.all([
       NotificationDelivery.find(filter)
         .select('-text')
         .sort({ updatedAt: -1 })
@@ -27,11 +30,17 @@ export async function GET(request) {
         .limit(limit)
         .lean(),
       NotificationDelivery.countDocuments(filter),
+      NotificationDelivery.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+      NotificationDelivery.aggregate([{ $group: { _id: '$category', count: { $sum: 1 } } }]),
     ]);
 
     return NextResponse.json({
       deliveries: deliveries.map((delivery) => ({ ...delivery, id: delivery._id.toString() })),
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      summary: {
+        byStatus: Object.fromEntries(statusCounts.map(({ _id, count }) => [_id, count])),
+        byCategory: Object.fromEntries(categoryCounts.map(({ _id, count }) => [_id, count])),
+      },
     });
   } catch (error) {
     console.error('Email delivery history load failed:', error);
@@ -52,8 +61,8 @@ export async function POST(request) {
     await dbConnect();
     const delivery = await NotificationDelivery.findById(id).lean();
     if (!delivery) return NextResponse.json({ message: 'Email delivery record not found.' }, { status: 404 });
-    if (delivery.status !== 'failed') {
-      return NextResponse.json({ message: 'Only failed email deliveries can be retried.' }, { status: 409 });
+    if (!canRetryEmailDelivery(delivery.status)) {
+      return NextResponse.json({ message: 'Only failed or skipped email deliveries can be retried.' }, { status: 409 });
     }
 
     const result = await sendTrackedEmail({

@@ -97,7 +97,8 @@ export async function POST(request) {
           from: null,
           to: 'New'
         }
-      ]
+      ],
+      statusHistory: [{ status: 'Pending', remarks: 'Query submitted.', changedBy: name || 'Citizen' }],
     });
 
     await newQuery.save();

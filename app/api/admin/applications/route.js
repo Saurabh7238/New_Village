@@ -9,6 +9,7 @@ import { emitApplicationUpdated, emitDocumentRequested } from '@/lib/socketEmitt
 import CitizenDocument from '@/models/CitizenDocument';
 import { dataUrlByteLength, hasDocumentQuota, MAX_USER_DOCUMENT_BYTES } from '@/lib/documentQuota';
 import { sendTrackedEmail } from '@/lib/trackedEmail';
+import { addStatusHistoryEntry } from '@/lib/requestHistory';
 
 const STATUSES = ['Submitted', 'Under Review', 'Need Documents', 'Updated', 'Approved', 'Rejected', 'Completed'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -63,6 +64,14 @@ export async function PUT(request) {
     application.adminDocuments = nextAdminDocuments;
     application.requestedDocuments = nextRequestedDocuments;
     application.reviewedBy = session.user.id;
+    if (statusChanged || remarksChanged) {
+      application.statusHistory = addStatusHistoryEntry(application.statusHistory, {
+        status,
+        remarks: nextRemarks,
+        changedBy: session.user.name || 'Admin',
+        changedAt: new Date(),
+      });
+    }
     await application.save();
     if (documentsChanged && nextAdminDocuments.length) {
       const existingVaultDocuments = await CitizenDocument.find({ applicationId: application._id, uploadedBy: 'admin' }).select('fileUrl').lean();

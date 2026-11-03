@@ -11,6 +11,7 @@ import CitizenDocument from '@/models/CitizenDocument';
 import { validateApplicationForm } from '@/lib/applicationValidation';
 import { dataUrlByteLength, hasDocumentQuota, MAX_USER_DOCUMENT_BYTES } from '@/lib/documentQuota';
 import { sendTrackedEmail } from '@/lib/trackedEmail';
+import { addStatusHistoryEntry } from '@/lib/requestHistory';
 
 const SERVICE_TYPES = ['birth-certificate', 'death-certificate', 'aadhaar-request', 'voter-request', 'other'];
 const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
@@ -37,7 +38,7 @@ export async function GET() {
   await connectDB();
   const applications = await Application.find({ userId: session.user.id })
     .sort({ createdAt: -1 })
-    .select('applicationNumber serviceType status formData documents adminDocuments requestedDocuments adminRemarks createdAt updatedAt')
+    .select('applicationNumber serviceType status formData documents adminDocuments requestedDocuments adminRemarks statusHistory createdAt updatedAt')
     .lean();
   return NextResponse.json({ applications: applications.map((item) => ({ ...item, id: item._id.toString() })) });
 }
@@ -79,6 +80,11 @@ export async function POST(request) {
       // Identity comes from the authenticated profile, never from client supplied IDs.
       formData: { ...formData, applicant: { name: user.name, email: user.email || '', phone: user.phone, aadhaarLast4: user.aadhaarLast4 || null } },
       documents: safeDocuments,
+      statusHistory: addStatusHistoryEntry([], {
+        status: 'Submitted',
+        remarks: 'Application submitted.',
+        changedBy: user.name || 'Citizen',
+      }),
     });
     if (safeDocuments.length) {
       await CitizenDocument.insertMany(safeDocuments.map((document) => ({

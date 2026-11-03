@@ -63,6 +63,14 @@ export async function POST(request, { params }) {
           status: 'Updated',
           requestedDocuments: [],
           adminRemarks: 'Citizen uploaded the required additional documents.',
+          $push: {
+            statusHistory: {
+              status: 'Updated',
+              remarks: 'Citizen uploaded the required additional documents.',
+              changedBy: 'Citizen',
+              changedAt: new Date(),
+            },
+          },
         },
       },
       { new: true }

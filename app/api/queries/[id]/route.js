@@ -112,6 +112,17 @@ export async function PUT(request, { params }) {
     }
 
     const previousQuery = await Query.findById(id).select('status adminRemarks').lean();
+    if (previousQuery && (previousQuery.status !== (updateData.status || previousQuery.status) || (adminRemarks !== undefined && previousQuery.adminRemarks !== adminRemarks))) {
+      updateData.$push = {
+        ...(updateData.$push || {}),
+        statusHistory: {
+          status: updateData.status || previousQuery.status,
+          remarks: adminRemarks === undefined ? previousQuery.adminRemarks : String(adminRemarks).slice(0, 4000),
+          changedBy: session.user.name || 'Admin',
+          changedAt: new Date(),
+        },
+      };
+    }
     const query = await Query.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
 
     if (!query) {

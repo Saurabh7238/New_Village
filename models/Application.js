@@ -10,6 +10,12 @@ const ApplicationSchema = new mongoose.Schema({
   adminDocuments: [{ fileName: String, fileUrl: String, mimeType: String, uploadedAt: { type: Date, default: Date.now } }],
   requestedDocuments: { type: [String], default: [] },
   adminRemarks: { type: String, default: '' },
+  statusHistory: [{
+    status: { type: String, required: true },
+    remarks: { type: String, default: '' },
+    changedBy: { type: String, default: 'System' },
+    changedAt: { type: Date, default: Date.now },
+  }],
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: true });
 

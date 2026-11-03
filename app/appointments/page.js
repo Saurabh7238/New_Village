@@ -29,7 +29,9 @@ import { useSession } from 'next-auth/react';import LoginRequiredModal from '@/c
           {message && <p className={message.startsWith('Appointment requested') ? 'text-green-700' : 'text-red-700'}>{message}</p>}
             <button
             type="submit"
-            className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
+            disabled={loading}
+            aria-busy={loading}
+            className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? 'Booking…' : labels.bookAppointment}
           </button>

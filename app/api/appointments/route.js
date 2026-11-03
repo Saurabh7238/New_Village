@@ -36,7 +36,15 @@ export async function POST(request) {
     const previousBooking = await Appointment.findOne({ userId: user._id, archivedAt: null, createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }).select('_id').lean();
     if (previousBooking) return NextResponse.json({ message: 'You can book your next appointment 24 hours after your previous booking.' }, { status: 429 });
     const appointmentNumber = `APT-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const appointment = await Appointment.create({ appointmentNumber, userId: user._id, service: 'General Panchayat Appointment', appointmentDate: new Date(), appointmentTime: 'Pending scheduling', purpose: purpose.trim() });
+    const appointment = await Appointment.create({
+      appointmentNumber,
+      userId: user._id,
+      service: 'General Panchayat Appointment',
+      appointmentDate: new Date(),
+      appointmentTime: 'Pending scheduling',
+      purpose: purpose.trim(),
+      statusHistory: [{ status: 'Pending', remarks: 'Appointment request submitted.', changedBy: user._id }],
+    });
     await writeAuditLog({ session, action: 'Appointment requested', details: { appointmentId: appointment._id.toString(), appointmentNumber } });
     await ServiceNotification.create({ userId: user._id, serviceType: 'appointment', relatedType: 'appointment', relatedId: appointment._id, queryRaised: appointment.createdAt });
     await CitizenNotification.create({ userId: user._id, title: `${appointmentNumber} booked`, message: `Your appointment request ${appointmentNumber} has been sent to the Panchayat office. The administrator will set your date and time.`, type: 'appointment', relatedType: 'appointment', relatedId: appointment._id });

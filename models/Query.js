@@ -92,6 +92,12 @@ const QuerySchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  statusHistory: [{
+    status: { type: String, required: true },
+    remarks: { type: String, default: '' },
+    changedBy: { type: String, default: 'System' },
+    changedAt: { type: Date, default: Date.now },
+  }],
   internalNotes: {
     type: String,
     default: ''

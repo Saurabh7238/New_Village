@@ -9,6 +9,7 @@
     "lint": "eslint",
     "seed:existing-infrastructure": "node scripts/seed-existing-infrastructure.mjs",
     "test:voter-data": "node --test tests/voter-data.test.mjs",
+    "test:requests": "node --test tests/request-history.test.mjs",
     "verify": "npm run lint && npm run build"
   },
   "dependencies": {
