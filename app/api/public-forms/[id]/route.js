@@ -15,17 +15,23 @@ export async function GET(_request, { params }) {
 
   try {
     await connectDB();
-    const form = await PublicForm.findById(id).select('fileName fileData').lean();
+    const form = await PublicForm.findById(id).select('fileName fileData');
 
     if (!form) {
       return NextResponse.json({ message: 'Form not found.' }, { status: 404 });
     }
 
-    return new Response(new Uint8Array(form.fileData), {
+    const fileData = form.fileData;
+    if (!Buffer.isBuffer(fileData) || fileData.length === 0) {
+      console.error(`Public form ${id} has no readable PDF data.`);
+      return NextResponse.json({ message: 'The stored form file is unavailable. Please contact the Panchayat office.' }, { status: 500 });
+    }
+
+    return new Response(fileData, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${safeFileName(form.fileName)}"`,
-        'Content-Length': String(form.fileData.length),
+        'Content-Length': String(fileData.length),
         'Cache-Control': 'public, max-age=3600',
         'X-Content-Type-Options': 'nosniff',
       },
