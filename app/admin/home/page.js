@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import Image from "next/image";
 import { DEFAULT_VILLAGE_PROFILE } from "@/lib/villageProfile";
 
 const villageProfileSections = [
@@ -83,10 +82,6 @@ const defaultSlides = [
 
 export default function HomeManagementPage() {
   const { data: session, status } = useSession();
-  const [galleryImages, setGalleryImages] = useState([]);
-  const [galleryLoading, setGalleryLoading] = useState(false);
-  const [galleryError, setGalleryError] = useState("");
-  const [gallerySlideIndex, setGallerySlideIndex] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -202,33 +197,6 @@ export default function HomeManagementPage() {
       setMessage(error.message || "Image upload failed.");
       setMessageType("error");
     }
-  };
-
-  const openGalleryPicker = async (index) => {
-    setGallerySlideIndex(index);
-    setGalleryError("");
-    if (galleryImages.length) return;
-
-    setGalleryLoading(true);
-    try {
-      const response = await fetch("/api/images");
-      const images = await response.json();
-      if (!response.ok) throw new Error(images.message || "Failed to load gallery images.");
-      setGalleryImages(Array.isArray(images) ? images : images.images || []);
-    } catch (error) {
-      console.error("Failed to load gallery images for homepage slide:", error);
-      setGalleryError(error.message || "Failed to load gallery images.");
-    } finally {
-      setGalleryLoading(false);
-    }
-  };
-
-  const selectGalleryImage = (imageUrl) => {
-    if (gallerySlideIndex === null) return;
-    updateSlide(gallerySlideIndex, "imageUrl", imageUrl);
-    setGallerySlideIndex(null);
-    setMessage("Gallery image selected for slide. Save settings to publish it.");
-    setMessageType("success");
   };
 
   const saveSettings = async () => {
@@ -467,7 +435,7 @@ export default function HomeManagementPage() {
                         className="flex-1 rounded border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
                       <label className="inline-flex cursor-pointer items-center justify-center rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                        Upload Image
+                        Choose from Device Gallery
                         <input
                           type="file"
                           accept="image/*"
@@ -475,13 +443,6 @@ export default function HomeManagementPage() {
                           onChange={(e) => uploadSlideImage(index, e.target.files?.[0])}
                         />
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => openGalleryPicker(index)}
-                        className="inline-flex items-center justify-center rounded bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
-                      >
-                        Choose from Gallery
-                      </button>
                     </div>
                   </div>
                   <div>
@@ -510,112 +471,7 @@ export default function HomeManagementPage() {
           </div>
         </div>
 
-        {gallerySlideIndex !== null && (
-          <div
-            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4"
-            role="presentation"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setGallerySlideIndex(null);
-            }}
-          >
-            <section
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="gallery-picker-title"
-              className="max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white p-5 shadow-2xl dark:bg-gray-800"
-            >
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <h2 id="gallery-picker-title" className="text-xl font-bold">Choose a Gallery Image</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">Select an image for Slide {gallerySlideIndex + 1}.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setGallerySlideIndex(null)}
-                  className="rounded px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                >
-                  Close
-                </button>
-              </div>
-
-              {galleryLoading ? (
-                <p role="status" className="py-10 text-center">Loading gallery...</p>
-              ) : galleryError ? (
-                <p role="alert" className="py-6 text-center text-red-600">{galleryError}</p>
-              ) : galleryImages.length === 0 ? (
-                <p className="py-10 text-center text-gray-600 dark:text-gray-300">
-                  No gallery images found. Upload images in the Gallery admin section first.
-                </p>
-              ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                  {galleryImages.map((image) => (
-                    <GalleryImageOption
-                      key={image._id}
-                      image={image}
-                      onSelect={selectGalleryImage}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-        )}
       </div>
     </div>
-  );
-}
-
-function GalleryImageOption({ image, onSelect }) {
-  const [imageData, setImageData] = useState("");
-  const [error, setError] = useState("");
-  const [loadingImage, setLoadingImage] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    fetch(`/api/images?id=${encodeURIComponent(image._id)}`)
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Could not load this image.");
-        if (!data.image_data) throw new Error("Image data is unavailable.");
-        if (active) setImageData(data.image_data);
-      })
-      .catch((loadError) => {
-        console.error(`Failed to load gallery image ${image._id}:`, loadError);
-        if (active) setError("Preview unavailable");
-      })
-      .finally(() => {
-        if (active) setLoadingImage(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [image._id]);
-
-  return (
-    <button
-      type="button"
-      disabled={!imageData}
-      onClick={() => onSelect(imageData)}
-      className="overflow-hidden rounded-lg border border-gray-200 text-left transition hover:border-violet-500 hover:ring-2 hover:ring-violet-300 disabled:cursor-not-allowed disabled:opacity-70 dark:border-gray-600"
-    >
-      <div className="relative h-28 bg-gray-100 dark:bg-gray-700">
-        {imageData ? (
-          <Image
-            src={imageData}
-            alt={image.title || "Gallery image"}
-            fill
-            unoptimized
-            sizes="(max-width: 640px) 50vw, 25vw"
-            className="object-cover"
-          />
-        ) : (
-          <div className="grid h-full place-items-center px-2 text-center text-xs text-gray-500">
-            {error || (loadingImage ? "Loading preview..." : "Unavailable")}
-          </div>
-        )}
-      </div>
-      <span className="block truncate px-2 py-2 text-sm font-medium">{image.title || "Untitled image"}</span>
-    </button>
   );
 }
