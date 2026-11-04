@@ -28,7 +28,7 @@ export async function GET(request) {
         updatedAt: form.updatedAt,
       })),
     }, {
-      headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=300' },
+      headers: { 'Cache-Control': 'no-store' },
     });
   } catch (error) {
     console.error('Public forms fetch failed:', error);
