@@ -12,7 +12,7 @@ const services = [
     description: 'Apply online and provide proof of birth, such as a hospital record.',
     hindiDescription: 'ऑनलाइन आवेदन करें और जन्म का प्रमाण, जैसे अस्पताल का रिकॉर्ड, दें।',
     requirements: [
-      'Birth proof / hospital record',
+      'Birth proof / Hospital record',
       'जन्म प्रमाण / अस्पताल का रिकॉर्ड',
     ],
     href: '/birth',
