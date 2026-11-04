@@ -2,11 +2,17 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/dbConnect';
 import PublicForm from '@/models/PublicForm';
 
-export async function GET() {
+export async function GET(request) {
   try {
     await connectDB();
+    const { searchParams } = new URL(request.url);
+    const requestedLimit = Number(searchParams.get('limit'));
+    const limit = Number.isInteger(requestedLimit) && requestedLimit > 0
+      ? Math.min(requestedLimit, 50)
+      : 50;
     const forms = await PublicForm.find({})
-      .sort({ service: 1, language: 1, createdAt: -1 })
+      .sort({ createdAt: -1 })
+      .limit(limit)
       .select('title service language fileName fileSize sourceNote createdAt')
       .lean();
 

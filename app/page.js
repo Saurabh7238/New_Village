@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowDown, ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Droplets, FileText, HelpCircle, Hospital, Landmark, MessageCircle, Route, School, ShieldCheck, Sparkles, X } from "lucide-react";
+import { ArrowDown, ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft, ChevronRight, Download, Droplets, FileText, HelpCircle, Hospital, Landmark, MessageCircle, Route, School, ShieldCheck, Sparkles, X } from "lucide-react";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import DottedSpinner from "@/components/DottedSpinner";
 import { useLanguage } from "@/app/language-provider";
@@ -46,6 +46,9 @@ export default function HomePage() {
   const [latestNotices, setLatestNotices] = useState([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
   const [noticesError, setNoticesError] = useState(false);
+  const [latestForms, setLatestForms] = useState([]);
+  const [formsLoading, setFormsLoading] = useState(true);
+  const [formsError, setFormsError] = useState(false);
   const [homeSettings, setHomeSettings] = useState({
     popupEnabled: true,
     popupTitle: "Important Update",
@@ -160,6 +163,35 @@ export default function HomePage() {
     loadLatestNotices();
     const noticeInterval = setInterval(loadLatestNotices, 30000);
     return () => clearInterval(noticeInterval);
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+    const loadLatestForms = async () => {
+      try {
+        const response = await fetch("/api/public-forms?limit=3", { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.forms)) {
+          throw new Error("Could not load published forms.");
+        }
+        if (isActive) {
+          setLatestForms(data.forms);
+          setFormsError(false);
+        }
+      } catch (error) {
+        console.error("Failed to load latest homepage forms:", error);
+        if (isActive) setFormsError(true);
+      } finally {
+        if (isActive) setFormsLoading(false);
+      }
+    };
+
+    loadLatestForms();
+    const formsInterval = setInterval(loadLatestForms, 60000);
+    return () => {
+      isActive = false;
+      clearInterval(formsInterval);
+    };
   }, []);
 
   useEffect(() => {
@@ -606,6 +638,71 @@ export default function HomePage() {
                 </motion.div>
               )}
             </AnimatePresence>
+          </section>
+
+          <section aria-labelledby="latest-forms-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">
+                  {language === "hi" ? "आधिकारिक दस्तावेज़" : "Official documents"}
+                </p>
+                <h2 id="latest-forms-heading" className="mt-1 text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">
+                  {language === "hi" ? "डाउनलोड फॉर्म" : "Downloadable forms"}
+                </h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  {language === "hi"
+                    ? "सत्यापित फॉर्म डाउनलोड करें या सभी फॉर्म देखें।"
+                    : "Download verified forms or browse all available forms."}
+                </p>
+              </div>
+              <Link
+                href="/downloads"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 text-sm font-semibold text-teal-900 transition hover:border-teal-400 hover:bg-teal-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:border-teal-900 dark:bg-teal-950/50 dark:text-teal-200 dark:hover:bg-teal-950"
+              >
+                {language === "hi" ? "सभी फॉर्म देखें" : "View all forms"}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+            {formsLoading ? (
+              <p role="status" className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+                {language === "hi" ? "फॉर्म लोड हो रहे हैं…" : "Loading forms…"}
+              </p>
+            ) : formsError ? (
+              <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                {language === "hi"
+                  ? "डाउनलोड फॉर्म अभी लोड नहीं हो सके। कृपया सभी फॉर्म देखने के लिए डाउनलोड पेज खोलें।"
+                  : "Published forms could not be loaded right now. Visit the Downloads page to try again."}
+              </p>
+            ) : latestForms.length ? (
+              <ul className="grid gap-3 md:grid-cols-3">
+                {latestForms.map((form) => (
+                  <li key={form.id} className="flex flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-300">
+                      {form.language === "hi"
+                        ? "Hindi / हिंदी"
+                        : form.language === "bilingual"
+                          ? (language === "hi" ? "द्विभाषी" : "Bilingual")
+                          : (language === "hi" ? "अंग्रेज़ी" : "English")}
+                    </p>
+                    <h3 className="mt-2 flex-1 font-bold text-slate-900 dark:text-white">{form.title}</h3>
+                    <p className="mt-1 truncate text-sm text-slate-600 dark:text-slate-300">{form.fileName}</p>
+                    <a
+                      href={`/api/public-forms/${encodeURIComponent(form.id)}`}
+                      className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+                    >
+                      <Download className="h-4 w-4" aria-hidden="true" />
+                      {language === "hi" ? "PDF डाउनलोड करें" : "Download PDF"}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm leading-6 text-slate-700 dark:border-slate-600 dark:text-slate-300">
+                {language === "hi"
+                  ? "अभी कोई सत्यापित फॉर्म प्रकाशित नहीं है। नए फॉर्म उपलब्ध होने पर वे यहाँ दिखाई देंगे।"
+                  : "No verified forms are published yet. New forms will appear here when available."}
+              </p>
+            )}
           </section>
 
           <section aria-labelledby="latest-notices-heading" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
