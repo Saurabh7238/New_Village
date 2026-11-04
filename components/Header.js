@@ -9,6 +9,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Bell, Moon, Sun, Phone, Menu as MenuIcon, X } from "lucide-react";
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
+import { useSiteSettings } from "@/app/site-settings-provider";
 import { GREETING_CATEGORIES, TYPE_LABELS } from "@/lib/notificationConstants";
 
 export default function Header() {
@@ -33,6 +34,7 @@ export default function Header() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { labels: langLabels, toggleLanguage } = useLanguage();
+  const { villageName } = useSiteSettings();
 
   const displayName =
     session?.user?.name ||
@@ -316,7 +318,7 @@ export default function Header() {
           <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 sm:h-12 sm:w-12">
             <Image
               src={siteBranding.darkLogo?.url || siteBranding.logo?.url || '/favicon.png'}
-              alt="Chiutahara Heritage Village logo"
+              alt={`${villageName} Heritage Village logo`}
               fill
               sizes="(max-width: 640px) 40px, 48px"
               unoptimized
@@ -325,7 +327,7 @@ export default function Header() {
             />
           </span>
           <span className="min-w-0 leading-none text-white">
-            <span className="block truncate text-sm font-extrabold tracking-wide text-white sm:text-lg">Chiutahara</span>
+            <span className="block truncate text-sm font-extrabold tracking-wide text-white sm:text-lg">{villageName}</span>
             <span className="mt-0.5 block truncate text-[10px] font-semibold tracking-[0.2em] text-yellow-200 uppercase sm:text-[11px]">Portal</span>
           </span>
         </Link>

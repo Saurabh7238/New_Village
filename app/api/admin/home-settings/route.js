@@ -3,6 +3,7 @@ import { requireAdminSession } from '@/lib/adminAuth';
 import HomeSettings from '@/models/HomeSettings';
 import SiteAsset from '@/models/SiteAsset';
 import { writeAuditLog } from '@/lib/writeAuditLog';
+import { DEFAULT_VILLAGE_PROFILE } from '@/lib/villageProfile';
 
 export async function GET() {
   try {
@@ -21,6 +22,8 @@ export async function GET() {
       settings: {
         ...(settings || {
           name: 'default',
+          villageName: 'Chiutahara',
+          villageNameHindi: 'चिउटहरा',
           popupEnabled: true,
           popupTitle: 'Important Update',
           popupMessage: 'Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.',
@@ -51,6 +54,9 @@ export async function GET() {
             },
           ],
         }),
+        villageName: settings?.villageName || 'Chiutahara',
+        villageNameHindi: settings?.villageNameHindi || 'चिउटहरा',
+        villageProfile: { ...DEFAULT_VILLAGE_PROFILE, ...(settings?.villageProfile || {}) },
         noticeEmailNotificationsEnabled: settings?.noticeEmailNotificationsEnabled !== false,
         applicationEmailNotificationsEnabled: settings?.applicationEmailNotificationsEnabled !== false,
         appointmentEmailNotificationsEnabled: settings?.appointmentEmailNotificationsEnabled !== false,
@@ -73,6 +79,23 @@ export async function POST(req) {
 
     await dbConnect();
     const payload = await req.json();
+    const villageName = typeof payload.villageName === 'string' ? payload.villageName.trim() : 'Chiutahara';
+    const villageNameHindi = typeof payload.villageNameHindi === 'string' ? payload.villageNameHindi.trim() : 'चिउटहरा';
+    if (!villageName || villageName.length > 80 || !villageNameHindi || villageNameHindi.length > 80) {
+      return Response.json({ error: 'Village names must be between 1 and 80 characters.' }, { status: 400 });
+    }
+    const submittedProfile = payload.villageProfile && typeof payload.villageProfile === 'object'
+      && !Array.isArray(payload.villageProfile)
+      ? payload.villageProfile
+      : {};
+    const villageProfile = {};
+    for (const [field, defaultValue] of Object.entries(DEFAULT_VILLAGE_PROFILE)) {
+      const value = submittedProfile[field] ?? defaultValue;
+      if (typeof value !== 'string' || value.length > 500) {
+        return Response.json({ error: `Village profile field "${field}" must be text no longer than 500 characters.` }, { status: 400 });
+      }
+      villageProfile[field] = value.trim();
+    }
 
     const safeSlides = Array.isArray(payload.slides)
       ? payload.slides.map((slide) => ({
@@ -85,6 +108,9 @@ export async function POST(req) {
 
     const update = {
       name: 'default',
+      villageName,
+      villageNameHindi,
+      villageProfile,
       popupEnabled: Boolean(payload.popupEnabled),
       popupTitle: String(payload.popupTitle || 'Important Update').trim() || 'Important Update',
       popupMessage: String(payload.popupMessage || '').trim() || 'Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.',
@@ -122,7 +148,7 @@ export async function POST(req) {
     );
     await writeAuditLog({
       session,
-      action: 'Homepage settings updated',
+      action: 'Homepage and site identity settings updated',
       entityType: 'home-settings',
       details: { fields: Object.keys(update) },
     });

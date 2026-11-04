@@ -7,6 +7,7 @@ import ChatWidget from "../components/ChatWidget";
 import PwaRegistration from "../components/PwaRegistration";
 import SiteFooter from "../components/SiteFooter";
 import { LanguageProvider } from "./language-provider";
+import { SiteSettingsProvider } from "./site-settings-provider";
 
 export const metadata = {
   metadataBase: new URL("https://www.grampanchayatchiutahara.online"),
@@ -65,6 +66,7 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          id="site-organization-jsonld"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
@@ -94,6 +96,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen bg-slate-50 text-slate-900 font-sans relative dark:bg-slate-950 dark:text-slate-100 transition-colors">
         <Providers>
           <LanguageProvider>
+            <SiteSettingsProvider>
             <noscript>
               <div className="bg-red-100 text-red-700 text-center p-2 text-sm">
                 This site works best with JavaScript enabled.
@@ -108,6 +111,7 @@ export default function RootLayout({ children }) {
             <ScrollToTopButton />
             <ChatWidget />
             <SiteFooter />
+            </SiteSettingsProvider>
           </LanguageProvider>
         </Providers>
       </body>

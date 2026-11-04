@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useSiteSettings } from '@/app/site-settings-provider';
 
 export default function SiteFooter() {
+  const { villageName } = useSiteSettings();
   const [branding, setBranding] = useState({});
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function SiteFooter() {
           <Image src={lightLogo} alt="" fill sizes="36px" unoptimized className="object-contain dark:hidden" />
           <Image src={darkLogo} alt="" fill sizes="36px" unoptimized className="hidden object-contain dark:block" />
         </span>
-        <span>© {new Date().getFullYear()} Gram Panchayat Chiutahara</span>
+        <span>© {new Date().getFullYear()} Gram Panchayat {villageName}</span>
       </div>
     </footer>
   );

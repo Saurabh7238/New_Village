@@ -3,6 +3,61 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { DEFAULT_VILLAGE_PROFILE } from "@/lib/villageProfile";
+
+const villageProfileSections = [
+  {
+    title: "Population and services",
+    fields: [
+      ["population", "Total population"],
+      ["censusYear", "Population census year"],
+      ["malePopulation", "Male population"],
+      ["femalePopulation", "Female population"],
+      ["households", "Households"],
+      ["householdCode", "Household code"],
+      ["schools", "Schools"],
+      ["wardMembers", "Ward members"],
+    ],
+  },
+  {
+    title: "Location and Gram Pradhan",
+    fields: [
+      ["state", "State"],
+      ["district", "District"],
+      ["block", "Block"],
+      ["villagesServed", "Villages served (comma separated)"],
+      ["gramPradhanName", "Gram Pradhan name"],
+      ["gramPradhanTerm", "Gram Pradhan role / term"],
+      ["villageDescription", "Village description (English)", true],
+      ["villageDescriptionHindi", "गांव का परिचय (हिंदी)", true],
+    ],
+  },
+  {
+    title: "Representatives and governance",
+    fields: [
+      ["assembly", "Assembly constituency"],
+      ["parliament", "Parliament constituency"],
+      ["subDistrict", "Sub-district / tehsil"],
+      ["mla", "MLA name and party"],
+      ["mp", "MP name and party"],
+    ],
+  },
+  {
+    title: "Culture and postal details",
+    fields: [
+      ["templeName", "Temple / landmark"],
+      ["templeDescription", "Temple description (English)", true],
+      ["templeDescriptionHindi", "मंदिर का परिचय (हिंदी)", true],
+      ["beliefsDescription", "Beliefs and customs (English)", true],
+      ["beliefsDescriptionHindi", "विश्वास और परंपराएं (हिंदी)", true],
+      ["traditionalDress", "Traditional dress"],
+      ["traditionalFood", "Traditional food"],
+      ["traditionalOrnaments", "Traditional ornaments"],
+      ["pincode", "PIN code"],
+      ["postalAreaCode", "Postal area code"],
+    ],
+  },
+];
 
 const defaultSlides = [
   {
@@ -32,6 +87,9 @@ export default function HomeManagementPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
   const [formData, setFormData] = useState({
+    villageName: "Chiutahara",
+    villageNameHindi: "चिउटहरा",
+    villageProfile: DEFAULT_VILLAGE_PROFILE,
     popupEnabled: true,
     popupTitle: "Important Update",
     popupMessage: "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
@@ -49,6 +107,12 @@ export default function HomeManagementPage() {
         const data = await res.json();
         if (res.ok && data.settings) {
           setFormData({
+            villageName: data.settings.villageName || "Chiutahara",
+            villageNameHindi: data.settings.villageNameHindi || "चिउटहरा",
+            villageProfile: {
+              ...DEFAULT_VILLAGE_PROFILE,
+              ...(data.settings.villageProfile || {}),
+            },
             popupEnabled: Boolean(data.settings.popupEnabled),
             popupTitle: data.settings.popupTitle || "Important Update",
             popupMessage: data.settings.popupMessage || "",
@@ -70,6 +134,13 @@ export default function HomeManagementPage() {
 
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateVillageProfile = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      villageProfile: { ...prev.villageProfile, [field]: value },
+    }));
   };
 
   const updateSlide = (index, field, value) => {
@@ -145,8 +216,9 @@ export default function HomeManagementPage() {
         throw new Error(data.error || "Failed to save homepage settings");
       }
 
-      setMessage("Homepage popup and slide settings saved successfully.");
+      setMessage("Village name and homepage settings saved successfully.");
       setMessageType("success");
+      window.dispatchEvent(new CustomEvent("site-settings-updated", { detail: data.settings }));
     } catch (error) {
       console.error("Save failed:", error);
       setMessage(error.message || "Unable to save homepage settings.");
@@ -172,7 +244,7 @@ export default function HomeManagementPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-green-700 dark:text-green-400">Home Page Management</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300">Manage the popup notification and homepage slides from the admin side.</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Manage village information, popup notifications, and homepage slides.</p>
           </div>
           <Link href="/admin" className="px-4 py-2 rounded bg-slate-700 text-white hover:bg-slate-800">
             Back to Admin
@@ -184,6 +256,79 @@ export default function HomeManagementPage() {
             {message}
           </div>
         )}
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+          <h2 className="text-2xl font-bold mb-2">Village Name</h2>
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+            These names update the public site header, homepage, footer, page metadata, and PWA install name.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="villageName" className="block text-sm font-medium mb-1">Village name (English)</label>
+              <input
+                id="villageName"
+                type="text"
+                maxLength={80}
+                required
+                value={formData.villageName}
+                onChange={(e) => updateField("villageName", e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            <div>
+              <label htmlFor="villageNameHindi" className="block text-sm font-medium mb-1">गांव का नाम (हिंदी)</label>
+              <input
+                id="villageNameHindi"
+                type="text"
+                maxLength={80}
+                required
+                value={formData.villageNameHindi}
+                onChange={(e) => updateField("villageNameHindi", e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+          <h2 className="text-2xl font-bold mb-2">Homepage Village Information</h2>
+          <p className="mb-5 text-sm text-gray-600 dark:text-gray-300">
+            Edit the facts and figures displayed in the homepage village section. The Gram Pradhan name and role are optional; only publish details approved for public display.
+          </p>
+          <div className="space-y-6">
+            {villageProfileSections.map((section) => (
+              <section key={section.title}>
+                <h3 className="mb-3 border-b border-gray-200 pb-2 text-lg font-semibold dark:border-gray-700">{section.title}</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {section.fields.map(([field, label, multiline]) => (
+                    <div key={field}>
+                      <label htmlFor={`villageProfile-${field}`} className="mb-1 block text-sm font-medium">{label}</label>
+                      {multiline ? (
+                        <textarea
+                          id={`villageProfile-${field}`}
+                          rows={3}
+                          maxLength={500}
+                          value={formData.villageProfile[field] || ""}
+                          onChange={(event) => updateVillageProfile(field, event.target.value)}
+                          className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                      ) : (
+                        <input
+                          id={`villageProfile-${field}`}
+                          type="text"
+                          maxLength={500}
+                          value={formData.villageProfile[field] || ""}
+                          onChange={(event) => updateVillageProfile(field, event.target.value)}
+                          className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
           <h2 className="text-2xl font-bold mb-4">Popup Notification</h2>

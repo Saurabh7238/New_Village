@@ -11,8 +11,10 @@ import { ArrowDown, ArrowRight, BellRing, BadgeCheck, CalendarDays, ChevronLeft,
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import DottedSpinner from "@/components/DottedSpinner";
 import { useLanguage } from "@/app/language-provider";
+import { useSiteSettings } from "@/app/site-settings-provider";
 import { sanitizePublicReviews } from "@/lib/reviewVisibility";
 import { getInfraCategoryByType, INFRA_CATEGORIES } from "@/lib/infrastructureDisplay";
+import { DEFAULT_VILLAGE_PROFILE } from "@/lib/villageProfile";
 
 const INFRA_TYPE_ICONS = {
   Road: Route,
@@ -38,6 +40,7 @@ const DEFAULT_SLIDES = [
 
 export default function HomePage() {
   const { language } = useLanguage();
+  const { villageName, villageNameHindi } = useSiteSettings();
   const { status: authStatus } = useSession();
   const reduceMotion = useReducedMotion();
   const [visitCount, setVisitCount] = useState(null);
@@ -56,6 +59,7 @@ export default function HomePage() {
     popupLink: "",
     heroBackgroundImage: "",
     slides: DEFAULT_SLIDES,
+    villageProfile: DEFAULT_VILLAGE_PROFILE,
   });
   const [reviews, setReviews] = useState([]);
   const [reviewMessage, setReviewMessage] = useState("");
@@ -130,6 +134,10 @@ export default function HomePage() {
             slides: Array.isArray(data.settings.slides) && data.settings.slides.length
               ? data.settings.slides
               : DEFAULT_SLIDES,
+            villageProfile: {
+              ...DEFAULT_VILLAGE_PROFILE,
+              ...(data.settings.villageProfile || {}),
+            },
           });
           setShowBanner(Boolean(data.settings.popupEnabled));
         }
@@ -289,7 +297,7 @@ export default function HomePage() {
 
   const labels = {
     en: {
-      welcome: "Welcome to Gram Panchayat Chiutahara",
+      welcome: `Welcome to Gram Panchayat ${villageName}`,
       description: "Manage certificates, budget, members, development & more",
       services: "Services",
       lang: "हिंदी",
@@ -299,7 +307,7 @@ export default function HomePage() {
       fab: "📞",
       whatsappLink:
         "https://wa.me/qr/D5EKI63JQJHLC1?text=Hello%20Gram%20Panchayat%20Team%2C%20I%20have%20a%20query.",
-      contactTitle: "Contact Gram Panchayat Chiutahara",
+      contactTitle: `Contact Gram Panchayat ${villageName}`,
       contactMessage: "Send us a message or reach out via WhatsApp.",
       close: "Close",
       whatsapp: "Open WhatsApp",
@@ -319,19 +327,19 @@ export default function HomePage() {
       reviewError: "Could not submit review. Please try again.",
       noReviews: "No reviews yet. Be the first to share!",
       village: "Our village",
-      villageAbout: "About Chiutahara Village",
-      population: "Population (2011 Census)", households: "Households", schools: "Schools", wardMembers: "Ward Members",
+      villageAbout: `About ${villageName} Village`,
+      population: `Population (${homeSettings.villageProfile.censusYear} Census)`, households: "Households", schools: "Schools", wardMembers: "Ward Members",
       male: "Male", female: "Female", educationPriority: "Education Priority", electedRepresentatives: "Elected Representatives",
-      overview: "Gram Panchayat Overview", state: "State", district: "District", block: "Block", gramPanchayat: "Gram Panchayat", villagesServed: "Villages Served", sarpanch: "Sarpanch",
+      overview: "Gram Panchayat Overview", state: "State", district: "District", block: "Block", gramPanchayat: "Gram Panchayat", gramPradhan: "Gram Pradhan", villagesServed: "Villages Served", sarpanch: "Sarpanch",
       localGovernance: "Local Governance", assembly: "Assembly", parliament: "Parliament", subDistrict: "Sub-District", politicalRepresentatives: "Political Representatives", mla: "MLA", mp: "MP",
-      villageDescription: "Part of the Panchayati Raj system, working at grassroots level for local administrative matters and village-level planning.",
+      villageDescription: homeSettings.villageProfile.villageDescription,
       famousFor: "Famous For", culturalHeritage: "Cultural Heritage", postalLocation: "Postal & Location Info", beliefsCustoms: "Beliefs & Customs",
-      templeDescription: "Sacred temple dedicated to Lord Hanuman (God of Strength). People from nearby and far-off villages visit regularly to worship and offer prayers, especially on special occasions.",
+      templeDescription: homeSettings.villageProfile.templeDescription,
       traditionalDress: "Traditional Dress", traditionalFood: "Traditional Food", traditionalOrnaments: "Traditional Ornaments", pincode: "Pincode", postalAreaCode: "Postal Area Code",
-      beliefsDescription: "The community believes that Lord Hanuman protects the village and its people from all harm. Worship at Hanuman Mandir is a regular practice, strengthening the cultural and spiritual fabric of the village.",
+      beliefsDescription: homeSettings.villageProfile.beliefsDescription,
     },
     hi: {
-      welcome: "ग्राम पंचायत पोर्टल में आपका स्वागत है",
+      welcome: `${villageNameHindi} ग्राम पंचायत पोर्टल में आपका स्वागत है`,
       description: "प्रमाणपत्र, बजट, सदस्य, विकास और अधिक प्रकाशित करें",
       services: "सेवाएं",
       lang: "English",
@@ -361,16 +369,16 @@ export default function HomePage() {
       reviewError: "समीक्षा भेज नहीं सकी। कृपया पुनः प्रयास करें।",
       noReviews: "अभी कोई समीक्षा नहीं। पहले अपना अनुभव साझा करें!",
       village: "हमारा गांव",
-      villageAbout: "चिउटहरा गांव के बारे में",
-      population: "जनसंख्या (2011 जनगणना)", households: "परिवार", schools: "विद्यालय", wardMembers: "वार्ड सदस्य",
+      villageAbout: `${villageNameHindi} गांव के बारे में`,
+      population: `जनसंख्या (${homeSettings.villageProfile.censusYear} जनगणना)`, households: "परिवार", schools: "विद्यालय", wardMembers: "वार्ड सदस्य",
       male: "पुरुष", female: "महिला", educationPriority: "शिक्षा प्राथमिकता", electedRepresentatives: "निर्वाचित प्रतिनिधि",
-      overview: "ग्राम पंचायत का परिचय", state: "राज्य", district: "जिला", block: "ब्लॉक", gramPanchayat: "ग्राम पंचायत", villagesServed: "सेवा प्राप्त गांव", sarpanch: "सरपंच",
+      overview: "ग्राम पंचायत का परिचय", state: "राज्य", district: "जिला", block: "ब्लॉक", gramPanchayat: "ग्राम पंचायत", gramPradhan: "ग्राम प्रधान", villagesServed: "सेवा प्राप्त गांव", sarpanch: "सरपंच",
       localGovernance: "स्थानीय शासन", assembly: "विधानसभा", parliament: "संसद", subDistrict: "तहसील", politicalRepresentatives: "राजनीतिक प्रतिनिधि", mla: "विधायक", mp: "सांसद",
-      villageDescription: "पंचायती राज व्यवस्था का हिस्सा, जो स्थानीय प्रशासनिक मामलों और गांव-स्तरीय योजना के लिए जमीनी स्तर पर कार्य करती है।",
+      villageDescription: homeSettings.villageProfile.villageDescriptionHindi,
       famousFor: "प्रसिद्धि", culturalHeritage: "सांस्कृतिक विरासत", postalLocation: "डाक और स्थान की जानकारी", beliefsCustoms: "विश्वास और परंपराएं",
-      templeDescription: "भगवान हनुमान (शक्ति के देवता) को समर्पित पवित्र मंदिर। आसपास और दूर-दराज के गांवों के लोग नियमित रूप से पूजा और प्रार्थना करने आते हैं, विशेषकर शुभ अवसरों पर।",
+      templeDescription: homeSettings.villageProfile.templeDescriptionHindi,
       traditionalDress: "पारंपरिक पोशाक", traditionalFood: "पारंपरिक भोजन", traditionalOrnaments: "पारंपरिक आभूषण", pincode: "पिनकोड", postalAreaCode: "डाक क्षेत्र कोड",
-      beliefsDescription: "समुदाय का विश्वास है कि भगवान हनुमान गांव और उसके लोगों को सभी संकटों से बचाते हैं। हनुमान मंदिर में पूजा नियमित परंपरा है, जो गांव की सांस्कृतिक और आध्यात्मिक एकता को मजबूत करती है।",
+      beliefsDescription: homeSettings.villageProfile.beliefsDescriptionHindi,
     },
   };
 
@@ -392,7 +400,7 @@ export default function HomePage() {
     >
       <Image
         src={slide.imageUrl}
-        alt={slide.alt || `Chiutahara village highlight ${index + 1}`}
+        alt={slide.alt || `${villageName} village highlight ${index + 1}`}
         fill
         sizes="(max-width: 640px) 78vw, 18rem"
         className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -851,13 +859,22 @@ export default function HomePage() {
               📍 {t.villageAbout}
             </h2>
 
-            {/* Key Stats */}
+            {homeSettings.villageProfile.gramPradhanName && (
+              <div className="mb-5 rounded-xl border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/40">
+                <p className="text-xs font-bold uppercase tracking-wide text-teal-800 dark:text-teal-200">{t.gramPradhan}</p>
+                <p className="mt-1 text-lg font-bold text-slate-950 dark:text-white">{homeSettings.villageProfile.gramPradhanName}</p>
+                {homeSettings.villageProfile.gramPradhanTerm && (
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{homeSettings.villageProfile.gramPradhanTerm}</p>
+                )}
+              </div>
+            )}
+
             <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {[
-                { label: t.population, value: "1,768", note: `${t.male}: 795 · ${t.female}: 973`, color: "text-blue-700 dark:text-blue-300" },
-                { label: t.households, value: "269", note: "Code: 195584", color: "text-emerald-700 dark:text-emerald-300" },
-                { label: t.schools, value: "3", note: t.educationPriority, color: "text-violet-700 dark:text-violet-300" },
-                { label: t.wardMembers, value: "12", note: t.electedRepresentatives, color: "text-amber-700 dark:text-amber-300" },
+                { label: t.population, value: homeSettings.villageProfile.population, note: `${t.male}: ${homeSettings.villageProfile.malePopulation} · ${t.female}: ${homeSettings.villageProfile.femalePopulation}`, color: "text-blue-700 dark:text-blue-300" },
+                { label: t.households, value: homeSettings.villageProfile.households, note: `Code: ${homeSettings.villageProfile.householdCode}`, color: "text-emerald-700 dark:text-emerald-300" },
+                { label: t.schools, value: homeSettings.villageProfile.schools, note: t.educationPriority, color: "text-violet-700 dark:text-violet-300" },
+                { label: t.wardMembers, value: homeSettings.villageProfile.wardMembers, note: t.electedRepresentatives, color: "text-amber-700 dark:text-amber-300" },
               ].map((stat) => (
                 <article key={stat.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
                   <p className="text-xs font-semibold leading-5 text-slate-600 dark:text-slate-300">{stat.label}</p>
@@ -870,13 +887,13 @@ export default function HomePage() {
               <section className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                 <h3 className="mb-3 text-sm font-bold text-slate-900 dark:text-white">🏘️ {t.overview}</h3>
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                  <div><dt className="text-slate-500 dark:text-slate-400">{t.state}</dt><dd className="font-semibold">Uttar Pradesh</dd></div>
-                  <div><dt className="text-slate-500 dark:text-slate-400">{t.district}</dt><dd className="font-semibold">Azamgarh</dd></div>
-                  <div><dt className="text-slate-500 dark:text-slate-400">{t.block}</dt><dd className="font-semibold">Lalganj</dd></div>
-                  <div><dt className="text-slate-500 dark:text-slate-400">{t.gramPanchayat}</dt><dd className="font-semibold">Chiutahara</dd></div>
+                  <div><dt className="text-slate-500 dark:text-slate-400">{t.state}</dt><dd className="font-semibold">{homeSettings.villageProfile.state}</dd></div>
+                  <div><dt className="text-slate-500 dark:text-slate-400">{t.district}</dt><dd className="font-semibold">{homeSettings.villageProfile.district}</dd></div>
+                  <div><dt className="text-slate-500 dark:text-slate-400">{t.block}</dt><dd className="font-semibold">{homeSettings.villageProfile.block}</dd></div>
+                  <div><dt className="text-slate-500 dark:text-slate-400">{t.gramPanchayat}</dt><dd className="font-semibold">{language === "hi" ? villageNameHindi : villageName}</dd></div>
                 </dl>
                 <p className="mt-3 text-xs leading-5 text-slate-600 dark:text-slate-300">{t.villageDescription}</p>
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300"><strong>{t.villagesServed}:</strong> Chiutahara, Lauhara, Malikan</p>
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300"><strong>{t.villagesServed}:</strong> {homeSettings.villageProfile.villagesServed}</p>
               </section>
 
               <details className="group rounded-xl border border-slate-200 p-4 dark:border-slate-700">
@@ -884,11 +901,11 @@ export default function HomePage() {
                   <span className="flex items-center justify-between gap-3">🏛️ {t.localGovernance} & {t.politicalRepresentatives}<ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" aria-hidden="true" /></span>
                 </summary>
                 <div className="mt-4 space-y-3 border-t border-slate-200 pt-3 text-xs dark:border-slate-700">
-                  <p><span className="font-semibold">{t.assembly}:</span> Lalganj Constituency</p>
-                  <p><span className="font-semibold">{t.parliament}:</span> Lalganj Constituency</p>
-                  <p><span className="font-semibold">{t.subDistrict}:</span> Lalganj</p>
-                  <p><span className="font-semibold">{t.mla}:</span> Shri Bechai Saroj (Samajwadi Party)</p>
-                  <p><span className="font-semibold">{t.mp}:</span> Daroga Prasad Saroj (Samajwadi Party)</p>
+                  <p><span className="font-semibold">{t.assembly}:</span> {homeSettings.villageProfile.assembly}</p>
+                  <p><span className="font-semibold">{t.parliament}:</span> {homeSettings.villageProfile.parliament}</p>
+                  <p><span className="font-semibold">{t.subDistrict}:</span> {homeSettings.villageProfile.subDistrict}</p>
+                  <p><span className="font-semibold">{t.mla}:</span> {homeSettings.villageProfile.mla}</p>
+                  <p><span className="font-semibold">{t.mp}:</span> {homeSettings.villageProfile.mp}</p>
                 </div>
               </details>
 
@@ -897,9 +914,9 @@ export default function HomePage() {
                   <span className="flex items-center justify-between gap-3">🙏 {t.culturalHeritage}, {t.famousFor} & {t.postalLocation}<ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" aria-hidden="true" /></span>
                 </summary>
                 <div className="mt-4 grid gap-4 border-t border-slate-200 pt-3 text-xs leading-5 dark:border-slate-700 md:grid-cols-3">
-                  <div><p className="mb-1 font-semibold">{t.famousFor}</p><p><strong>Hanuman Mandir</strong> — {t.templeDescription}</p><p className="mt-2">{t.beliefsDescription}</p></div>
-                  <div><p className="mb-1 font-semibold">{t.culturalHeritage}</p><p><strong>{t.traditionalDress}:</strong> Dhoti Kurta</p><p><strong>{t.traditionalFood}:</strong> Dal Chawal</p><p><strong>{t.traditionalOrnaments}:</strong> Bichhiya</p></div>
-                  <div><p className="mb-1 font-semibold">{t.postalLocation}</p><p><strong>{t.pincode}:</strong> 276203</p><p><strong>{t.postalAreaCode}:</strong> 276123</p></div>
+                  <div><p className="mb-1 font-semibold">{t.famousFor}</p><p><strong>{homeSettings.villageProfile.templeName}</strong> — {t.templeDescription}</p><p className="mt-2">{t.beliefsDescription}</p></div>
+                  <div><p className="mb-1 font-semibold">{t.culturalHeritage}</p><p><strong>{t.traditionalDress}:</strong> {homeSettings.villageProfile.traditionalDress}</p><p><strong>{t.traditionalFood}:</strong> {homeSettings.villageProfile.traditionalFood}</p><p><strong>{t.traditionalOrnaments}:</strong> {homeSettings.villageProfile.traditionalOrnaments}</p></div>
+                  <div><p className="mb-1 font-semibold">{t.postalLocation}</p><p><strong>{t.pincode}:</strong> {homeSettings.villageProfile.pincode}</p><p><strong>{t.postalAreaCode}:</strong> {homeSettings.villageProfile.postalAreaCode}</p></div>
                 </div>
               </details>
             </div>
@@ -1111,7 +1128,7 @@ export default function HomePage() {
           <div className="flex flex-col justify-between gap-3 border-b border-slate-200 px-5 py-5 dark:border-slate-700 sm:flex-row sm:items-center sm:px-8">
             <div>
               <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700 dark:text-teal-300">Location</p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Chiutahara Panchayat Map</h2>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{villageName} Panchayat Map</h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Find the Panchayat location and nearby landmark.</p>
             </div>
             <Link
@@ -1122,7 +1139,7 @@ export default function HomePage() {
             </Link>
           </div>
           <iframe
-            title="Chiutahara Panchayat map"
+            title={`${villageName} Panchayat map`}
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3584.370430999999!2d83.0625204!3d25.7310942!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3991cf1450dc16cf%3A0xd24a5f561129b0b!2sShri%20Radhe%20Krishna%20Mandir!5e0!3m2!1sen!2sin!4v1694767000000!5m2!1sen!2sin"
             className="h-72 w-full border-0 sm:h-96"
             loading="lazy"

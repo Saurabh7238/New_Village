@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { DEFAULT_VILLAGE_PROFILE } from '@/lib/villageProfile';
 
 const SlideSchema = new mongoose.Schema(
   {
@@ -10,6 +11,16 @@ const SlideSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const VillageProfileSchema = new mongoose.Schema(
+  Object.fromEntries(
+    Object.entries(DEFAULT_VILLAGE_PROFILE).map(([field, value]) => [
+      field,
+      { type: String, default: value, trim: true, maxlength: 500 },
+    ])
+  ),
+  { _id: false }
+);
+
 const HomeSettingsSchema = new mongoose.Schema(
   {
     name: {
@@ -17,6 +28,22 @@ const HomeSettingsSchema = new mongoose.Schema(
       default: 'default',
       unique: true,
       index: true,
+    },
+    villageName: {
+      type: String,
+      default: 'Chiutahara',
+      trim: true,
+      maxlength: 80,
+    },
+    villageNameHindi: {
+      type: String,
+      default: 'चिउटहरा',
+      trim: true,
+      maxlength: 80,
+    },
+    villageProfile: {
+      type: VillageProfileSchema,
+      default: () => ({}),
     },
     popupEnabled: {
       type: Boolean,

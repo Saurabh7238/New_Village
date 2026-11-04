@@ -7,8 +7,10 @@ import AdminAnalyticsDashboard from "@/components/AdminAnalyticsDashboard";
 import { BarChart3, ChevronDown } from "lucide-react";
 import Button from "@/components/Button";
 import PageHeader from "@/components/PageHeader";
+import { useSiteSettings } from "@/app/site-settings-provider";
 
 export default function AdminPanel() {
+  const { villageName } = useSiteSettings();
   const { data: session, status } = useSession();
   const [requestCounts, setRequestCounts] = useState(null);
   const [requestCountsError, setRequestCountsError] = useState('');
@@ -231,7 +233,7 @@ export default function AdminPanel() {
         <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 p-6 rounded-lg border border-green-200 dark:border-gray-600">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Welcome to Admin Dashboard</h3>
           <p className="text-gray-700 dark:text-gray-300">
-            Select a management section above to manage different aspects of Chiutahara Portal.
+            Select a management section above to manage different aspects of {villageName} Portal.
           </p>
         </div>
         )}

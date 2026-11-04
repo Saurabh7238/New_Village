@@ -10,6 +10,7 @@ import {
   CATEGORY_LABELS,
   getCategoryColor,
 } from '@/lib/notificationConstants';
+import { useSiteSettings } from '@/app/site-settings-provider';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -25,6 +26,7 @@ function formatNoticeDate(value) {
 }
 
 export default function NoticesPage() {
+  const { villageName } = useSiteSettings();
   const { data: session, status: sessionStatus } = useSession();
   const [notices, setNotices] = useState([]);
   const [category, setCategory] = useState('');
@@ -219,7 +221,7 @@ export default function NoticesPage() {
               <Megaphone className="h-7 w-7" aria-hidden="true" />
             </span>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-100">Chiutahara community</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-100">{villageName} community</p>
               <h1 className="mt-2 text-3xl font-extrabold sm:text-4xl">Community Notice Board</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-teal-50 sm:text-base">
                 Birthday wishes, greetings, congratulations, condolence messages, village events, and official updates.

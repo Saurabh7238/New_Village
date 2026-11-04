@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useSiteSettings } from "@/app/site-settings-provider";
 
 export default function WelcomeToast() {
   const [showToast, setShowToast] = useState(false);
   const [message, setMessage] = useState("");
   const { data: session, status } = useSession();
+  const { villageName } = useSiteSettings();
 
   const displayName =
     session?.user?.name || session?.user?.email?.split("@")[0] || null;
@@ -20,7 +22,7 @@ export default function WelcomeToast() {
 
     if (isWelcome && status === "loading") return undefined;
     if (isWelcome && status === "authenticated") {
-      setMessage(`Welcome to Chiutahara Portal, ${displayName || "there"}!`);
+      setMessage(`Welcome to ${villageName} Portal, ${displayName || "there"}!`);
       setShowToast(true);
       params.delete("welcome");
       const newSearch = params.toString();
@@ -48,7 +50,7 @@ export default function WelcomeToast() {
       window.history.replaceState({}, "", newUrl);
     }
     return undefined;
-  }, [displayName, status]);
+  }, [displayName, status, villageName]);
 
   return (
     <AnimatePresence>

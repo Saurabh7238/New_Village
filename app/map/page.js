@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
+import { useSiteSettings } from "@/app/site-settings-provider";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -20,6 +21,7 @@ const CHIUTAHARA_BOUNDARY = [
 ];
 
 export default function MapPage() {
+  const { villageName } = useSiteSettings();
   const mapElementRef = useRef(null);
   const mapRef = useRef(null);
   const boundaryRef = useRef(null);
@@ -85,7 +87,7 @@ export default function MapPage() {
             <div
               ref={mapElementRef}
               role="region"
-              aria-label="Map showing Chiutahara with an illustrative boundary"
+              aria-label={`Map showing ${villageName} with an illustrative boundary`}
               className="h-[450px] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow dark:border-slate-700"
             />
           )}
@@ -102,7 +104,7 @@ export default function MapPage() {
           rel="noopener noreferrer"
           className="text-green-700 underline hover:text-green-900"
         >
-          Open Chiutahara in Google Maps
+          {`Open ${villageName} in Google Maps`}
         </a>
       </div>
     </div>
