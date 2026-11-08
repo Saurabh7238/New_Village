@@ -24,6 +24,16 @@ const NotificationBoardSchema = new mongoose.Schema(
       required: [true, 'Description is required'],
       minlength: [10, 'Description must be at least 10 characters'],
     },
+    backgroundColor: {
+      type: String,
+      default: '#ffffff',
+      match: /^#[0-9A-Fa-f]{6}$/,
+    },
+    fontColor: {
+      type: String,
+      default: '#1f2937',
+      match: /^#[0-9A-Fa-f]{6}$/,
+    },
     issueDate: {
       type: Date,
       default: () => new Date(),

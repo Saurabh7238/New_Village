@@ -99,7 +99,13 @@ export default function NotificationDetailPage() {
           <span className="text-gray-600 dark:text-gray-400 truncate">{notification.title}</span>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+        <div
+          className="rounded-lg p-8 shadow-md"
+          style={{
+            backgroundColor: notification.backgroundColor || '#ffffff',
+            color: notification.fontColor || '#1f2937',
+          }}
+        >
           <div className="mb-6">
             <div className="flex flex-wrap gap-2 mb-4">
               <span className={`px-3 py-1 rounded text-xs font-medium ${getLevelColor(notification.level)}`}>
@@ -115,7 +121,7 @@ export default function NotificationDetailPage() {
               )}
             </div>
 
-            <h1 className="text-4xl font-bold text-blue-700 dark:text-blue-400 mb-4">
+            <h1 className="mb-4 text-4xl font-bold" style={{ color: notification.fontColor || '#1f2937' }}>
               {notification.title}
             </h1>
 
@@ -134,7 +140,13 @@ export default function NotificationDetailPage() {
             </div>
           </div>
 
-          <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded text-gray-800 dark:text-gray-200 whitespace-pre-wrap text-lg leading-relaxed">
+          <div
+            className="mb-8 rounded p-6 whitespace-pre-wrap text-lg leading-relaxed"
+            style={{
+              backgroundColor: notification.backgroundColor || '#ffffff',
+              color: notification.fontColor || '#1f2937',
+            }}
+          >
             {notification.description}
           </div>
 

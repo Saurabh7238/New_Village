@@ -242,6 +242,10 @@ export default function NotificationsPage() {
                 return (
                   <div
                     key={notification.id}
+                    style={{
+                      backgroundColor: notification.backgroundColor || '#ffffff',
+                      color: notification.fontColor || '#1f2937',
+                    }}
                     className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 ${
                       expired ? 'border-l-gray-400 opacity-75' : 'border-l-blue-500'
                     }`}
@@ -269,7 +273,10 @@ export default function NotificationsPage() {
                         )}
                       </div>
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-                        <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                        <h2
+                          className="text-2xl font-bold"
+                          style={{ color: notification.fontColor || '#1f2937' }}
+                        >
                           {notification.title}
                         </h2>
                         <Link href={`/notifications/${notification.id}`} className="rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
@@ -288,8 +295,14 @@ export default function NotificationsPage() {
                     </div>
 
                     {/* Description */}
-                    <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded">
-                      <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                    <div
+                      className="mb-4 rounded p-4"
+                      style={{
+                        backgroundColor: notification.backgroundColor || '#ffffff',
+                        color: notification.fontColor || '#1f2937',
+                      }}
+                    >
+                      <p className="whitespace-pre-wrap">
                         {notification.description}
                       </p>
                     </div>

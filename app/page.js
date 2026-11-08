@@ -735,7 +735,14 @@ export default function HomePage() {
               <ul className="grid gap-3 md:grid-cols-3">
                 {latestNotices.map((notice) => (
                   <li key={notice.id} className="min-w-0">
-                    <Link href={`/notifications/${notice.id}`} className="group block h-full rounded-xl border border-slate-200 p-4 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md dark:border-slate-700 dark:hover:border-teal-700 dark:hover:bg-slate-800">
+                    <Link
+                      href={`/notifications/${notice.id}`}
+                      style={{
+                        backgroundColor: notice.backgroundColor || '#ffffff',
+                        color: notice.fontColor || '#1f2937',
+                      }}
+                      className="group block h-full rounded-xl border border-slate-200 p-4 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md dark:border-slate-700 dark:hover:border-teal-700"
+                    >
                       <span className="flex flex-wrap items-center justify-between gap-2">
                         <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-teal-800 dark:text-teal-300">
                           <BellRing className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -751,8 +758,8 @@ export default function HomePage() {
                           }`}>{notice.priority}</span>
                         )}
                       </span>
-                      <span className="mt-2 block font-bold text-slate-900 dark:text-white">{notice.title}</span>
-                      <span className="mt-1 line-clamp-2 block text-sm text-slate-600 dark:text-slate-300">{notice.description}</span>
+                      <span className="mt-2 block font-bold" style={{ color: notice.fontColor || '#1f2937' }}>{notice.title}</span>
+                      <span className="mt-1 line-clamp-2 block text-sm" style={{ color: notice.fontColor || '#1f2937' }}>{notice.description}</span>
                       <time dateTime={notice.issueDate || notice.createdAt} className="mt-3 block text-xs font-medium text-slate-500 dark:text-slate-400">
                         {new Date(notice.issueDate || notice.createdAt).toLocaleDateString(language === "hi" ? "hi-IN" : "en-IN")}
                       </time>

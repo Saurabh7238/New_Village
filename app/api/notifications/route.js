@@ -20,6 +20,10 @@ function getNotificationStatus(status, scheduledPublishDate, now = new Date()) {
   return status || 'draft';
 }
 
+function isValidColor(value) {
+  return typeof value === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value);
+}
+
 // --- GET (FETCH ALL NOTIFICATIONS) ---
 export async function GET(request) {
   try {
@@ -163,7 +167,20 @@ export async function POST(request) {
 
     await dbConnect();
     const body = await request.json();
-    const { type, level, title, description, issueDate, validTill, priority, status, category, scheduledPublishDate } = body;
+    const {
+      type,
+      level,
+      title,
+      description,
+      backgroundColor = '#ffffff',
+      fontColor = '#1f2937',
+      issueDate,
+      validTill,
+      priority,
+      status,
+      category,
+      scheduledPublishDate,
+    } = body;
     const notificationType = GREETING_CATEGORIES.includes(category)
       ? 'message'
       : type;
@@ -185,6 +202,13 @@ export async function POST(request) {
     if (!notificationType || !level || !title || !description) {
       return NextResponse.json(
         { success: false, message: 'Type, level, title, and description are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidColor(backgroundColor) || !isValidColor(fontColor)) {
+      return NextResponse.json(
+        { success: false, message: 'Background and font colors must be valid six-digit hex colors.' },
         { status: 400 }
       );
     }
@@ -228,6 +252,8 @@ export async function POST(request) {
       level,
       title,
       description,
+      backgroundColor,
+      fontColor,
       issueDate: issueDateValue,
       validTill: validTillValue,
       priority: priority || 'medium',
@@ -303,7 +329,20 @@ export async function PUT(request) {
     }
 
     const body = await request.json();
-    const { title, description, level, priority, status, issueDate, validTill, category, scheduledPublishDate, type } = body;
+    const {
+      title,
+      description,
+      backgroundColor,
+      fontColor,
+      level,
+      priority,
+      status,
+      issueDate,
+      validTill,
+      category,
+      scheduledPublishDate,
+      type,
+    } = body;
     const notificationType = GREETING_CATEGORIES.includes(category) ? 'message' : type;
     const issueDateValue = issueDate ? new Date(issueDate) : undefined;
     const validTillValue = validTill ? new Date(validTill) : null;
@@ -323,6 +362,16 @@ export async function PUT(request) {
     if (!title || !description) {
       return NextResponse.json(
         { success: false, message: 'Title and description are required' },
+        { status: 400 }
+      );
+    }
+
+    if (
+      (backgroundColor !== undefined && !isValidColor(backgroundColor))
+      || (fontColor !== undefined && !isValidColor(fontColor))
+    ) {
+      return NextResponse.json(
+        { success: false, message: 'Background and font colors must be valid six-digit hex colors.' },
         { status: 400 }
       );
     }
@@ -372,6 +421,8 @@ export async function PUT(request) {
         ...(notificationType ? { type: notificationType } : {}),
         title,
         description,
+        ...(backgroundColor !== undefined ? { backgroundColor } : {}),
+        ...(fontColor !== undefined ? { fontColor } : {}),
         level,
         priority,
         category,

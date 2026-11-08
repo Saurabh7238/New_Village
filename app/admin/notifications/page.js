@@ -187,6 +187,8 @@ export default function AdminNotificationsPage() {
     level: 'national',
     title: '',
     description: '',
+    backgroundColor: '#ffffff',
+    fontColor: '#1f2937',
     issueDate: new Date().toISOString().split('T')[0],
     validTill: '',
     priority: 'medium',
@@ -368,6 +370,8 @@ export default function AdminNotificationsPage() {
         type: GREETING_CATEGORIES.includes(formData.category) ? 'message' : formData.type,
         title: trimmedTitle,
         description: trimmedDescription,
+        backgroundColor: formData.backgroundColor,
+        fontColor: formData.fontColor,
         validTill: formData.validTill
           ? new Date(`${formData.validTill}T23:59:59.999`).toISOString()
           : null,
@@ -413,6 +417,8 @@ export default function AdminNotificationsPage() {
       level: notification.level,
       title: notification.title,
       description: notification.description,
+      backgroundColor: notification.backgroundColor || '#ffffff',
+      fontColor: notification.fontColor || '#1f2937',
       issueDate: notification.issueDate.split('T')[0],
       validTill: notification.validTill ? notification.validTill.split('T')[0] : '',
       priority: notification.priority,
@@ -478,6 +484,8 @@ export default function AdminNotificationsPage() {
       level: 'national',
       title: '',
       description: '',
+      backgroundColor: '#ffffff',
+      fontColor: '#1f2937',
       issueDate: new Date().toISOString().split('T')[0],
       validTill: '',
       priority: 'medium',
@@ -652,6 +660,46 @@ export default function AdminNotificationsPage() {
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
                   required
                 />
+              </div>
+
+              <div className="md:col-span-2 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                <h3 className="font-semibold">Greeting / notification colors</h3>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                  Choose the background and text colors shown on the public notice cards and detail page.
+                </p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <label className="flex items-center justify-between gap-3 rounded border border-gray-200 p-3 dark:border-gray-600">
+                    <span className="text-sm font-medium">Background color</span>
+                    <input
+                      type="color"
+                      name="backgroundColor"
+                      value={formData.backgroundColor}
+                      onChange={handleInputChange}
+                      aria-label="Notification background color"
+                      className="h-10 w-14 cursor-pointer rounded border-0 bg-transparent"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between gap-3 rounded border border-gray-200 p-3 dark:border-gray-600">
+                    <span className="text-sm font-medium">Font color</span>
+                    <input
+                      type="color"
+                      name="fontColor"
+                      value={formData.fontColor}
+                      onChange={handleInputChange}
+                      aria-label="Notification font color"
+                      className="h-10 w-14 cursor-pointer rounded border-0 bg-transparent"
+                    />
+                  </label>
+                </div>
+                <div
+                  className="mt-4 rounded-lg border border-gray-300 p-4 dark:border-gray-600"
+                  style={{ backgroundColor: formData.backgroundColor, color: formData.fontColor }}
+                >
+                  <p className="font-bold">{formData.title || 'Greeting or notification preview'}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">
+                    {formData.description || 'Your notification text will look like this.'}
+                  </p>
+                </div>
               </div>
 
               {/* Issue Date */}
