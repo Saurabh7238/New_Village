@@ -90,6 +90,9 @@ export default function HomeManagementPage() {
     villageName: "Chiutahara",
     villageNameHindi: "चिउटहरा",
     villageProfile: DEFAULT_VILLAGE_PROFILE,
+    sloganEnabled: true,
+    slogan: "Panchayat Vikas, Sarvajan Sukhaya | Efficient Governance for Every Citizen",
+    sloganHindi: "पंचायत विकास, सर्वजन सुखाय | हर नागरिक के लिए प्रभावी शासन",
     popupEnabled: true,
     popupTitle: "Important Update",
     popupMessage: "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
@@ -113,6 +116,9 @@ export default function HomeManagementPage() {
               ...DEFAULT_VILLAGE_PROFILE,
               ...(data.settings.villageProfile || {}),
             },
+            sloganEnabled: data.settings.sloganEnabled !== false,
+            slogan: data.settings.slogan || "Panchayat Vikas, Sarvajan Sukhaya | Efficient Governance for Every Citizen",
+            sloganHindi: data.settings.sloganHindi || "पंचायत विकास, सर्वजन सुखाय | हर नागरिक के लिए प्रभावी शासन",
             popupEnabled: Boolean(data.settings.popupEnabled),
             popupTitle: data.settings.popupTitle || "Important Update",
             popupMessage: data.settings.popupMessage || "",
@@ -327,6 +333,44 @@ export default function HomeManagementPage() {
                 </div>
               </section>
             ))}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+          <h2 className="text-2xl font-bold mb-4">Homepage Slogan</h2>
+          <div className="mb-4 flex items-center gap-3">
+            <input
+              id="sloganEnabled"
+              type="checkbox"
+              checked={formData.sloganEnabled}
+              onChange={(event) => updateField("sloganEnabled", event.target.checked)}
+              className="h-4 w-4"
+            />
+            <label htmlFor="sloganEnabled" className="font-medium">Show scrolling slogan on homepage</label>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="slogan" className="mb-1 block text-sm font-medium">Slogan (English)</label>
+              <input
+                id="slogan"
+                type="text"
+                maxLength={240}
+                value={formData.slogan}
+                onChange={(event) => updateField("slogan", event.target.value)}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            <div>
+              <label htmlFor="sloganHindi" className="mb-1 block text-sm font-medium">नारा (हिंदी)</label>
+              <input
+                id="sloganHindi"
+                type="text"
+                maxLength={240}
+                value={formData.sloganHindi}
+                onChange={(event) => updateField("sloganHindi", event.target.value)}
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
           </div>
         </div>
 

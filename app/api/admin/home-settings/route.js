@@ -57,6 +57,9 @@ export async function GET() {
         villageName: settings?.villageName || 'Chiutahara',
         villageNameHindi: settings?.villageNameHindi || 'चिउटहरा',
         villageProfile: { ...DEFAULT_VILLAGE_PROFILE, ...(settings?.villageProfile || {}) },
+        sloganEnabled: settings?.sloganEnabled !== false,
+        slogan: settings?.slogan || 'Panchayat Vikas, Sarvajan Sukhaya | Efficient Governance for Every Citizen',
+        sloganHindi: settings?.sloganHindi || 'पंचायत विकास, सर्वजन सुखाय | हर नागरिक के लिए प्रभावी शासन',
         noticeEmailNotificationsEnabled: settings?.noticeEmailNotificationsEnabled !== false,
         applicationEmailNotificationsEnabled: settings?.applicationEmailNotificationsEnabled !== false,
         appointmentEmailNotificationsEnabled: settings?.appointmentEmailNotificationsEnabled !== false,
@@ -83,6 +86,11 @@ export async function POST(req) {
     const villageNameHindi = typeof payload.villageNameHindi === 'string' ? payload.villageNameHindi.trim() : 'चिउटहरा';
     if (!villageName || villageName.length > 80 || !villageNameHindi || villageNameHindi.length > 80) {
       return Response.json({ error: 'Village names must be between 1 and 80 characters.' }, { status: 400 });
+    }
+    const slogan = typeof payload.slogan === 'string' ? payload.slogan.trim() : '';
+    const sloganHindi = typeof payload.sloganHindi === 'string' ? payload.sloganHindi.trim() : '';
+    if (slogan.length > 240 || sloganHindi.length > 240) {
+      return Response.json({ error: 'Slogans must be no longer than 240 characters.' }, { status: 400 });
     }
     const submittedProfile = payload.villageProfile && typeof payload.villageProfile === 'object'
       && !Array.isArray(payload.villageProfile)
@@ -111,6 +119,9 @@ export async function POST(req) {
       villageName,
       villageNameHindi,
       villageProfile,
+      sloganEnabled: Boolean(payload.sloganEnabled),
+      slogan: slogan || 'Panchayat Vikas, Sarvajan Sukhaya | Efficient Governance for Every Citizen',
+      sloganHindi: sloganHindi || 'पंचायत विकास, सर्वजन सुखाय | हर नागरिक के लिए प्रभावी शासन',
       popupEnabled: Boolean(payload.popupEnabled),
       popupTitle: String(payload.popupTitle || 'Important Update').trim() || 'Important Update',
       popupMessage: String(payload.popupMessage || '').trim() || 'Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.',

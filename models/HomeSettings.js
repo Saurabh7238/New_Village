@@ -45,6 +45,22 @@ const HomeSettingsSchema = new mongoose.Schema(
       type: VillageProfileSchema,
       default: () => ({}),
     },
+    sloganEnabled: {
+      type: Boolean,
+      default: true,
+    },
+    slogan: {
+      type: String,
+      default: 'Panchayat Vikas, Sarvajan Sukhaya | Efficient Governance for Every Citizen',
+      trim: true,
+      maxlength: 240,
+    },
+    sloganHindi: {
+      type: String,
+      default: 'पंचायत विकास, सर्वजन सुखाय | हर नागरिक के लिए प्रभावी शासन',
+      trim: true,
+      maxlength: 240,
+    },
     popupEnabled: {
       type: Boolean,
       default: true,
