@@ -5,6 +5,9 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 const DEFAULT_SITE_SETTINGS = {
   villageName: "Chiutahara",
   villageNameHindi: "चिउटहरा",
+  sloganEnabled: true,
+  slogan: "Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen",
+  sloganHindi: "पंचायत विकास, सर्वजन सुखाय 🌞 | Efficient Governance For Every Citizen",
 };
 
 const SiteSettingsContext = createContext(DEFAULT_SITE_SETTINGS);
@@ -23,6 +26,9 @@ export function SiteSettingsProvider({ children }) {
           setSettings({
             villageName: data.settings.villageName || DEFAULT_SITE_SETTINGS.villageName,
             villageNameHindi: data.settings.villageNameHindi || DEFAULT_SITE_SETTINGS.villageNameHindi,
+            sloganEnabled: data.settings.sloganEnabled !== false,
+            slogan: data.settings.slogan || DEFAULT_SITE_SETTINGS.slogan,
+            sloganHindi: data.settings.sloganHindi || DEFAULT_SITE_SETTINGS.sloganHindi,
           });
         }
       } catch (error) {
@@ -36,6 +42,9 @@ export function SiteSettingsProvider({ children }) {
       setSettings({
         villageName: updatedSettings.villageName || DEFAULT_SITE_SETTINGS.villageName,
         villageNameHindi: updatedSettings.villageNameHindi || DEFAULT_SITE_SETTINGS.villageNameHindi,
+        sloganEnabled: updatedSettings.sloganEnabled !== false,
+        slogan: updatedSettings.slogan || DEFAULT_SITE_SETTINGS.slogan,
+        sloganHindi: updatedSettings.sloganHindi || DEFAULT_SITE_SETTINGS.sloganHindi,
       });
     };
 

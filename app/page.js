@@ -57,9 +57,6 @@ export default function HomePage() {
     popupTitle: "Important Update",
     popupMessage: "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
     popupLink: "",
-    sloganEnabled: true,
-    slogan: "Panchayat Vikas, Sarvajan Sukhaya | Efficient Governance for Every Citizen",
-    sloganHindi: "पंचायत विकास, सर्वजन सुखाय | हर नागरिक के लिए प्रभावी शासन",
     heroBackgroundImage: "",
     slides: DEFAULT_SLIDES,
     villageProfile: DEFAULT_VILLAGE_PROFILE,
@@ -133,9 +130,6 @@ export default function HomePage() {
             popupTitle: data.settings.popupTitle || "Important Update",
             popupMessage: data.settings.popupMessage || "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
             popupLink: data.settings.popupLink || "",
-            sloganEnabled: data.settings.sloganEnabled !== false,
-            slogan: data.settings.slogan || "Panchayat Vikas, Sarvajan Sukhaya | Efficient Governance for Every Citizen",
-            sloganHindi: data.settings.sloganHindi || "पंचायत विकास, सर्वजन सुखाय | हर नागरिक के लिए प्रभावी शासन",
             heroBackgroundImage: data.settings.branding?.heroImage?.url || "",
             slides: Array.isArray(data.settings.slides) && data.settings.slides.length
               ? data.settings.slides
@@ -484,26 +478,6 @@ export default function HomePage() {
     <div className="relative isolate overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 border-b border-slate-200/70 bg-white/60 dark:border-slate-800 dark:bg-slate-900/40" />
       <div className="relative min-h-screen text-black dark:text-white">
-        {homeSettingsLoaded && homeSettings.sloganEnabled && (
-          <div
-            role="region"
-            aria-label={language === "hi" ? "ग्राम पंचायत का नारा" : "Gram Panchayat slogan"}
-            className="mb-4 overflow-hidden rounded-lg border border-teal-200 bg-teal-50 py-2.5 text-sm font-semibold text-teal-900 dark:border-teal-800 dark:bg-teal-950/60 dark:text-teal-100"
-          >
-            <div className="panchayat-motto-track flex w-max items-center">
-              {[0, 1].map((copy) => (
-                <span
-                  key={copy}
-                  aria-hidden={copy === 1 ? "true" : undefined}
-                  className="shrink-0 px-8"
-                >
-                  {language === "hi" ? homeSettings.sloganHindi : homeSettings.slogan}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Notification Banner */}
         {homeSettingsLoaded && showBanner && homeSettings.popupEnabled && (
           <div role="status" className="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 shadow-lg shadow-amber-950/5 backdrop-blur dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100 sm:items-center sm:px-5">

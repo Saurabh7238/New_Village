@@ -51,13 +51,13 @@ const HomeSettingsSchema = new mongoose.Schema(
     },
     slogan: {
       type: String,
-      default: 'Panchayat Vikas, Sarvajan Sukhaya | Efficient Governance for Every Citizen',
+      default: 'Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen',
       trim: true,
       maxlength: 240,
     },
     sloganHindi: {
       type: String,
-      default: 'पंचायत विकास, सर्वजन सुखाय | हर नागरिक के लिए प्रभावी शासन',
+      default: 'पंचायत विकास, सर्वजन सुखाय 🌞 | Efficient Governance For Every Citizen',
       trim: true,
       maxlength: 240,
     },

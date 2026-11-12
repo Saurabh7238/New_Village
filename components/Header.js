@@ -33,8 +33,8 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
-  const { labels: langLabels, toggleLanguage } = useLanguage();
-  const { villageName } = useSiteSettings();
+  const { labels: langLabels, language, toggleLanguage } = useLanguage();
+  const { villageName, sloganEnabled, slogan, sloganHindi } = useSiteSettings();
 
   const displayName =
     session?.user?.name ||
@@ -304,14 +304,16 @@ export default function Header() {
 
   return (
     <header className={`${baseClass} ${scrolledClass}`}>
-      <div className="overflow-hidden border-b border-white/10 bg-slate-900">
-        <div className="py-1.5 text-xs font-semibold tracking-wide text-slate-200">
-          <div className="panchayat-motto-track flex w-max whitespace-nowrap">
-            <span className="px-8">Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen</span>
-            <span aria-hidden="true" className="px-8">Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen</span>
+      {sloganEnabled && (
+        <div className="overflow-hidden border-b border-white/10 bg-slate-900">
+          <div className="py-1.5 text-xs font-semibold tracking-wide text-slate-200">
+            <div className="panchayat-motto-track flex w-max whitespace-nowrap">
+              <span className="px-8">{language === "hi" ? sloganHindi : slogan}</span>
+              <span aria-hidden="true" className="px-8">{language === "hi" ? sloganHindi : slogan}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="mx-auto flex max-w-6xl flex-nowrap items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 lg:px-8">
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
