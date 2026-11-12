@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { normalizePhone } from '@/lib/phoneValidation';
 
-const fields = [['name', 'Full Name'], ['phone', 'Mobile Number'], ['email', 'Email'], ['village', 'Village'], ['ward', 'Ward Number'], ['address', 'Address'], ['profilePhoto', 'Profile Photo URL']];
+const fields = [['name', 'Full Name'], ['phone', 'Mobile Number'], ['email', 'Email'], ['village', 'Village'], ['ward', 'Ward Number'], ['address', 'Address']];
 
 export default function ProfilePage() {
   const [form, setForm] = useState(null);
   const [savedContact, setSavedContact] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [verificationPending, setVerificationPending] = useState(false);
   const [message, setMessage] = useState('');
@@ -55,6 +57,7 @@ export default function ProfilePage() {
 
     try {
       const profileUpdate = { ...form };
+      delete profileUpdate.profilePhoto;
       if (contactChanged) {
         delete profileUpdate.phone;
         delete profileUpdate.email;
@@ -107,6 +110,32 @@ export default function ProfilePage() {
     }
   };
 
+  const uploadProfilePhoto = async (event) => {
+    const photo = event.target.files?.[0];
+    event.target.value = '';
+    if (!photo) return;
+
+    setUploadingPhoto(true);
+    setMessage('');
+    try {
+      const uploadData = new FormData();
+      uploadData.append('photo', photo);
+      const response = await fetch('/api/me/profile-photo', {
+        method: 'POST',
+        body: uploadData,
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Unable to upload profile photo.');
+
+      setForm((currentForm) => ({ ...currentForm, profilePhoto: data.profilePhoto }));
+      setMessage('Profile photo updated successfully.');
+    } catch (error) {
+      setMessage(error.message || 'Unable to upload profile photo.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   if (!form) return <p className="py-8 text-center text-slate-600 dark:text-slate-300">Loading profile...</p>;
 
   return (
@@ -114,6 +143,40 @@ export default function ProfilePage() {
       <form onSubmit={save} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">My Profile</h1>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Your Citizen ID: {form.uniqueId}</p>
+        <div className="mt-5 flex items-center gap-4">
+          {form.profilePhoto ? (
+            <Image
+              src={form.profilePhoto}
+              alt="Profile"
+              width={80}
+              height={80}
+              unoptimized
+              className="h-20 w-20 rounded-full border border-slate-200 object-cover dark:border-slate-700"
+            />
+          ) : (
+            <div
+              aria-label="No profile photo uploaded"
+              className="flex h-20 w-20 items-center justify-center rounded-full bg-teal-100 text-2xl font-semibold text-teal-800 dark:bg-teal-900 dark:text-teal-100"
+            >
+              {(form.name || '?').trim().charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <label htmlFor="profilePhotoUpload" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+              Profile picture
+            </label>
+            <input
+              id="profilePhotoUpload"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={uploadProfilePhoto}
+              disabled={uploadingPhoto}
+              className="mt-1 block max-w-full text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:font-semibold file:text-white hover:file:bg-teal-800 disabled:opacity-60 dark:text-slate-200"
+            />
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">JPEG, PNG, WebP, or GIF; up to 3 MB.</p>
+            {uploadingPhoto && <p role="status" className="mt-1 text-sm text-teal-700 dark:text-teal-300">Uploading photo...</p>}
+          </div>
+        </div>
         <div className="mt-5 space-y-4">
           {fields.map(([key, label]) => (
             <label key={key} className="block text-sm font-medium text-slate-700 dark:text-slate-200">
