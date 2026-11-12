@@ -11,6 +11,10 @@ const LanguageContext = createContext({
 const LABELS = {
   en: {
     langToggle: "हिंदी",
+    language: "Language",
+    highContrast: "High contrast",
+    enableHighContrast: "Enable high contrast",
+    disableHighContrast: "Disable high contrast",
     menu: "Menu",
     close: "Close",
     weather: "Weather",
@@ -55,6 +59,10 @@ const LABELS = {
   },
   hi: {
     langToggle: "English",
+    language: "भाषा",
+    highContrast: "उच्च कंट्रास्ट",
+    enableHighContrast: "उच्च कंट्रास्ट चालू करें",
+    disableHighContrast: "उच्च कंट्रास्ट बंद करें",
     menu: "मेनू",
     close: "बंद करें",
     weather: "मौसम",

@@ -10,6 +10,7 @@ import { createHash } from "crypto";
 import { findMemberMatch } from "@/lib/memberRegistrationMatch";
 import { isDateOnlyNotInFuture, parseDateOnly } from "@/lib/dateOnly";
 import { checkRequestRateLimit } from "@/lib/requestRateLimit";
+import { getOtpErrorResponse, sendAuthEmailOtp } from "@/lib/authEmailOtp";
 
 export async function POST(req) {
   const rateLimit = checkRequestRateLimit(`register:${req.headers.get('x-forwarded-for') || 'local'}`, { limit: 5, windowMs: 15 * 60 * 1000 });
@@ -118,12 +119,23 @@ export async function POST(req) {
       aadhaarLast4: normalizedAadhaar ? normalizedAadhaar.slice(-4) : null,
       dateOfBirth: parsedDateOfBirth,
       profilePhoto: typeof profilePhoto === 'string' ? profilePhoto : null,
-      isVerified: true,
+      isVerified: false,
       uniqueId,
     });
 
-    if (matchedMember) {
-      await Member.findByIdAndUpdate(matchedMember._id, { userId: user._id, uniqueId: user.uniqueId });
+    let otpDelivery;
+    try {
+      otpDelivery = await sendAuthEmailOtp({
+        userId: user._id,
+        purpose: 'signup',
+        email,
+        subject: 'Verify your Gram Panchayat Portal email',
+        message: 'Use this code to verify the email address for your new Gram Panchayat Portal account.',
+      });
+    } catch (error) {
+      await User.deleteOne({ _id: user._id, isVerified: false });
+      const response = getOtpErrorResponse(error);
+      return NextResponse.json(response.body, { status: response.status });
     }
 
     await AuditLog.create({
@@ -134,8 +146,8 @@ export async function POST(req) {
 
     return NextResponse.json({
       success: true,
-      uniqueId: user.uniqueId,
-      user: { name: user.name, email: user.email, uniqueId: user.uniqueId },
+      verificationRequired: true,
+      email: otpDelivery.email,
     });
   } catch (error) {
     console.error("Registration error:", error);

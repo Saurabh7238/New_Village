@@ -6,35 +6,22 @@ import { useLanguage } from "@/app/language-provider";
 
 export default function ForgotPasswordPage() {
   const { labels } = useLanguage();
+  const [email, setEmail] = useState("");
   const [aadhaarNumber, setAadhaarNumber] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const resetPassword = async () => {
+  const sendCode = async () => {
     setError("");
     setSuccess("");
-
-    if (!/^\d{12}$/.test(aadhaarNumber.replace(/\s|-/g, ""))) {
-      setError("Enter a valid 12-digit Aadhaar number");
-      return;
-    }
-
-    if (!dateOfBirth) {
-      setError("Date of birth is required");
-      return;
-    }
-
-    if (!newPassword || newPassword.length < 6) {
-      setError("New password must be at least 6 characters");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim()) || !/^\d{12}$/.test(aadhaarNumber.replace(/\s|-/g, "")) || !dateOfBirth) {
+      setError("Enter your registered email, valid 12-digit Aadhaar number, and date of birth.");
       return;
     }
 
@@ -44,24 +31,66 @@ export default function ForgotPasswordPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "send",
+          email,
           aadhaarNumber,
           dateOfBirth,
-          password: newPassword,
         }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Unable to reset password");
+        setError(data.error || "Unable to send a verification code.");
         return;
       }
 
-      setSuccess("Password reset successfully. Redirecting to sign in...");
-      setTimeout(() => {
-        window.location.href = "/signin";
-      }, 1600);
+      setOtpSent(true);
+      setSuccess(data.message || "If those details match an active account, a verification code has been sent.");
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError("Unable to send a verification code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (event) => {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    if (!/^\d{6}$/.test(code)) {
+      setError("Enter the 6-digit email verification code.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError("New password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/forgot-password/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "verify",
+          email,
+          aadhaarNumber,
+          dateOfBirth,
+          code,
+          password: newPassword,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to reset password.");
+
+      setSuccess("Password reset successfully. Redirecting to sign in...");
+      setTimeout(() => { window.location.href = "/signin"; }, 1600);
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -73,11 +102,23 @@ export default function ForgotPasswordPage() {
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{labels.forgotPassword}</h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            Verify with Aadhaar and date of birth to reset your password
+            Verify your registered email with a code, along with your Aadhaar number and date of birth.
           </p>
         </div>
 
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Registered email</label>
+            <input
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+              placeholder="Email on your account"
+              disabled={loading || otpSent}
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.aadhaarNumber}</label>
             <input
@@ -86,7 +127,7 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setAadhaarNumber(e.target.value.replace(/\D/g, "").slice(0, 12))}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               placeholder="12-digit Aadhaar number"
-              disabled={loading}
+              disabled={loading || otpSent}
             />
           </div>
 
@@ -97,10 +138,37 @@ export default function ForgotPasswordPage() {
               value={dateOfBirth}
               onChange={(e) => setDateOfBirth(e.target.value)}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
-              disabled={loading}
+              disabled={loading || otpSent}
             />
           </div>
 
+          {!otpSent ? (
+            <button
+              type="button"
+              onClick={sendCode}
+              disabled={loading}
+              className="w-full rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? "Sending code..." : "Send email verification code"}
+            </button>
+          ) : (
+          <form onSubmit={resetPassword} className="space-y-4">
+          <p role="status" className="rounded border border-teal-200 bg-teal-50 p-3 text-sm text-teal-800">{success}</p>
+          <div>
+            <label htmlFor="passwordResetOtp" className="block text-sm font-medium text-slate-700 dark:text-slate-200">Email verification code</label>
+            <input
+              id="passwordResetOtp"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={code}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+              required
+              disabled={loading}
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{labels.newPassword}</label>
             <input
@@ -110,6 +178,7 @@ export default function ForgotPasswordPage() {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               placeholder="Enter new password"
               disabled={loading}
+              autoComplete="new-password"
             />
           </div>
 
@@ -122,25 +191,30 @@ export default function ForgotPasswordPage() {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:ring focus:ring-green-200"
               placeholder="Confirm new password"
               disabled={loading}
+              autoComplete="new-password"
             />
           </div>
 
           <button
-            type="button"
-            onClick={resetPassword}
-            disabled={loading}
+            type="submit"
+            disabled={loading || code.length !== 6}
             className="w-full rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Resetting..." : labels.resetPassword}
           </button>
+          <button type="button" onClick={sendCode} disabled={loading} className="w-full rounded-md border border-teal-700 px-4 py-2 text-sm font-semibold text-teal-800 disabled:opacity-60 dark:text-teal-200">
+            Send a new code
+          </button>
+          </form>
+          )}
 
           {error && (
-            <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {error}
             </div>
           )}
 
-          {success && (
+          {success && !otpSent && (
             <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">
               {success}
             </div>

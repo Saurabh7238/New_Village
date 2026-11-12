@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Bell, Moon, Sun, Phone, Menu as MenuIcon, X } from "lucide-react";
+import { Bell, Moon, Sun, Phone, Contrast, Menu as MenuIcon, X } from "lucide-react";
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
 import { useSiteSettings } from "@/app/site-settings-provider";
@@ -25,6 +25,7 @@ export default function Header() {
   const [serviceNotifications, setServiceNotifications] = useState([]);
   const [serviceUnreadCount, setServiceUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
+  const [highContrast, setHighContrast] = useState(false);
   const [siteBranding, setSiteBranding] = useState({});
   const [largeText, setLargeText] = useState(false);
   const notificationRef = useRef(null);
@@ -163,6 +164,7 @@ export default function Header() {
 
     setDarkMode(document.documentElement.classList.contains("dark"));
     setLargeText(document.documentElement.classList.contains("text-size-large"));
+    setHighContrast(document.documentElement.classList.contains("high-contrast"));
 
     const loadNotifications = () => {
       const params = new URLSearchParams({
@@ -227,6 +229,13 @@ export default function Header() {
     setDarkMode(nextMode);
     document.documentElement.classList.toggle("dark", nextMode);
     localStorage.setItem("theme", nextMode ? "dark" : "light");
+  };
+
+  const toggleHighContrast = () => {
+    const nextContrast = !highContrast;
+    setHighContrast(nextContrast);
+    document.documentElement.classList.toggle("high-contrast", nextContrast);
+    localStorage.setItem("high-contrast", String(nextContrast));
   };
 
 
@@ -352,6 +361,14 @@ export default function Header() {
             aria-pressed={largeText}
           >
             A+
+          </button>
+          <button
+            onClick={toggleHighContrast}
+            className="grid h-9 w-9 place-items-center rounded-md bg-white text-teal-800 shadow transition hover:bg-teal-50 sm:h-10 sm:w-10"
+            aria-label={highContrast ? langLabels.disableHighContrast : langLabels.enableHighContrast}
+            aria-pressed={highContrast}
+          >
+            <Contrast className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
           </button>
           <button
             onClick={toggleDarkMode}
@@ -530,9 +547,10 @@ export default function Header() {
                   <li>
                     <button
                       onClick={toggleLanguage}
+                      aria-label={langLabels.language}
                       className="flex w-full items-center justify-between rounded-lg bg-slate-100 px-2.5 py-2.5 text-left text-xs sm:text-sm font-semibold text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-800 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-200"
                     >
-                      <span>Language</span>
+                      <span>{langLabels.language}</span>
                       <span className="rounded-lg bg-white px-2 py-1 text-[10px] sm:text-xs font-bold text-emerald-700 shadow-sm dark:bg-slate-800 dark:text-emerald-300">
                         {langLabels.langToggle}
                       </span>

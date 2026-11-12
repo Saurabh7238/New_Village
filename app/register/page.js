@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/app/language-provider";
 import { Eye, EyeOff } from "lucide-react";
@@ -22,10 +21,12 @@ export default function RegisterPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [verificationPending, setVerificationPending] = useState(false);
+  const [verificationComplete, setVerificationComplete] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationLoading, setVerificationLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const router = useRouter();
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -100,15 +101,57 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Registration successful. Please login to continue.");
-      setTimeout(() => {
-        router.push("/signin");
-      }, 2000);
+      setVerificationPending(true);
+      setSuccess(`Enter the 6-digit code sent to ${data.email || formData.email}.`);
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const verifyEmail = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setVerificationLoading(true);
+    try {
+      const response = await fetch("/api/register/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify", email: formData.email, code: verificationCode }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Unable to verify your email.");
+      setVerificationPending(false);
+      setVerificationComplete(true);
+      setSuccess(data.message || "Email verified. You can now sign in.");
+    } catch (err) {
+      setError(err.message || "Unable to verify your email.");
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const resendVerificationCode = async () => {
+    setError(null);
+    setSuccess(null);
+    setVerificationLoading(true);
+    try {
+      const response = await fetch("/api/register/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send", email: formData.email }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Unable to send a verification code.");
+      setVerificationPending(true);
+      setSuccess(data.message || "If your account needs email verification, a code has been sent.");
+    } catch (err) {
+      setError(err.message || "Unable to send a verification code.");
+    } finally {
+      setVerificationLoading(false);
     }
   };
 
@@ -119,6 +162,43 @@ export default function RegisterPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{labels.register}</h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{labels.registerAccount}</p>
         </div>
+        {verificationComplete ? (
+          <div className="space-y-4" role="status">
+            {success && <p className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">{success}</p>}
+            <Link href="/signin" className="block w-full rounded-md bg-teal-700 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-teal-800">
+              {labels.signIn}
+            </Link>
+          </div>
+        ) : verificationPending ? (
+          <form onSubmit={verifyEmail} className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-300">{success}</p>
+            <label htmlFor="signupOtp" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+              Email verification code
+              <input
+                id="signupOtp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={verificationCode}
+                onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="mt-1 block w-full rounded-md border px-3 py-2"
+                required
+              />
+            </label>
+            {error && <p role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+            <button type="submit" disabled={verificationLoading || verificationCode.length !== 6} className="w-full rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
+              {verificationLoading ? "Verifying..." : "Verify email"}
+            </button>
+            <button type="button" onClick={resendVerificationCode} disabled={verificationLoading} className="w-full rounded-md border border-teal-700 px-4 py-2.5 text-sm font-semibold text-teal-800 disabled:opacity-60 dark:text-teal-200">
+              Send a new code
+            </button>
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+              <Link href="/signin" className="font-semibold text-teal-700 hover:underline dark:text-teal-300">{labels.signIn}</Link>
+            </p>
+          </form>
+        ) : (
+        <div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -248,12 +328,6 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {error && (
-            <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
           {success && (
             <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">
               {success}
@@ -268,13 +342,24 @@ export default function RegisterPage() {
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
+        <button
+          type="button"
+          onClick={resendVerificationCode}
+          disabled={verificationLoading || loading}
+          className="mt-4 w-full rounded-md border border-teal-700 px-4 py-2.5 text-sm font-semibold text-teal-800 disabled:opacity-60 dark:text-teal-200"
+        >
+          Already signed up? Resend email verification code
+        </button>
+        {error && <p role="alert" className="mt-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+        </div>
+        )}
 
-        <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+        {!verificationPending && !verificationComplete && <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
           Already have an account?{" "}
           <Link href="/signin" className="font-semibold text-teal-700 hover:text-teal-800 hover:underline dark:text-teal-300">
             {labels.signIn}
           </Link>
-        </div>
+        </div>}
       </div>
     </div>
   );
