@@ -51,6 +51,17 @@ export async function PATCH(request) {
     if (!Object.keys(update).length) return NextResponse.json({ message: 'No profile changes supplied' }, { status: 400 });
 
     await dbConnect();
+    const currentUser = await User.findById(session.user.id).select('email phone status').lean();
+    if (!currentUser || currentUser.status !== 'active') {
+      return NextResponse.json({ message: 'Account unavailable' }, { status: 403 });
+    }
+    if (update.phone !== undefined && update.phone !== currentUser.phone) {
+      return NextResponse.json({ message: 'Verify your email before changing your mobile number.' }, { status: 403 });
+    }
+    if (update.email !== undefined && update.email !== (currentUser.email || null)) {
+      return NextResponse.json({ message: 'Verify the email address before changing it.' }, { status: 403 });
+    }
+
     const duplicateFilters = [];
     if (update.phone) duplicateFilters.push({ phone: update.phone, _id: { $ne: session.user.id } });
     if (update.email) duplicateFilters.push({ email: update.email, _id: { $ne: session.user.id } });
