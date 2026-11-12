@@ -475,7 +475,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="relative isolate overflow-hidden">
+    <div className="relative isolate -mt-6 overflow-hidden sm:-mt-5">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 border-b border-slate-200/70 bg-white/60 dark:border-slate-800 dark:bg-slate-900/40" />
       <div className="relative min-h-screen text-black dark:text-white">
         {/* Notification Banner */}
