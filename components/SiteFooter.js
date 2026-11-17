@@ -1,39 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useSiteSettings } from '@/app/site-settings-provider';
 
 export default function SiteFooter() {
-  const { villageName } = useSiteSettings();
-  const [branding, setBranding] = useState({});
-
-  useEffect(() => {
-    let active = true;
-    fetch('/api/admin/home-settings', { cache: 'no-store' })
-      .then((response) => {
-        if (!response.ok) throw new Error('Failed to load footer branding.');
-        return response.json();
-      })
-      .then((data) => {
-        if (active) setBranding(data.settings?.branding || {});
-      })
-      .catch((error) => console.error('Failed to load footer branding:', error));
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleBrandingUpdate = (event) => {
-      const { key, asset } = event.detail || {};
-      if (!key) return;
-      setBranding((current) => ({ ...current, [key]: asset }));
-    };
-    window.addEventListener('site-branding-updated', handleBrandingUpdate);
-    return () => window.removeEventListener('site-branding-updated', handleBrandingUpdate);
-  }, []);
+  const { villageName, branding } = useSiteSettings();
 
   const lightLogo = branding.logo?.url || '/favicon.png';
   const darkLogo = branding.darkLogo?.url || lightLogo;

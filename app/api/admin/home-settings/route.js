@@ -1,6 +1,7 @@
 import dbConnect from '@/lib/dbConnect';
 import { requireAdminSession } from '@/lib/adminAuth';
 import HomeSettings from '@/models/HomeSettings';
+import ImageModel from '@/models/Image';
 import SiteAsset from '@/models/SiteAsset';
 import { writeAuditLog } from '@/lib/writeAuditLog';
 import { DEFAULT_VILLAGE_PROFILE } from '@/lib/villageProfile';
@@ -113,6 +114,19 @@ export async function POST(req) {
           href: String(slide?.href || '').trim(),
         })).filter((slide) => slide.imageUrl)
       : [];
+
+    for (const slide of safeSlides) {
+      const legacyImage = slide.imageUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=]+)$/);
+      if (!legacyImage) continue;
+
+      const image = await ImageModel.create({
+        title: (slide.title || 'Homepage slide').slice(0, 60),
+        image_data: slide.imageUrl,
+        mime_type: legacyImage[1],
+        tags: ['homepage-slide'],
+      });
+      slide.imageUrl = `/api/images/${image._id}`;
+    }
 
     const update = {
       name: 'default',

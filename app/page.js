@@ -40,12 +40,11 @@ const DEFAULT_SLIDES = [
 
 export default function HomePage() {
   const { language } = useLanguage();
-  const { villageName, villageNameHindi } = useSiteSettings();
+  const { villageName, villageNameHindi, homeSettings: savedHomeSettings, settingsLoaded } = useSiteSettings();
   const { status: authStatus } = useSession();
   const reduceMotion = useReducedMotion();
   const [visitCount, setVisitCount] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
-  const [homeSettingsLoaded, setHomeSettingsLoaded] = useState(false);
   const [latestNotices, setLatestNotices] = useState([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
   const [noticesError, setNoticesError] = useState(false);
@@ -58,7 +57,7 @@ export default function HomePage() {
     popupMessage: "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
     popupLink: "",
     heroBackgroundImage: "",
-    slides: DEFAULT_SLIDES,
+    slides: [],
     villageProfile: DEFAULT_VILLAGE_PROFILE,
   });
   const [reviews, setReviews] = useState([]);
@@ -119,37 +118,28 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const loadHomeSettings = async () => {
-      try {
-        const res = await fetch("/api/admin/home-settings");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.settings) {
-          setHomeSettings({
-            popupEnabled: Boolean(data.settings.popupEnabled),
-            popupTitle: data.settings.popupTitle || "Important Update",
-            popupMessage: data.settings.popupMessage || "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
-            popupLink: data.settings.popupLink || "",
-            heroBackgroundImage: data.settings.branding?.heroImage?.url || "",
-            slides: Array.isArray(data.settings.slides) && data.settings.slides.length
-              ? data.settings.slides
-              : DEFAULT_SLIDES,
-            villageProfile: {
-              ...DEFAULT_VILLAGE_PROFILE,
-              ...(data.settings.villageProfile || {}),
-            },
-          });
-          setShowBanner(Boolean(data.settings.popupEnabled));
-        }
-      } catch (error) {
-        console.error("Failed to load home settings:", error);
-      } finally {
-        setHomeSettingsLoaded(true);
-      }
-    };
+    if (!settingsLoaded) return;
+    if (!savedHomeSettings) {
+      setHomeSettings((current) => ({ ...current, slides: DEFAULT_SLIDES }));
+      return;
+    }
 
-    loadHomeSettings();
-  }, []);
+    setHomeSettings({
+      popupEnabled: Boolean(savedHomeSettings.popupEnabled),
+      popupTitle: savedHomeSettings.popupTitle || "Important Update",
+      popupMessage: savedHomeSettings.popupMessage || "Gram Sabha will be held on the scheduled date at the Panchayat Bhavan.",
+      popupLink: savedHomeSettings.popupLink || "",
+      heroBackgroundImage: savedHomeSettings.branding?.heroImage?.url || "",
+      slides: Array.isArray(savedHomeSettings.slides) && savedHomeSettings.slides.length
+        ? savedHomeSettings.slides
+        : DEFAULT_SLIDES,
+      villageProfile: {
+        ...DEFAULT_VILLAGE_PROFILE,
+        ...(savedHomeSettings.villageProfile || {}),
+      },
+    });
+    setShowBanner(Boolean(savedHomeSettings.popupEnabled));
+  }, [savedHomeSettings, settingsLoaded]);
 
   useEffect(() => {
     const loadLatestNotices = async () => {
@@ -403,6 +393,7 @@ export default function HomePage() {
         alt={slide.alt || `${villageName} village highlight ${index + 1}`}
         fill
         sizes="(max-width: 640px) 78vw, 18rem"
+        priority={!duplicate && index === 0}
         className="object-cover transition-transform duration-300 group-hover:scale-105"
       />
       <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent px-4 pb-3 pt-10 text-sm font-bold text-white">
@@ -479,7 +470,7 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 border-b border-slate-200/70 bg-white/60 dark:border-slate-800 dark:bg-slate-900/40" />
       <div className="relative min-h-screen text-black dark:text-white">
         {/* Notification Banner */}
-        {homeSettingsLoaded && showBanner && homeSettings.popupEnabled && (
+        {settingsLoaded && showBanner && homeSettings.popupEnabled && (
           <div role="status" className="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 shadow-lg shadow-amber-950/5 backdrop-blur dark:border-amber-700/60 dark:bg-amber-950/50 dark:text-amber-100 sm:items-center sm:px-5">
             <span className="flex items-center gap-2 leading-5">
               <BellRing className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -533,7 +524,7 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section aria-label="Village photos" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+          {settingsLoaded && images.length > 0 && <section aria-label="Village photos" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div role="region" aria-label="Village photos; continuously scrolling" className="overflow-hidden pb-2">
               <motion.div
                 className="flex w-max"
@@ -551,7 +542,7 @@ export default function HomePage() {
                 ))}
               </motion.div>
             </div>
-          </section>
+          </section>}
 
           <section aria-labelledby="governance-updates-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div className="mb-4">

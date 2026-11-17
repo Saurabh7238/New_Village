@@ -63,8 +63,13 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: true,
-        message: 'Image uploaded successfully (stored as Base64 in MongoDB)',
-        image: newImage,
+        message: 'Image uploaded successfully.',
+        image: {
+          _id: String(newImage._id),
+          title: newImage.title,
+          url: `/api/images/${newImage._id}`,
+          mime_type: newImage.mime_type,
+        },
       },
       { status: 201 }
     );

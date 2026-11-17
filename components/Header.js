@@ -26,7 +26,6 @@ export default function Header() {
   const [serviceUnreadCount, setServiceUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
   const [highContrast, setHighContrast] = useState(false);
-  const [siteBranding, setSiteBranding] = useState({});
   const [largeText, setLargeText] = useState(false);
   const notificationRef = useRef(null);
   const menuButtonRef = useRef(null);
@@ -35,40 +34,13 @@ export default function Header() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { labels: langLabels, language, toggleLanguage } = useLanguage();
-  const { villageName, sloganEnabled, slogan, sloganHindi } = useSiteSettings();
+  const { villageName, sloganEnabled, slogan, sloganHindi, branding: siteBranding } = useSiteSettings();
 
   const displayName =
     session?.user?.name ||
     session?.user?.email?.split("@")[0] ||
     session?.user?.role ||
     null;
-
-  useEffect(() => {
-    let active = true;
-    fetch('/api/admin/home-settings', { cache: 'no-store' })
-      .then((response) => {
-        if (!response.ok) throw new Error('Failed to load site branding.');
-        return response.json();
-      })
-      .then((data) => {
-        if (active) setSiteBranding(data.settings?.branding || {});
-      })
-      .catch((error) => console.error('Failed to load header branding:', error));
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleBrandingUpdate = (event) => {
-      const { key, asset } = event.detail || {};
-      if (!key) return;
-      setSiteBranding((current) => ({ ...current, [key]: asset }));
-    };
-    window.addEventListener('site-branding-updated', handleBrandingUpdate);
-    return () => window.removeEventListener('site-branding-updated', handleBrandingUpdate);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -328,7 +300,7 @@ export default function Header() {
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 sm:h-12 sm:w-12">
             <Image
-              src={siteBranding.darkLogo?.url || siteBranding.logo?.url || '/favicon.png'}
+              src={siteBranding.darkLogo?.url || siteBranding.logo?.url || '/api/site-assets/logo'}
               alt={`${villageName} Heritage Village logo`}
               fill
               sizes="(max-width: 640px) 40px, 48px"

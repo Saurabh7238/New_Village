@@ -192,7 +192,7 @@ export default function HomeManagementPage() {
         throw new Error(data.message || "Image upload failed");
       }
 
-      const uploadedImage = data.image?.image_data || data.image?.url || "";
+      const uploadedImage = data.image?.url || data.image?.image_data || "";
       if (uploadedImage) {
         updateSlide(index, "imageUrl", uploadedImage);
         setMessage("Image uploaded successfully.");
@@ -250,7 +250,7 @@ export default function HomeManagementPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-green-700 dark:text-green-400">Home Page Management</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300">Manage village information, popup notifications, and homepage slides.</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Manage village information, popup notifications, and homepage slides. Uploaded slide images use versioned cache URLs and update immediately.</p>
           </div>
           <Link href="/admin" className="px-4 py-2 rounded bg-slate-700 text-white hover:bg-slate-800">
             Back to Admin

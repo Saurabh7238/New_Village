@@ -24,7 +24,9 @@ export async function GET(_request, { params }) {
       headers: {
         'Content-Type': siteAsset.mimeType,
         'Content-Length': String(Buffer.byteLength(siteAsset.data, 'base64')),
-        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+        'Cache-Control': new URL(_request.url).searchParams.has('v')
+          ? 'public, max-age=31536000, immutable'
+          : 'public, max-age=0, must-revalidate',
         'X-Content-Type-Options': 'nosniff',
         'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
       },

@@ -8,6 +8,9 @@ const DEFAULT_SITE_SETTINGS = {
   sloganEnabled: true,
   slogan: "Panchayat Vikas, Sarvajan Sukhaya 🌞 | Efficient Governance for Every Citizen",
   sloganHindi: "पंचायत विकास, सर्वजन सुखाय 🌞 | Efficient Governance For Every Citizen",
+  branding: {},
+  homeSettings: null,
+  settingsLoaded: false,
 };
 
 const SiteSettingsContext = createContext(DEFAULT_SITE_SETTINGS);
@@ -29,30 +32,52 @@ export function SiteSettingsProvider({ children }) {
             sloganEnabled: data.settings.sloganEnabled !== false,
             slogan: data.settings.slogan || DEFAULT_SITE_SETTINGS.slogan,
             sloganHindi: data.settings.sloganHindi || DEFAULT_SITE_SETTINGS.sloganHindi,
+            branding: data.settings.branding || {},
+            homeSettings: data.settings,
+            settingsLoaded: true,
           });
         }
       } catch (error) {
         console.error("Failed to load village name settings:", error);
+      } finally {
+        if (active) setSettings((current) => ({ ...current, settingsLoaded: true }));
       }
     };
 
     const handleSettingsUpdate = (event) => {
       const updatedSettings = event.detail;
       if (!updatedSettings) return;
-      setSettings({
+      setSettings((current) => ({
+        ...current,
         villageName: updatedSettings.villageName || DEFAULT_SITE_SETTINGS.villageName,
         villageNameHindi: updatedSettings.villageNameHindi || DEFAULT_SITE_SETTINGS.villageNameHindi,
         sloganEnabled: updatedSettings.sloganEnabled !== false,
         slogan: updatedSettings.slogan || DEFAULT_SITE_SETTINGS.slogan,
         sloganHindi: updatedSettings.sloganHindi || DEFAULT_SITE_SETTINGS.sloganHindi,
-      });
+        homeSettings: { ...current.homeSettings, ...updatedSettings },
+        settingsLoaded: true,
+      }));
+    };
+
+    const handleBrandingUpdate = (event) => {
+      const { key, asset } = event.detail || {};
+      if (!key) return;
+      setSettings((current) => ({
+        ...current,
+        branding: { ...current.branding, [key]: asset },
+        homeSettings: current.homeSettings
+          ? { ...current.homeSettings, branding: { ...current.branding, [key]: asset } }
+          : current.homeSettings,
+      }));
     };
 
     loadSettings();
     window.addEventListener("site-settings-updated", handleSettingsUpdate);
+    window.addEventListener("site-branding-updated", handleBrandingUpdate);
     return () => {
       active = false;
       window.removeEventListener("site-settings-updated", handleSettingsUpdate);
+      window.removeEventListener("site-branding-updated", handleBrandingUpdate);
     };
   }, []);
 
