@@ -1,4 +1,5 @@
 'use client';
+import { withAdminTranslations } from "../admin-translations";
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -164,7 +165,7 @@ function AdminNoticeSection({ title, description, notices, loading, onCreate, on
   );
 }
 
-export default function AdminNotificationsPage() {
+function AdminNotificationsPage() {
   const { data: session, status } = useSession();
   const [notifications, setNotifications] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -513,6 +514,7 @@ export default function AdminNotificationsPage() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white pt-20">
@@ -965,3 +967,5 @@ export default function AdminNotificationsPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminNotificationsPage);

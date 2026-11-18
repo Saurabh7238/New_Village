@@ -1,4 +1,5 @@
 'use client';
+import { withAdminTranslations } from "../admin-translations";
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
@@ -30,7 +31,7 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-export default function AdminFormsPage() {
+function AdminFormsPage() {
   const { data: session, status } = useSession();
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -258,3 +259,5 @@ export default function AdminFormsPage() {
     </main>
   );
 }
+
+export default withAdminTranslations(AdminFormsPage);

@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -18,7 +19,7 @@ import {
 import { useTheme } from "@/app/theme-provider";
 import DevelopmentMap from "@/components/DevelopmentMap";
 
-export default function DevelopmentPage() {
+function DevelopmentPage() {
   const { isDark } = useTheme();
   const [projects, setProjects] = useState([]);
   const [viewType, setViewType] = useState("table"); // table, scheme, ward, or map
@@ -371,3 +372,5 @@ export default function DevelopmentPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(DevelopmentPage);

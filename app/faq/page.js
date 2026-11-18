@@ -1,5 +1,6 @@
 'use client';
 
+import { withLocalizedPage } from "@/app/localized-page";
 const faqs = [
   {
     question: 'How do I apply for a birth certificate?',
@@ -23,7 +24,7 @@ const faqs = [
   },
 ];
 
-export default function FAQPage() {
+function FAQPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 text-slate-900 dark:text-white">
       <div className="mb-8">
@@ -44,3 +45,5 @@ export default function FAQPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(FAQPage);

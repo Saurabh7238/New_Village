@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -145,4 +146,4 @@ const LazyImageCard = ({ image, altText, protectedGallery }) => {
     );
 };
 
-export default GalleryPage;
+export default withLocalizedPage(GalleryPage);

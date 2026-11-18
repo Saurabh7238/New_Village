@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -6,7 +7,7 @@ import Image from "next/image";
 
 const FALLBACK_IMAGE_URL = '/images/placeholder.svg';
 
-export default function AdminGalleryPage() {
+function AdminGalleryPage() {
   const { data: session, status } = useSession();
   const [images, setImages] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -213,3 +214,5 @@ export default function AdminGalleryPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminGalleryPage);

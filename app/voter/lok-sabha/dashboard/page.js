@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
 import {
@@ -26,7 +27,7 @@ ChartJS.register(
   Legend
 );
 
-export default function LokSabhaDashboard() {
+function LokSabhaDashboard() {
   const [voters, setVoters] = useState([]);
 
   useEffect(() => {
@@ -104,3 +105,5 @@ export default function LokSabhaDashboard() {
     </div>
   );
 }
+
+export default withLocalizedPage(LokSabhaDashboard);

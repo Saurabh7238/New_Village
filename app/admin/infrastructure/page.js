@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -18,7 +19,7 @@ const DETAIL_FIELDS = {
   "Sanitation Unit": ["toiletSeats", "handwashingStations"],
 };
 
-export default function AdminInfrastructurePage() {
+function AdminInfrastructurePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [infrastructureList, setInfrastructureList] = useState([]);
@@ -269,3 +270,5 @@ export default function AdminInfrastructurePage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminInfrastructurePage);

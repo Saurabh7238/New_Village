@@ -1,5 +1,6 @@
 'use client';
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -84,7 +85,7 @@ function formatDate(value) {
   return new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium' }).format(new Date(value));
 }
 
-export default function DownloadsPage() {
+function DownloadsPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All categories');
   const [forms, setForms] = useState([]);
@@ -339,3 +340,5 @@ export default function DownloadsPage() {
     </main>
   );
 }
+
+export default withLocalizedPage(DownloadsPage);

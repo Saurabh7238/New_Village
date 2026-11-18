@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
@@ -8,7 +9,7 @@ import { formatDate, formatCurrency, calculateDaysRemaining, getStatusBgClass } 
 import { useTheme } from "@/app/theme-provider";
 import DevelopmentMap from "@/components/DevelopmentMap";
 
-export default function DevelopmentDetailPage({ params }) {
+function DevelopmentDetailPage({ params }) {
   const { isDark } = useTheme();
   const { data: session, status: sessionStatus } = useSession();
   const [project, setProject] = useState(null);
@@ -450,3 +451,5 @@ export default function DevelopmentDetailPage({ params }) {
     </div>
   );
 }
+
+export default withLocalizedPage(DevelopmentDetailPage);

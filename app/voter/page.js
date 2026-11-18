@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useState, useEffect } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useLanguage } from "@/app/language-provider";
@@ -44,7 +45,7 @@ async function fetchVotersByType(type) {
   }
 }
 
-export default function VoterSearchPage() {
+function VoterSearchPage() {
   const [voters, setVoters] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -282,3 +283,5 @@ export default function VoterSearchPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(VoterSearchPage);

@@ -1,4 +1,5 @@
 'use client';
+import { withAdminTranslations } from "../admin-translations";
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
@@ -18,7 +19,7 @@ function formatDate(value) {
   return value ? new Date(value).toLocaleString('en-IN') : '—';
 }
 
-export default function AdminEmailDeliveriesPage() {
+function AdminEmailDeliveriesPage() {
   const { data: session, status: sessionStatus } = useSession();
   const [deliveries, setDeliveries] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -178,3 +179,5 @@ export default function AdminEmailDeliveriesPage() {
     </main>
   );
 }
+
+export default withAdminTranslations(AdminEmailDeliveriesPage);

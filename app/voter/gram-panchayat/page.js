@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import {
@@ -23,7 +24,7 @@ import {
 import { useLanguage } from "@/app/language-provider";
 
 
-export default function GramPanchayatPage() {
+function GramPanchayatPage() {
   const [voters, setVoters] = useState([]);
   const [search, setSearch] = useState("");
   const [wardFilter, setWardFilter] = useState("");
@@ -418,3 +419,5 @@ export default function GramPanchayatPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(GramPanchayatPage);

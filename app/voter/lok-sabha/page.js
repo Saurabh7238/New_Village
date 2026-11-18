@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import {
@@ -20,7 +21,7 @@ import {
 } from "@/lib/voterDisplay";
 import { useLanguage } from "@/app/language-provider";
 
-export default function LokSabhaPage() {
+function LokSabhaPage() {
   const [voters, setVoters] = useState([]);
   const [search, setSearch] = useState("");
   const [constituencyFilter, setConstituencyFilter] = useState("");
@@ -174,3 +175,5 @@ export default function LokSabhaPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(LokSabhaPage);

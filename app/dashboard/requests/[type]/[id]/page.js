@@ -1,5 +1,6 @@
 'use client';
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -26,7 +27,7 @@ function historyItems(request) {
   return entries.filter((entry) => entry?.status);
 }
 
-export default function CitizenRequestDetailsPage() {
+function CitizenRequestDetailsPage() {
   const { type, id } = useParams();
   const [request, setRequest] = useState(null);
   const [error, setError] = useState('');
@@ -118,3 +119,5 @@ export default function CitizenRequestDetailsPage() {
     </section>}
   </main>;
 }
+
+export default withLocalizedPage(CitizenRequestDetailsPage);

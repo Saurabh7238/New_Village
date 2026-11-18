@@ -1,4 +1,5 @@
 'use client';
+import { withAdminTranslations } from "../admin-translations";
 
 import Link from 'next/link';
 import { useRef, useState } from 'react';
@@ -12,7 +13,7 @@ const COLLECTION_OPTIONS = [
   ['voters', 'Voter records'],
 ];
 
-export default function AdminDataBackupPage() {
+function AdminDataBackupPage() {
   const { data: session, status } = useSession();
   const [selected, setSelected] = useState(['applications', 'appointments', 'grievances', 'notices']);
   const [file, setFile] = useState(null);
@@ -38,6 +39,7 @@ export default function AdminDataBackupPage() {
         const data = await response.json();
         throw new Error(data.message || 'Unable to create the backup.');
       }
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
@@ -155,3 +157,5 @@ export default function AdminDataBackupPage() {
     </main>
   );
 }
+
+export default withAdminTranslations(AdminDataBackupPage);

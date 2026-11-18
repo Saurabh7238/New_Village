@@ -1,8 +1,9 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useEffect, useState } from "react";
 
-export default function DebugVotersPage() {
+function DebugVotersPage() {
   const [apiData, setApiData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -93,3 +94,5 @@ export default function DebugVotersPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(DebugVotersPage);

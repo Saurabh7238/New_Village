@@ -1,9 +1,10 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 
-export default function AdminReviewsPage() {
+function AdminReviewsPage() {
   const { data: session, status } = useSession();
   const [reviews, setReviews] = useState([]);
 
@@ -103,3 +104,5 @@ export default function AdminReviewsPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminReviewsPage);

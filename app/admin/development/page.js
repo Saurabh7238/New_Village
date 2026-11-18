@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { DEVELOPMENT_SCHEMES, DEVELOPMENT_STATUSES, getStatusBgClass, formatDate, formatCurrency } from "@/lib/developmentDisplay";
 import { useTheme } from "@/app/theme-provider";
 
-export default function DevelopmentAdmin() {
+function DevelopmentAdmin() {
   const { isDark } = useTheme();
   const [projects, setProjects] = useState([]);
   const [formData, setFormData] = useState({
@@ -1216,3 +1217,5 @@ Print this report and display in Gram Sabha meetings for transparency and social
     </div>
   );
 }
+
+export default withAdminTranslations(DevelopmentAdmin);

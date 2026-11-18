@@ -1,12 +1,13 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { ToastContainer, useToast } from '@/components/Toast';
 import { useLanguage } from '@/app/language-provider';
 
-export default function MyDocumentsPage() {
+function MyDocumentsPage() {
   const { labels } = useLanguage();
   const { toasts, addToast, removeToast } = useToast();
   const [user, setUser] = useState(null);
@@ -140,3 +141,5 @@ export default function MyDocumentsPage() {
     </>
   );
 }
+
+export default withLocalizedPage(MyDocumentsPage);

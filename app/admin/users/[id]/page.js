@@ -1,4 +1,5 @@
 'use client';
+import { withAdminTranslations } from "../../admin-translations";
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -15,7 +16,7 @@ function RecordList({ title, records, children }) {
   );
 }
 
-export default function AdminUserDetailsPage() {
+function AdminUserDetailsPage() {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -55,3 +56,5 @@ export default function AdminUserDetailsPage() {
     </main>
   );
 }
+
+export default withAdminTranslations(AdminUserDetailsPage);

@@ -1,9 +1,10 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import ServiceApplicationForm from '@/components/ServiceApplicationForm';
 import { useLanguage } from '@/app/language-provider';
 
-export default function AadharPage() {
+function AadharPage() {
   const { language } = useLanguage();
   const today = new Date().toISOString().split('T')[0];
 
@@ -51,3 +52,5 @@ export default function AadharPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(AadharPage);

@@ -1,10 +1,11 @@
 "use client";
+import { withAdminTranslations } from "../../admin-translations";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
-export default function DevelopmentReportsPage() {
+function DevelopmentReportsPage() {
   const { data: session, status } = useSession();
   const [reports, setReports] = useState([]);
   const [error, setError] = useState("");
@@ -76,3 +77,5 @@ export default function DevelopmentReportsPage() {
     </main>
   );
 }
+
+export default withAdminTranslations(DevelopmentReportsPage);

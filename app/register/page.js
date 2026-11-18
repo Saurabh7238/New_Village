@@ -1,11 +1,12 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/app/language-provider";
 import { Eye, EyeOff } from "lucide-react";
 
-export default function RegisterPage() {
+function RegisterPage() {
   const { labels } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
@@ -364,3 +365,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(RegisterPage);

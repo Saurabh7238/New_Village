@@ -2,9 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/app/language-provider";
 
 export default function LoginRequiredModal({ isOpen, onClose, callbackUrl }) {
   const router = useRouter();
+  const { labels } = useLanguage();
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -30,11 +32,11 @@ export default function LoginRequiredModal({ isOpen, onClose, callbackUrl }) {
     >
       <div className="w-full max-w-md rounded-2xl border border-amber-200 bg-white p-6 shadow-2xl dark:border-amber-800 dark:bg-slate-900">
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-2xl dark:bg-amber-950">⚠️</div>
-        <h2 id="login-required-title" className="text-xl font-bold text-slate-900 dark:text-white">Login required</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Please log in first to submit a request, service application, query, or suggestion.</p>
+        <h2 id="login-required-title" className="text-xl font-bold text-slate-900 dark:text-white">{labels.loginRequired}</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{labels.loginRequiredMessage}</p>
         <div className="mt-6 flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</button>
-          <button type="button" onClick={signIn} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">Login now</button>
+          <button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">{labels.cancel}</button>
+          <button type="button" onClick={signIn} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">{labels.loginNow}</button>
         </div>
       </div>
     </div>

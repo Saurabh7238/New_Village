@@ -1,8 +1,9 @@
 "use client";
+import { withLocalizedPage } from "@/app/localized-page";
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/app/language-provider';
-import { useSession } from 'next-auth/react';import LoginRequiredModal from '@/components/LoginRequiredModal';import LoadingSpinner from '@/components/LoadingSpinner';export default function AppointmentsPage() {
+import { useSession } from 'next-auth/react';import LoginRequiredModal from '@/components/LoginRequiredModal';import LoadingSpinner from '@/components/LoadingSpinner';function AppointmentsPage() {
   const { status } = useSession(); const router = useRouter(); const { labels } = useLanguage(); const [form, setForm] = useState({ purpose: '' }); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false); const [appointments, setAppointments] = useState([]); const [updates, setUpdates] = useState({}); const [showLoginWarning, setShowLoginWarning] = useState(false); const [page, setPage] = useState(1); const [pagination, setPagination] = useState({ pages: 1 });
   const loadAppointments = useCallback(() => fetch(`/api/appointments?page=${page}&limit=10`).then((res) => res.ok ? res.json() : null).then((data) => { setAppointments(data?.appointments || []); setPagination(data?.pagination || { pages: 1 }); }), [page]);
   useEffect(() => {
@@ -42,3 +43,5 @@ import { useSession } from 'next-auth/react';import LoginRequiredModal from '@/c
     </div>
   );
 }
+
+export default withLocalizedPage(AppointmentsPage);

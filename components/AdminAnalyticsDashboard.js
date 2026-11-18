@@ -3,8 +3,60 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { useLanguage } from '@/app/language-provider';
 
 export default function AdminAnalyticsDashboard() {
+  const { language } = useLanguage();
+  const isHindi = language === 'hi';
+  const text = isHindi
+    ? {
+      loading: 'विश्लेषण डेटा लोड हो रहा है...',
+      title: 'विश्लेषण डैशबोर्ड',
+      totalApplications: 'कुल आवेदन',
+      pendingApplications: 'लंबित आवेदन',
+      totalQueries: 'कुल प्रश्न',
+      openQueries: 'खुले प्रश्न',
+      avgDays: 'औसत प्रक्रिया दिन',
+      pending: 'लंबित',
+      approved: 'स्वीकृत',
+      rejected: 'अस्वीकृत',
+      needDocs: 'दस्तावेज़ आवश्यक',
+      completed: 'पूर्ण',
+      open: 'खुला',
+      inProgress: 'प्रगति में',
+      resolved: 'हल किया गया',
+      applicationDistribution: 'आवेदन स्थिति वितरण',
+      queryDistribution: 'प्रश्न स्थिति वितरण',
+      applicationTrends: 'आवेदन (पिछले 30 दिन)',
+      queryTrends: 'प्रश्न (पिछले 30 दिन)',
+      applicationsByType: 'प्रकार के अनुसार आवेदन',
+      topCategories: 'शीर्ष प्रश्न श्रेणियां',
+      totalAppointments: 'कुल अपॉइंटमेंट',
+    }
+    : {
+      loading: 'Loading analytics...',
+      title: 'Analytics Dashboard',
+      totalApplications: 'Total Applications',
+      pendingApplications: 'Pending Applications',
+      totalQueries: 'Total Queries',
+      openQueries: 'Open Queries',
+      avgDays: 'Avg Processing Days',
+      pending: 'Pending',
+      approved: 'Approved',
+      rejected: 'Rejected',
+      needDocs: 'Need Docs',
+      completed: 'Completed',
+      open: 'Open',
+      inProgress: 'In Progress',
+      resolved: 'Resolved',
+      applicationDistribution: 'Application Status Distribution',
+      queryDistribution: 'Query Status Distribution',
+      applicationTrends: 'Applications (Last 30 Days)',
+      queryTrends: 'Queries (Last 30 Days)',
+      applicationsByType: 'Applications by Type',
+      topCategories: 'Top Query Categories',
+      totalAppointments: 'Total Appointments',
+    };
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,59 +80,59 @@ export default function AdminAnalyticsDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) return <div className="p-6 text-center">Loading analytics...</div>;
+  if (loading) return <div className="p-6 text-center">{text.loading}</div>;
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
   if (!analytics) return null;
 
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   const applicationStatusData = [
-    { name: 'Pending', value: analytics.applications.pending, color: '#f59e0b' },
-    { name: 'Approved', value: analytics.applications.approved, color: '#10b981' },
-    { name: 'Rejected', value: analytics.applications.rejected, color: '#ef4444' },
-    { name: 'Need Docs', value: analytics.applications.needDocuments, color: '#8b5cf6' },
-    { name: 'Completed', value: analytics.applications.completed, color: '#06b6d4' },
+    { name: text.pending, value: analytics.applications.pending, color: '#f59e0b' },
+    { name: text.approved, value: analytics.applications.approved, color: '#10b981' },
+    { name: text.rejected, value: analytics.applications.rejected, color: '#ef4444' },
+    { name: text.needDocs, value: analytics.applications.needDocuments, color: '#8b5cf6' },
+    { name: text.completed, value: analytics.applications.completed, color: '#06b6d4' },
   ];
 
   const queryStatusData = [
-    { name: 'Open', value: analytics.queries.open, color: '#f59e0b' },
-    { name: 'In Progress', value: analytics.queries.inProgress, color: '#3b82f6' },
-    { name: 'Resolved', value: analytics.queries.resolved, color: '#10b981' },
+    { name: text.open, value: analytics.queries.open, color: '#f59e0b' },
+    { name: text.inProgress, value: analytics.queries.inProgress, color: '#3b82f6' },
+    { name: text.resolved, value: analytics.queries.resolved, color: '#10b981' },
   ];
 
   return (
     <div className="space-y-6 rounded-lg bg-white p-6 dark:bg-slate-800">
-      <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Analytics Dashboard</h1>
+      <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{text.title}</h1>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <MetricCard
           icon={FileText}
-          label="Total Applications"
+          label={text.totalApplications}
           value={analytics.applications.total}
           color="bg-blue-100 text-blue-700 dark:bg-blue-900"
         />
         <MetricCard
           icon={AlertCircle}
-          label="Pending Applications"
+          label={text.pendingApplications}
           value={analytics.applications.pending}
           color="bg-amber-100 text-amber-700 dark:bg-amber-900"
         />
         <MetricCard
           icon={CheckCircle}
-          label="Total Queries"
+          label={text.totalQueries}
           value={analytics.queries.total}
           color="bg-green-100 text-green-700 dark:bg-green-900"
         />
         <MetricCard
           icon={Clock}
-          label="Open Queries"
+          label={text.openQueries}
           value={analytics.queries.open}
           color="bg-purple-100 text-purple-700 dark:bg-purple-900"
         />
         <MetricCard
           icon={TrendingUp}
-          label="Avg Processing Days"
+          label={text.avgDays}
           value={analytics.processingMetrics.avgDaysPerApplication.toFixed(1)}
           color="bg-cyan-100 text-cyan-700 dark:bg-cyan-900"
         />
@@ -90,7 +142,7 @@ export default function AdminAnalyticsDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Application Status Pie Chart */}
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-700">
-          <h2 className="mb-4 font-bold text-slate-900 dark:text-white">Application Status Distribution</h2>
+          <h2 className="mb-4 font-bold text-slate-900 dark:text-white">{text.applicationDistribution}</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -114,7 +166,7 @@ export default function AdminAnalyticsDashboard() {
 
         {/* Query Status Pie Chart */}
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-700">
-          <h2 className="mb-4 font-bold text-slate-900 dark:text-white">Query Status Distribution</h2>
+          <h2 className="mb-4 font-bold text-slate-900 dark:text-white">{text.queryDistribution}</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -141,7 +193,7 @@ export default function AdminAnalyticsDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Application Trends */}
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-700">
-          <h2 className="mb-4 font-bold text-slate-900 dark:text-white">Applications (Last 30 Days)</h2>
+          <h2 className="mb-4 font-bold text-slate-900 dark:text-white">{text.applicationTrends}</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={analytics.trends.applications}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -155,7 +207,7 @@ export default function AdminAnalyticsDashboard() {
 
         {/* Query Trends */}
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-700">
-          <h2 className="mb-4 font-bold text-slate-900 dark:text-white">Queries (Last 30 Days)</h2>
+          <h2 className="mb-4 font-bold text-slate-900 dark:text-white">{text.queryTrends}</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={analytics.trends.queries}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -170,7 +222,7 @@ export default function AdminAnalyticsDashboard() {
 
       {/* Applications by Type */}
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-700">
-        <h2 className="mb-4 font-bold text-slate-900 dark:text-white">Applications by Type</h2>
+        <h2 className="mb-4 font-bold text-slate-900 dark:text-white">{text.applicationsByType}</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={analytics.applications.byType}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -184,7 +236,7 @@ export default function AdminAnalyticsDashboard() {
 
       {/* Top Query Categories */}
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-700">
-        <h2 className="mb-4 font-bold text-slate-900 dark:text-white">Top Query Categories</h2>
+        <h2 className="mb-4 font-bold text-slate-900 dark:text-white">{text.topCategories}</h2>
         <div className="space-y-2">
           {analytics.queries.byCategory.map((cat, idx) => (
             <div key={idx} className="flex items-center justify-between">
@@ -207,10 +259,10 @@ export default function AdminAnalyticsDashboard() {
 
       {/* Appointment Summary */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <SummaryBox label="Total Appointments" value={analytics.appointments.total} />
-        <SummaryBox label="Pending" value={analytics.appointments.pending} />
-        <SummaryBox label="Approved" value={analytics.appointments.approved} />
-        <SummaryBox label="Completed" value={analytics.appointments.completed} />
+        <SummaryBox label={text.totalAppointments} value={analytics.appointments.total} />
+        <SummaryBox label={text.pending} value={analytics.appointments.pending} />
+        <SummaryBox label={text.approved} value={analytics.appointments.approved} />
+        <SummaryBox label={text.completed} value={analytics.appointments.completed} />
       </div>
     </div>
   );

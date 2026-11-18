@@ -1,10 +1,11 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/app/language-provider";
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordPage() {
   const { labels } = useLanguage();
   const [email, setEmail] = useState("");
   const [aadhaarNumber, setAadhaarNumber] = useState("");
@@ -230,3 +231,5 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(ForgotPasswordPage);

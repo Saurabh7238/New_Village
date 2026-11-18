@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { sortMembersByHierarchy, groupWardMembersByWard, formatTenure, getStatusColor, DESIGNATION_HIERARCHY } from '@/lib/memberDisplay';
@@ -112,7 +113,7 @@ function MemberCard({ member }) {
   );
 }
 
-export default function MembersPage() {
+function MembersPage() {
   const { language } = useLanguage();
   const t = TRANSLATIONS.members[language];
   const [members, setMembers] = useState([]);
@@ -210,3 +211,5 @@ export default function MembersPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(MembersPage);

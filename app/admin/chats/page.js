@@ -1,11 +1,12 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useCallback, useEffect, useState } from "react";
 import { MessageCircle, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-export default function AdminChats() {
+function AdminChats() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [list, setList] = useState([]);
@@ -30,6 +31,7 @@ export default function AdminChats() {
           const data = await res.json();
           setList(data);
         }
+
       } catch (error) {
         console.error("Failed to fetch chats:", error);
       }
@@ -58,6 +60,7 @@ export default function AdminChats() {
       </div>
     );
   }
+
 
   // Open chat conversation
   const openChat = async (userId) => {
@@ -286,3 +289,5 @@ export default function AdminChats() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminChats);

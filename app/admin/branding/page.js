@@ -1,4 +1,5 @@
 'use client';
+import { withAdminTranslations } from "../admin-translations";
 
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
@@ -33,7 +34,7 @@ const ASSET_FIELDS = [
   },
 ];
 
-export default function BrandingManagerPage() {
+function BrandingManagerPage() {
   const { data: session, status } = useSession();
   const [assets, setAssets] = useState({});
   const [selectedFiles, setSelectedFiles] = useState({});
@@ -49,6 +50,7 @@ export default function BrandingManagerPage() {
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Unable to load site media.');
       }
+
       setAssets(data.assets || {});
     } catch (error) {
       console.error('Failed to load site branding media:', error);
@@ -263,3 +265,5 @@ export default function BrandingManagerPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(BrandingManagerPage);

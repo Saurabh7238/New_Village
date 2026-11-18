@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "./admin-translations";
 
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -9,7 +10,7 @@ import Button from "@/components/Button";
 import PageHeader from "@/components/PageHeader";
 import { useSiteSettings } from "@/app/site-settings-provider";
 
-export default function AdminPanel() {
+function AdminPanel() {
   const { villageName } = useSiteSettings();
   const { data: session, status } = useSession();
   const [requestCounts, setRequestCounts] = useState(null);
@@ -60,6 +61,7 @@ export default function AdminPanel() {
   if (status === "loading") {
     return <div className="p-8 text-center text-slate-600 dark:text-slate-300">Loading...</div>;
   }
+
 
   if (status === "unauthenticated" || session?.user?.role !== "admin") {
     return (
@@ -244,3 +246,5 @@ export default function AdminPanel() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminPanel);

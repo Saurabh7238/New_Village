@@ -45,6 +45,69 @@ export default function ServiceApplicationForm({
   const [savingDraft, setSavingDraft] = useState(false);
   const [showLoginWarning, setShowLoginWarning] = useState(false);
   const todayString = new Date().toISOString().split('T')[0];
+  const formText = language === 'hi'
+    ? {
+      loading: 'आपका आवेदन लोड हो रहा है…',
+      applicantDetails: 'आवेदक का विवरण',
+      name: 'नाम',
+      mobile: 'मोबाइल नंबर',
+      emailOptional: 'ईमेल (वैकल्पिक)',
+      optional: ' (वैकल्पिक)',
+      supportingDocuments: 'सहायक दस्तावेज़ (PDF, JPG, PNG; {requirement})',
+      required: 'आवश्यक',
+      uploadAtLeastOne: 'कम से कम एक दस्तावेज़ अपलोड करें:',
+      documentsReady: 'दस्तावेज़ अपलोड के लिए तैयार हैं।',
+      savingDraft: 'ड्राफ्ट सेव हो रहा है…',
+      saveDraft: 'ड्राफ्ट सेव करें',
+      submitting: 'सबमिट हो रहा है…',
+      submitApplication: 'आवेदन सबमिट करें',
+      yourUpdates: 'आपके आवेदन की स्थिति',
+      adminRemark: 'व्यवस्थापक की टिप्पणी:',
+      uploadedDocuments: 'आपके अपलोड किए गए दस्तावेज़',
+      panchayatDocuments: 'पंचायत से दस्तावेज़',
+      uploadSuccess: 'दस्तावेज़ सफलतापूर्वक अपलोड हुए। अब आप सेवा आवेदन सबमिट कर सकते हैं।',
+      uploadRequired: 'कृपया कम से कम एक आवश्यक सहायक दस्तावेज़ अपलोड करें।',
+      submitFailed: 'आपका आवेदन सबमिट नहीं हो सका। कृपया पुनः प्रयास करें।',
+      draftSaved: 'ड्राफ्ट सफलतापूर्वक सेव हुआ।',
+      onlyDocuments: 'केवल PDF, JPG और PNG दस्तावेज़ स्वीकार किए जाते हैं।',
+      documentSize: 'हर दस्तावेज़ 5 MB से छोटा होना चाहिए।',
+      readDocument: 'दस्तावेज़ पढ़ा नहीं जा सका।',
+      chooseFive: '5 MB से कम आकार के अधिकतम पांच PDF, JPG या PNG दस्तावेज़ चुनें।',
+      saveDraftFailed: 'ड्राफ्ट सेव नहीं हो सका।',
+      uploadFailed: 'अतिरिक्त दस्तावेज़ अपलोड नहीं हो सके।',
+      additionalUploaded: 'अतिरिक्त दस्तावेज़ सफलतापूर्वक अपलोड हुए।',
+    }
+    : {
+      loading: 'Loading your application…',
+      applicantDetails: 'Applicant details',
+      name: 'Name',
+      mobile: 'Mobile Number',
+      emailOptional: 'Email (Optional)',
+      optional: ' (Optional)',
+      supportingDocuments: 'Supporting documents (PDF, JPG, PNG; {requirement})',
+      required: 'required',
+      uploadAtLeastOne: 'Upload at least one:',
+      documentsReady: 'document(s) ready to upload.',
+      savingDraft: 'Saving draft…',
+      saveDraft: 'Save draft',
+      submitting: 'Submitting…',
+      submitApplication: 'Submit application',
+      yourUpdates: 'Your application updates',
+      adminRemark: 'Admin remark:',
+      uploadedDocuments: 'Your uploaded documents',
+      panchayatDocuments: 'Documents from Panchayat',
+      uploadSuccess: 'document(s) uploaded successfully. You can submit the service now.',
+      uploadRequired: 'Please upload at least one required supporting document.',
+      submitFailed: 'Your application could not be submitted. Please try again.',
+      draftSaved: 'Draft saved successfully.',
+      onlyDocuments: 'Only PDF, JPG, and PNG documents are allowed.',
+      documentSize: 'Each document must be smaller than 5 MB.',
+      readDocument: 'Unable to read document.',
+      chooseFive: 'Choose up to five PDF, JPG, or PNG documents under 5 MB each.',
+      saveDraftFailed: 'Unable to save draft.',
+      uploadFailed: 'Unable to upload additional documents.',
+      additionalUploaded: 'Additional documents uploaded successfully.',
+    };
 
   useEffect(() => {
     if (!includeContactFields || status !== 'authenticated') return;
@@ -103,22 +166,22 @@ export default function ServiceApplicationForm({
           (file) =>
             new Promise((resolve, reject) => {
               if (!['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) {
-                return reject(new Error('Only PDF, JPG, and PNG documents are allowed.'));
+                return reject(new Error(formText.onlyDocuments));
               }
               if (file.size > MAX_FILE_SIZE) {
-                return reject(new Error('Each document must be smaller than 5 MB.'));
+                return reject(new Error(formText.documentSize));
               }
               const reader = new FileReader();
               reader.onload = () =>
                 resolve({ fileName: file.name, fileUrl: reader.result, mimeType: file.type });
-              reader.onerror = () => reject(new Error('Unable to read document.'));
+              reader.onerror = () => reject(new Error(formText.readDocument));
               reader.readAsDataURL(file);
             })
         )
       );
 
       setDocuments(parsed);
-      addToast(`${parsed.length} document(s) uploaded successfully. You can submit the service now.`, 'success');
+      addToast(`${parsed.length} ${formText.uploadSuccess}`, 'success');
     } catch (error) {
       addToast(error.message, 'error');
     }
@@ -136,7 +199,7 @@ export default function ServiceApplicationForm({
 
     if (requiredDocuments.length && !documents.length) {
       setSubmitting(false);
-      return addToast('Please upload at least one required supporting document.', 'error');
+      return addToast(formText.uploadRequired, 'error');
     }
 
     const response = await fetch('/api/applications', {
@@ -148,7 +211,7 @@ export default function ServiceApplicationForm({
     setSubmitting(false);
 
     if (!response.ok) {
-      return addToast(data.message || 'Your application could not be submitted. Please try again.', 'error');
+      return addToast(data.message || formText.submitFailed, 'error');
     }
 
     setValues({});
@@ -184,9 +247,9 @@ export default function ServiceApplicationForm({
     });
     const data = await response.json();
     setSavingDraft(false);
-    if (!response.ok) return addToast(data.error || 'Unable to save draft.', 'error');
+    if (!response.ok) return addToast(data.error || formText.saveDraftFailed, 'error');
     setDraftId(data._id);
-    addToast('Draft saved successfully.', 'success');
+    addToast(formText.draftSaved, 'success');
   }
 
   async function uploadMoreDocuments(applicationId, files) {
@@ -199,7 +262,7 @@ export default function ServiceApplicationForm({
         (file) => !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type) || file.size > MAX_FILE_SIZE
       )
     ) {
-      return addToast('Choose up to five PDF, JPG, or PNG documents under 5 MB each.', 'error');
+      return addToast(formText.chooseFive, 'error');
     }
 
     const docs = await Promise.all(
@@ -209,7 +272,7 @@ export default function ServiceApplicationForm({
             const reader = new FileReader();
             reader.onload = () =>
               resolve({ fileName: file.name, fileUrl: reader.result, mimeType: file.type });
-            reader.onerror = () => reject(new Error('Unable to read document.'));
+            reader.onerror = () => reject(new Error(formText.readDocument));
             reader.readAsDataURL(file);
           })
       )
@@ -223,7 +286,7 @@ export default function ServiceApplicationForm({
     const data = await response.json();
 
     if (!response.ok) {
-      return addToast(data.message || 'Unable to upload additional documents.', 'error');
+      return addToast(data.message || formText.uploadFailed, 'error');
     }
 
     fetch('/api/applications')
@@ -231,14 +294,17 @@ export default function ServiceApplicationForm({
       .then((payload) => setApplications(payload?.applications || []))
       .catch(() => setApplications([]));
 
-    addToast(data.message || 'Additional documents uploaded successfully.', 'success');
+    addToast(data.message || formText.additionalUploaded, 'success');
   }
 
   if (status === 'loading') {
-    return <p className="pt-36 text-center">Loading your application…</p>;
+    return <p className="pt-36 text-center">{formText.loading}</p>;
   }
 
   const myApplications = applications.filter((application) => application.serviceType === serviceType);
+  const applicationStatuses = language === 'hi'
+    ? { Submitted: 'जमा किया गया', 'Under Review': 'समीक्षा में', 'Need Documents': 'दस्तावेज़ आवश्यक', Updated: 'अपडेट किया गया', Approved: 'स्वीकृत', Rejected: 'अस्वीकृत', Completed: 'पूर्ण' }
+    : {};
 
   return (
     <>
@@ -247,9 +313,9 @@ export default function ServiceApplicationForm({
       <form onSubmit={submit} className="space-y-4">
         {includeContactFields && (
           <div className="space-y-4 rounded border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-emerald-950/40">
-            <p className="text-sm font-semibold text-green-900 dark:text-emerald-200">Applicant details</p>
+            <p className="text-sm font-semibold text-green-900 dark:text-emerald-200">{formText.applicantDetails}</p>
             <div>
-              <label className="block text-sm font-semibold text-gray-700">Name *</label>
+              <label className="block text-sm font-semibold text-gray-700">{formText.name} *</label>
               <input
                 required
                 type="text"
@@ -259,7 +325,7 @@ export default function ServiceApplicationForm({
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700">Mobile Number *</label>
+              <label className="block text-sm font-semibold text-gray-700">{formText.mobile} *</label>
               <input
                 required
                 type="tel"
@@ -276,7 +342,7 @@ export default function ServiceApplicationForm({
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700">Email (Optional)</label>
+              <label className="block text-sm font-semibold text-gray-700">{formText.emailOptional}</label>
               <input
                 type="email"
                 value={values.applicantEmail || ''}
@@ -297,7 +363,7 @@ export default function ServiceApplicationForm({
           return (
             <div key={field.name}>
               <label className="block text-sm font-semibold text-gray-700">
-                {field.label} {field.required ? '*' : '(Optional)'}
+                {field.label} {field.required ? '*' : formText.optional}
               </label>
               {field.multiline ? (
                 <textarea
@@ -375,11 +441,11 @@ export default function ServiceApplicationForm({
 
         <div>
           <label className="block text-sm font-semibold text-gray-700">
-            Supporting documents (PDF, JPG, PNG; {requiredDocuments.length ? 'required' : 'optional'})
+            {formText.supportingDocuments.replace('{requirement}', requiredDocuments.length ? formText.required : formText.optional.trim().toLowerCase())}
           </label>
           {requiredDocuments.length > 0 && (
             <p className="mt-1 text-xs text-gray-600">
-              Upload at least one: {requiredDocuments.join(', ')}.
+              {formText.uploadAtLeastOne} {requiredDocuments.join(', ')}.
             </p>
           )}
           <input
@@ -390,7 +456,7 @@ export default function ServiceApplicationForm({
             className="mt-1 w-full rounded border p-2"
           />
           {documents.length > 0 && (
-            <p className="mt-1 text-sm text-gray-600">{documents.length} document(s) ready to upload.</p>
+            <p className="mt-1 text-sm text-gray-600">{documents.length} {formText.documentsReady}</p>
           )}
         </div>
 
@@ -401,14 +467,14 @@ export default function ServiceApplicationForm({
             disabled={savingDraft || submitting}
             className="min-h-12 rounded border border-green-700 px-4 py-2 font-semibold text-green-700 hover:bg-green-50 disabled:opacity-60"
           >
-            {savingDraft ? 'Saving draft…' : 'Save draft'}
+            {savingDraft ? formText.savingDraft : formText.saveDraft}
           </button>
           <button
             type="submit"
             disabled={submitting || savingDraft}
             className="min-h-12 rounded bg-green-700 px-4 py-2 font-semibold text-white hover:bg-green-800 disabled:opacity-60"
           >
-            {submitting ? 'Submitting…' : 'Submit application'}
+            {submitting ? formText.submitting : formText.submitApplication}
           </button>
         </div>
       </form>
@@ -425,7 +491,7 @@ export default function ServiceApplicationForm({
 
       {myApplications.length > 0 && (
         <section className="mt-8 rounded-lg border border-green-200 bg-green-50 p-4 text-gray-800 dark:border-green-900 dark:bg-emerald-950/40 dark:text-slate-100">
-          <h2 className="text-lg font-bold text-green-800">Your {serviceType.replace(/-/g, ' ')} updates</h2>
+          <h2 className="text-lg font-bold text-green-800">{formText.yourUpdates}: {serviceType.replace(/-/g, ' ')}</h2>
           <div className="mt-3 space-y-3">
             {myApplications.map((application) => (
               <article
@@ -435,13 +501,13 @@ export default function ServiceApplicationForm({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <strong>{application.applicationNumber}</strong>
                   <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
-                    {application.status}
+                    {applicationStatuses[application.status] || application.status}
                   </span>
                 </div>
 
                 {application.adminRemarks && (
                   <p className="mt-2 text-sm">
-                    <strong>Admin remark:</strong> {application.adminRemarks}
+                    <strong>{formText.adminRemark}</strong> {application.adminRemarks}
                   </p>
                 )}
 
@@ -449,7 +515,7 @@ export default function ServiceApplicationForm({
                   {application.documents?.length > 0 && (
                     <div className="rounded border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/20">
                       <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-                        Your uploaded documents
+                        {formText.uploadedDocuments}
                       </p>
                       <ul className="mt-2 list-disc pl-5 text-sm">
                         {application.documents.map((document, index) => (
@@ -459,7 +525,7 @@ export default function ServiceApplicationForm({
                               download={document.fileName}
                               className="text-emerald-700 underline dark:text-emerald-300"
                             >
-                              {document.fileName || `Document ${index + 1}`}
+                              {document.fileName || `${language === 'hi' ? 'दस्तावेज़' : 'Document'} ${index + 1}`}
                             </a>
                           </li>
                         ))}
@@ -470,7 +536,7 @@ export default function ServiceApplicationForm({
                   {application.adminDocuments?.length > 0 && (
                     <div className="rounded border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/20">
                       <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-                        Documents from Panchayat
+                        {formText.panchayatDocuments}
                       </p>
                       <ul className="mt-2 list-disc pl-5 text-sm">
                         {application.adminDocuments.map((document, index) => (
@@ -480,7 +546,7 @@ export default function ServiceApplicationForm({
                               download={document.fileName}
                               className="text-amber-700 underline dark:text-amber-300"
                             >
-                              {document.fileName || `Document ${index + 1}`}
+                              {document.fileName || `${language === 'hi' ? 'दस्तावेज़' : 'Document'} ${index + 1}`}
                             </a>
                           </li>
                         ))}

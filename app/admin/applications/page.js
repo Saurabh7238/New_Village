@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
@@ -513,10 +514,12 @@ function AdminApplicationsContent() {
   );
 }
 
-export default function AdminApplicationsPage() {
+function AdminApplicationsPage() {
   return (
     <Suspense fallback={<div className="p-8 text-center">Loading service applications...</div>}>
       <AdminApplicationsContent />
     </Suspense>
   );
 }
+
+export default withAdminTranslations(AdminApplicationsPage);

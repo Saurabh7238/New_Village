@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -80,7 +81,7 @@ const defaultSlides = [
   },
 ];
 
-export default function HomeManagementPage() {
+function HomeManagementPage() {
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -243,6 +244,7 @@ export default function HomeManagementPage() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white py-8">
@@ -519,3 +521,5 @@ export default function HomeManagementPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(HomeManagementPage);

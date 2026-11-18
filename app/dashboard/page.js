@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import RequestStatusCard from '@/components/RequestStatusCard';
@@ -14,7 +15,7 @@ const services = [
   ['other', 'Other Service'],
 ];
 
-export default function DashboardPage() {
+function DashboardPage() {
   const [user, setUser] = useState(null);
   const [byService, setByService] = useState({});
   const [byRelatedType, setByRelatedType] = useState({});
@@ -135,3 +136,5 @@ export default function DashboardPage() {
     </section>
   </div>;
 }
+
+export default withLocalizedPage(DashboardPage);

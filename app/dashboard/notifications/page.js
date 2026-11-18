@@ -1,5 +1,6 @@
 'use client';
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -18,7 +19,7 @@ function getLabel(notification) {
   return notification.serviceType.replace(/[-:]/g, ' ');
 }
 
-export default function MyNotificationsPage() {
+function MyNotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -116,3 +117,5 @@ export default function MyNotificationsPage() {
     </main>
   );
 }
+
+export default withLocalizedPage(MyNotificationsPage);

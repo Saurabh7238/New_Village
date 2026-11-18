@@ -1,9 +1,10 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function NotificationsPage() {
+function NotificationsPage() {
   const router = useRouter();
   const [notifications, setNotifications] = useState([]);
 
@@ -52,3 +53,5 @@ export default function NotificationsPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(NotificationsPage);

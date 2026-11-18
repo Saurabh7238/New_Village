@@ -1,9 +1,10 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import ServiceApplicationForm from '@/components/ServiceApplicationForm';
 import { useLanguage } from '@/app/language-provider';
 
-export default function BirthPage() {
+function BirthPage() {
   const { language } = useLanguage();
 
   const labels = {
@@ -60,3 +61,5 @@ export default function BirthPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(BirthPage);

@@ -1,12 +1,13 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme } from "@/app/theme-provider";
 import { getStatusBgClass, formatQueryDate, calculateProgressPercentage, getProgressColor, maskMobile, getTimeRemaining, getSlaDeadline, QUERY_SLA_MATRIX } from "@/lib/queryDisplay";
 
-export default function TrackPage() {
+function TrackPage() {
   const { isDark } = useTheme();
   const { status } = useSession();
   const router = useRouter();
@@ -324,3 +325,5 @@ export default function TrackPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(TrackPage);

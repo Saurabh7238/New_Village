@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useLanguage } from "@/app/language-provider";
@@ -11,7 +12,7 @@ import {
   getFundStatusColor,
 } from "@/lib/fundsDisplay";
 
-export default function FundsPage() {
+function FundsPage() {
   const { language } = useLanguage();
   const t = TRANSLATIONS.funds[language];
   const [funds, setFunds] = useState([]);
@@ -202,3 +203,5 @@ export default function FundsPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(FundsPage);

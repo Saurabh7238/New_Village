@@ -35,6 +35,29 @@ const LABELS = {
     gallery: "Gallery",
     map: "Map",
     infra: "Infra",
+    services: "Services",
+    emergency: "Emergency",
+    emergencyContacts: "Emergency contacts",
+    communityUpdates: "Community updates",
+    notifications: "Notifications",
+    noNotifications: "No notifications",
+    dashboard: "Dashboard",
+    myProfile: "My Profile",
+    loggedInAs: "Logged in as",
+    logout: "Logout",
+    logIn: "Log In",
+    signUp: "Sign Up",
+    toggleDarkMode: "Toggle dark mode",
+    largerText: "Use larger text size",
+    normalText: "Use normal text size",
+    loginRequired: "Login required",
+    loginRequiredMessage: "Please log in first to submit a request, service application, query, or suggestion.",
+    cancel: "Cancel",
+    loginNow: "Login now",
+    loadingMessage: "Please wait while we fetch your information...",
+    portal: "Portal",
+    gramPanchayat: "Gram Panchayat",
+    loading: "Loading...",
     login: "Login",
     forgotPassword: "Forgot Password",
     resetPassword: "Reset Password",
@@ -83,6 +106,29 @@ const LABELS = {
     gallery: "गैलरी",
     map: "मानचित्र",
     infra: "इंफ्रा",
+    services: "सेवाएं",
+    emergency: "आपातकाल",
+    emergencyContacts: "आपातकालीन संपर्क",
+    communityUpdates: "गांव की सूचनाएं",
+    notifications: "सूचनाएं",
+    noNotifications: "कोई सूचना नहीं",
+    dashboard: "डैशबोर्ड",
+    myProfile: "मेरी प्रोफ़ाइल",
+    loggedInAs: "लॉग इन हैं",
+    logout: "लॉग आउट",
+    logIn: "लॉग इन",
+    signUp: "साइन अप",
+    toggleDarkMode: "डार्क मोड बदलें",
+    largerText: "बड़ा टेक्स्ट उपयोग करें",
+    normalText: "सामान्य टेक्स्ट उपयोग करें",
+    loginRequired: "लॉगिन आवश्यक है",
+    loginRequiredMessage: "अनुरोध, सेवा आवेदन, प्रश्न या सुझाव भेजने के लिए पहले लॉगिन करें।",
+    cancel: "रद्द करें",
+    loginNow: "अभी लॉगिन करें",
+    loadingMessage: "कृपया प्रतीक्षा करें, आपकी जानकारी लोड हो रही है...",
+    portal: "पोर्टल",
+    gramPanchayat: "ग्राम पंचायत",
+    loading: "लोड हो रहा है...",
     login: "लॉगिन",
     forgotPassword: "पासवर्ड भूल गए",
     resetPassword: "पासवर्ड रीसेट करें",
@@ -107,22 +153,33 @@ const LABELS = {
   },
 };
 
-export function LanguageProvider({ children }) {
-  const [language, setLanguage] = useState("en");
+export function LanguageProvider({ children, initialLanguage = "en" }) {
+  const [language, setLanguage] = useState(initialLanguage === "hi" ? "hi" : "en");
+  const [languageLoaded, setLanguageLoaded] = useState(false);
 
   useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem("language") : null;
-    if (saved === "en" || saved === "hi") {
-      setLanguage(saved);
+    const hasLanguageCookie = document.cookie.split("; ").some((cookie) => cookie.startsWith("language="));
+    if (!hasLanguageCookie) {
+      try {
+        const saved = localStorage.getItem("language");
+        if (saved === "en" || saved === "hi") setLanguage(saved);
+      } catch (error) {
+        console.warn("Unable to read saved language preference:", error);
+      }
     }
+    setLanguageLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (!languageLoaded) return;
+    try {
       localStorage.setItem("language", language);
-      document.documentElement.lang = language;
+    } catch (error) {
+      console.warn("Unable to save language preference in local storage:", error);
     }
-  }, [language]);
+    document.cookie = `language=${language}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    document.documentElement.lang = language;
+  }, [language, languageLoaded]);
 
   const toggleLanguage = () => {
     setLanguage((current) => (current === "en" ? "hi" : "en"));

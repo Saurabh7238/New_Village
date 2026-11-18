@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { Suspense } from 'react';
 import EnhancedCitizenDashboard from '@/components/EnhancedCitizenDashboard';
 
@@ -16,10 +17,12 @@ function ApplicationsContent() {
   );
 }
 
-export default function MyApplicationsPage() {
+function MyApplicationsPage() {
   return (
     <Suspense fallback={<div className="p-8 text-center">Loading dashboard...</div>}>
       <ApplicationsContent />
     </Suspense>
   );
 }
+
+export default withLocalizedPage(MyApplicationsPage);

@@ -290,6 +290,15 @@ export default function HomePage() {
     en: {
       welcome: `Welcome to Gram Panchayat ${villageName}`,
       description: "Manage certificates, budget, members, development & more",
+      heroEyebrow: "Digital village services",
+      raiseRequest: "Raise a request",
+      trackRequest: "Track your request",
+      secureAccess: "Simple, secure access to Panchayat services",
+      villagePhotos: "Village photos",
+      villagePhotosScrolling: "Village photos; continuously scrolling",
+      loadingStatistics: "Loading statistics",
+      loadingNotices: "Loading notices",
+      loadingInfrastructureCount: "Loading infrastructure count",
       services: "Services",
       lang: "हिंदी",
       dark: "Dark Mode",
@@ -332,6 +341,15 @@ export default function HomePage() {
     hi: {
       welcome: `${villageNameHindi} ग्राम पंचायत पोर्टल में आपका स्वागत है`,
       description: "प्रमाणपत्र, बजट, सदस्य, विकास और अधिक प्रकाशित करें",
+      heroEyebrow: "डिजिटल ग्राम सेवाएं",
+      raiseRequest: "अनुरोध भेजें",
+      trackRequest: "अपने अनुरोध की स्थिति देखें",
+      secureAccess: "पंचायत सेवाओं तक सरल और सुरक्षित पहुंच",
+      villagePhotos: "गांव की तस्वीरें",
+      villagePhotosScrolling: "गांव की तस्वीरें; लगातार स्क्रॉल हो रही हैं",
+      loadingStatistics: "आंकड़े लोड हो रहे हैं",
+      loadingNotices: "सूचनाएं लोड हो रही हैं",
+      loadingInfrastructureCount: "बुनियादी ढांचे की संख्या लोड हो रही है",
       services: "सेवाएं",
       lang: "English",
       dark: "डार्क मोड",
@@ -439,7 +457,7 @@ export default function HomePage() {
     ? "Unavailable"
     : adminStats
       ? value
-      : <DottedSpinner size="sm" label="Loading statistics" />;
+      : <DottedSpinner size="sm" label={t.loadingStatistics} />;
   const adminMetrics = [
     { label: "Applications needing action", value: statsValue(adminStats?.metrics.actionableApplications), detail: "Awaiting admin action", tone: "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300" },
     { label: "Certificates approved", value: statsValue(adminStats?.metrics.approvedCertificates), detail: "Birth and death certificates", tone: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" },
@@ -504,7 +522,7 @@ export default function HomePage() {
             <div>
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .45 }} className="flex flex-col items-start px-5 py-8 sm:px-9 sm:py-10 lg:px-12 lg:py-14">
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[.14em] text-teal-50">
-                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />Digital village services
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />{t.heroEyebrow}
                 </span>
                 <h1 className="mt-5 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
                   {t.welcome}
@@ -514,21 +532,21 @@ export default function HomePage() {
                 </p>
                 <div className="mt-7 flex w-full flex-col gap-3 min-[420px]:w-auto min-[420px]:flex-row">
                   <Link href="/grievance" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/grievance", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-teal-900 shadow-sm transition hover:-translate-y-0.5 hover:bg-teal-50 focus-visible:outline-white">
-                    Raise a request <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    {t.raiseRequest} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                   <Link href="/track" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); return; } try { const saved = JSON.parse(localStorage.getItem("portal-visited-links") || "[]"); const next = [...new Set(["/track", ...(Array.isArray(saved) ? saved : [])])].slice(0, 20); localStorage.setItem("portal-visited-links", JSON.stringify(next)); } catch {} }} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/15 focus-visible:outline-white">
-                    Track your request <ChevronRight className="h-4 w-4" />
+                    {t.trackRequest} <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
-                <p className="mt-5 flex items-center gap-2 text-xs font-medium text-teal-50/90"><ShieldCheck className="h-4 w-4 text-emerald-200" />Simple, secure access to Panchayat services</p>
+                <p className="mt-5 flex items-center gap-2 text-xs font-medium text-teal-50/90"><ShieldCheck className="h-4 w-4 text-emerald-200" />{t.secureAccess}</p>
               </motion.div>
             </div>
           </section>
 
           <UpcomingCommunityUpdates />
 
-          {settingsLoaded && images.length > 0 && <section aria-label="Village photos" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
-            <div role="region" aria-label="Village photos; continuously scrolling" className="overflow-hidden pb-2">
+          {settingsLoaded && images.length > 0 && <section aria-label={t.villagePhotos} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+            <div role="region" aria-label={t.villagePhotosScrolling} className="overflow-hidden pb-2">
               <motion.div
                 className="flex w-max"
                 animate={{ x: ["-25%", "0%"] }}
@@ -718,7 +736,7 @@ export default function HomePage() {
               </Link>
             </div>
             {noticesLoading ? (
-              <DottedSpinner size="sm" label="Loading notices" />
+              <DottedSpinner size="sm" label={t.loadingNotices} />
             ) : noticesError ? (
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 Notices are temporarily unavailable. <Link href="/notices" className="font-semibold text-teal-800 underline dark:text-teal-300">Open the notice board</Link>.
@@ -798,7 +816,7 @@ export default function HomePage() {
                         {infrastructureLoadFailed
                           ? "Count unavailable"
                           : count === undefined
-                            ? <DottedSpinner size="sm" label="Loading infrastructure count" />
+                            ? <DottedSpinner size="sm" label={t.loadingInfrastructureCount} />
                             : `${count} ${count === 1 ? "item" : "items"}`}
                       </span>
                       <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-teal-700 dark:group-hover:text-teal-300" aria-hidden="true" />
@@ -840,7 +858,7 @@ export default function HomePage() {
                                 {infrastructureLoadFailed
                                   ? "Unavailable"
                                   : count === undefined
-                                    ? <DottedSpinner size="sm" label={`Loading ${category.hubLabel} count`} />
+                                    ? <DottedSpinner size="sm" label={t.loadingInfrastructureCount} />
                                     : `${count} ${count === 1 ? "item" : "items"}`}
                               </span>
                               <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
@@ -1156,7 +1174,7 @@ export default function HomePage() {
               <MessageCircle className="h-4 w-4" aria-hidden="true" />{t.whatsapp}
             </a>
             <Link href="/grievance" onClick={(event) => { if (authStatus !== "authenticated") { event.preventDefault(); setShowLoginWarning(true); } }} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:border-teal-500 hover:text-teal-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:text-teal-300">
-              Raise a request <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              {t.raiseRequest} <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </section>

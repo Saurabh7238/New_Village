@@ -1,4 +1,5 @@
 'use client';
+import { withAdminTranslations } from "../admin-translations";
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
@@ -12,7 +13,7 @@ function formatLogValue(value) {
   return String(value);
 }
 
-export default function AdminActivityLogPage() {
+function AdminActivityLogPage() {
   const [logs, setLogs] = useState([]);
   const [action, setAction] = useState('');
   const [entityType, setEntityType] = useState('');
@@ -43,6 +44,7 @@ export default function AdminActivityLogPage() {
     } finally {
       setLoading(false);
     }
+
   }, [action, entityType, page, user]);
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
@@ -158,3 +160,5 @@ export default function AdminActivityLogPage() {
     </main>
   );
 }
+
+export default withAdminTranslations(AdminActivityLogPage);

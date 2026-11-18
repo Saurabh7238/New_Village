@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { useLanguage } from "@/app/language-provider";
@@ -21,7 +22,7 @@ const CHIUTAHARA_BOUNDARY = [
   { lat: 25.8052, lng: 82.9276 },
 ];
 
-export default function MapPage() {
+function MapPage() {
   const { language } = useLanguage();
   const { villageName } = useSiteSettings();
   const mapElementRef = useRef(null);
@@ -132,3 +133,5 @@ export default function MapPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(MapPage);

@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useSiteSettings } from "@/app/site-settings-provider";
+import { useLanguage } from "@/app/language-provider";
 
 export default function WelcomeToast() {
   const [showToast, setShowToast] = useState(false);
   const [message, setMessage] = useState("");
   const { data: session, status } = useSession();
-  const { villageName } = useSiteSettings();
+  const { villageName, villageNameHindi } = useSiteSettings();
+  const { language } = useLanguage();
+  const localizedVillageName = language === "hi" ? villageNameHindi || villageName : villageName;
 
   const displayName =
     session?.user?.name || session?.user?.email?.split("@")[0] || null;
@@ -22,7 +25,9 @@ export default function WelcomeToast() {
 
     if (isWelcome && status === "loading") return undefined;
     if (isWelcome && status === "authenticated") {
-      setMessage(`Welcome to ${villageName} Portal, ${displayName || "there"}!`);
+      setMessage(language === "hi"
+        ? `${localizedVillageName} पोर्टल में आपका स्वागत है, ${displayName || "नमस्कार"}!`
+        : `Welcome to ${localizedVillageName} Portal, ${displayName || "there"}!`);
       setShowToast(true);
       params.delete("welcome");
       const newSearch = params.toString();
@@ -33,7 +38,7 @@ export default function WelcomeToast() {
     }
 
     if (isLogout) {
-      setMessage("You have successfully logged out.");
+      setMessage(language === "hi" ? "आप सफलतापूर्वक लॉग आउट हो गए हैं।" : "You have successfully logged out.");
       setShowToast(true);
       params.delete("logout");
       const newSearch = params.toString();
@@ -50,7 +55,7 @@ export default function WelcomeToast() {
       window.history.replaceState({}, "", newUrl);
     }
     return undefined;
-  }, [displayName, status, villageName]);
+  }, [displayName, language, status, localizedVillageName]);
 
   return (
     <AnimatePresence>

@@ -1,5 +1,6 @@
 'use client';
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -25,7 +26,7 @@ function formatNoticeDate(value) {
   });
 }
 
-export default function NoticesPage() {
+function NoticesPage() {
   const { villageName } = useSiteSettings();
   const { data: session, status: sessionStatus } = useSession();
   const [notices, setNotices] = useState([]);
@@ -479,3 +480,5 @@ export default function NoticesPage() {
     </main>
   );
 }
+
+export default withLocalizedPage(NoticesPage);

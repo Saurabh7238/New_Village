@@ -1,11 +1,12 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useToast, ToastContainer } from "@/components/Toast";
 import { FUND_STATUSES, formatFundAmount, formatFundLastUpdated } from "@/lib/fundsDisplay";
 
-export default function AdminFundsPage() {
+function AdminFundsPage() {
   const { data: session, status } = useSession();
   const [fundList, setFundList] = useState([]);
   const [fundForm, setFundForm] = useState({
@@ -264,3 +265,5 @@ export default function AdminFundsPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminFundsPage);

@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -6,7 +7,7 @@ import { useSession } from "next-auth/react";
 
 const TICKET_STATUSES = ["Open", "In Progress", "Resolved", "Closed"];
 
-export default function AdminChatTicketsPage() {
+function AdminChatTicketsPage() {
   const { data: session, status: authStatus } = useSession();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +28,7 @@ export default function AdminChatTicketsPage() {
     } finally {
       setLoading(false);
     }
+
   }, []);
 
   useEffect(() => {
@@ -109,3 +111,5 @@ export default function AdminChatTicketsPage() {
     </main>
   );
 }
+
+export default withAdminTranslations(AdminChatTicketsPage);

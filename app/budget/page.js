@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useLanguage } from "@/app/language-provider";
@@ -11,7 +12,7 @@ import {
   getStatusColor,
 } from "@/lib/budgetDisplay";
 
-export default function BudgetPage() {
+function BudgetPage() {
   const { language } = useLanguage();
   const t = TRANSLATIONS.budget[language];
   const [budgets, setBudgets] = useState([]);
@@ -259,3 +260,5 @@ export default function BudgetPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(BudgetPage);

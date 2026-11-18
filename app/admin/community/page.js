@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -41,7 +42,7 @@ function localDateTime(value) {
   return date.toISOString().slice(0, 16);
 }
 
-export default function AdminCommunityPage() {
+function AdminCommunityPage() {
   const { data: session, status } = useSession();
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +63,7 @@ export default function AdminCommunityPage() {
     } finally {
       setLoading(false);
     }
+
   }, []);
 
   useEffect(() => {
@@ -254,3 +256,5 @@ export default function AdminCommunityPage() {
     </main>
   );
 }
+
+export default withAdminTranslations(AdminCommunityPage);

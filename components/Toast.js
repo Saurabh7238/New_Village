@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AlertCircle, CheckCircle2, Info, TriangleAlert, X } from "lucide-react";
+import { useLanguage } from "@/app/language-provider";
 
 export function useToast() {
   const [toasts, setToasts] = useState([]);
@@ -28,6 +29,8 @@ export function useToast() {
 }
 
 export function ToastContainer({ toasts, removeToast, isDark }) {
+  const { language } = useLanguage();
+
   return (
     <div className="fixed left-3 right-3 top-3 z-[120] space-y-2 sm:left-auto sm:right-4 sm:top-4 sm:w-full sm:max-w-md" aria-live="polite">
       {toasts.map(toast => (
@@ -57,7 +60,7 @@ export function ToastContainer({ toasts, removeToast, isDark }) {
           <button
             onClick={() => removeToast(toast.id)}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-md hover:bg-black/5 dark:hover:bg-white/10"
-            aria-label="Dismiss notification"
+            aria-label={language === "hi" ? "सूचना हटाएं" : "Dismiss notification"}
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

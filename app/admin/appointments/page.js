@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -10,7 +11,7 @@ function dateValue(value) {
   return value ? new Date(value).toISOString().slice(0, 10) : '';
 }
 
-export default function AdminAppointmentsPage() {
+function AdminAppointmentsPage() {
   const { data: session, status: authStatus } = useSession();
   const [appointments, setAppointments] = useState([]);
   const [search, setSearch] = useState('');
@@ -40,6 +41,7 @@ export default function AdminAppointmentsPage() {
     } finally {
       setLoading(false);
     }
+
   }, [page, search, showArchived, statusFilter]);
 
   useEffect(() => {
@@ -428,3 +430,5 @@ export default function AdminAppointmentsPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminAppointmentsPage);

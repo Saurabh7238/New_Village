@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
@@ -8,7 +9,7 @@ import { maskMobile, formatQueryDate, QUERY_CATEGORIES, QUERY_STATUSES, QUERY_PR
 import { useToast, ToastContainer } from "@/components/Toast";
 import { checkSlaBreach } from "@/lib/escalationRules";
 
-export default function AdminQueriesPage() {
+function AdminQueriesPage() {
   const { isDark } = useTheme();
   const { data: session, status: authStatus } = useSession();
   const { toasts, addToast, removeToast } = useToast();
@@ -226,6 +227,7 @@ export default function AdminQueriesPage() {
       </div>
     );
   }
+
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-gray-50"} ${textClass} py-8 px-4`}>
@@ -500,3 +502,5 @@ export default function AdminQueriesPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminQueriesPage);

@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../../admin-translations";
 
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
@@ -7,7 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "@/app/theme-provider";
 import { maskMobile, formatQueryDate, getStatusBgClass, QUERY_STATUSES, QUERY_PRIORITIES } from "@/lib/queryDisplay";
 
-export default function QueryDetailPage() {
+function QueryDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { isDark } = useTheme();
@@ -159,6 +160,7 @@ export default function QueryDetailPage() {
     );
   }
 
+
   if (!query) {
     return (
       <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-gray-50"} ${textClass} py-8 px-4`}>
@@ -171,6 +173,7 @@ export default function QueryDetailPage() {
       </div>
     );
   }
+
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-gray-50"} ${textClass} py-8 px-4`}>
@@ -427,3 +430,5 @@ export default function QueryDetailPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(QueryDetailPage);

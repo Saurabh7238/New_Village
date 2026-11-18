@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -12,7 +13,7 @@ const statusStyles = {
   Closed: "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
 };
 
-export default function ChatTicketTrackPage() {
+function ChatTicketTrackPage() {
   const { status: authStatus } = useSession();
   const searchParams = useSearchParams();
   const [ticketId, setTicketId] = useState(searchParams.get("ticketId") || "");
@@ -90,3 +91,5 @@ export default function ChatTicketTrackPage() {
     </main>
   );
 }
+
+export default withLocalizedPage(ChatTicketTrackPage);

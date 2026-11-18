@@ -1,12 +1,13 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { normalizePhone } from '@/lib/phoneValidation';
 
 const fields = [['name', 'Full Name'], ['phone', 'Mobile Number'], ['email', 'Email'], ['village', 'Village'], ['ward', 'Ward Number'], ['address', 'Address']];
 
-export default function ProfilePage() {
+function ProfilePage() {
   const [form, setForm] = useState(null);
   const [savedContact, setSavedContact] = useState(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -261,3 +262,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+export default withLocalizedPage(ProfilePage);

@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -18,7 +19,7 @@ const getFriendlyAuthError = (authError) => {
   }
 };
 
-export default function LoginPage() {
+function LoginPage() {
   const { labels } = useLanguage();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -211,3 +212,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(LoginPage);

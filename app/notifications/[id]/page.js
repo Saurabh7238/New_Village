@@ -1,5 +1,6 @@
 'use client';
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -17,7 +18,7 @@ import {
   isNotificationExpired,
 } from '@/lib/notificationDisplay';
 
-export default function NotificationDetailPage() {
+function NotificationDetailPage() {
   const params = useParams();
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -195,3 +196,5 @@ export default function NotificationDetailPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(NotificationDetailPage);

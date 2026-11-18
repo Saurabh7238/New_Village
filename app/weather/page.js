@@ -1,8 +1,9 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useRef, useState } from "react";
 
-export default function WeatherPage() {
+function WeatherPage() {
   const [unit, setUnit] = useState("c");
   const containerRef = useRef(null);
 
@@ -75,3 +76,5 @@ export default function WeatherPage() {
     </main>
   );
 }
+
+export default withLocalizedPage(WeatherPage);

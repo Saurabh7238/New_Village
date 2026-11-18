@@ -6,10 +6,41 @@ import { MessageCircle, FileText, Clock, CheckCircle, AlertCircle, TrendingUp, D
 import ServiceStatusTimeline from './ServiceStatusTimeline';
 import { useSocket } from '@/app/socket-provider';
 import { normalizeApplicationsResponse, getNormalizedDocumentList } from '@/lib/applicationDocumentUtils';
+import { useLanguage } from '@/app/language-provider';
 
 export default function EnhancedCitizenDashboard() {
   const { data: session } = useSession();
   const { unreadCount, markAsRead, isConnected } = useSocket();
+  const { language } = useLanguage();
+  const isHindi = language === 'hi';
+  const locale = isHindi ? 'hi-IN' : 'en-IN';
+  const text = isHindi
+    ? {
+      loading: 'आपका डैशबोर्ड लोड हो रहा है...',
+      connection: '⚠️ रीयल-टाइम अपडेट उपलब्ध नहीं हैं - कनेक्शन बहाल होने पर आपको सूचित किया जाएगा',
+      completed: 'पूर्ण', inProgress: 'प्रगति में', needDocs: 'दस्तावेज़ आवश्यक', openQueries: 'खुले प्रश्न',
+      suggested: 'सुझाई गई सेवाएं', myApplications: 'मेरे आवेदन', all: 'सभी',
+      submitted: 'जमा किया गया', underReview: 'समीक्षा में', approved: 'स्वीकृत',
+      noApplications: 'कोई आवेदन नहीं मिला। अनुरोध सबमिट करके शुरू करें!',
+      documentHistory: 'दस्तावेज़ इतिहास', noDocuments: 'अभी कोई दस्तावेज़ नहीं',
+      messages: 'संदेश', noMessages: 'अभी कोई संदेश नहीं',
+      performance: 'आपका प्रदर्शन', completionRate: 'पूर्णता दर', averageWait: 'औसत प्रतीक्षा समय',
+      days: 'दिन', you: 'आप', admin: 'व्यवस्थापक', download: 'दस्तावेज़ डाउनलोड करें',
+      serviceTypes: { 'birth-certificate': 'जन्म प्रमाणपत्र', 'death-certificate': 'मृत्यु प्रमाणपत्र', 'aadhaar-request': 'आधार अनुरोध', 'voter-list': 'मतदाता सूची' },
+    }
+    : {
+      loading: 'Loading your dashboard...',
+      connection: "⚠️ Real-time updates unavailable - you'll be notified when connection is restored",
+      completed: 'Completed', inProgress: 'In Progress', needDocs: 'Need Docs', openQueries: 'Open Queries',
+      suggested: 'Suggested Services', myApplications: 'My Applications', all: 'All',
+      submitted: 'Submitted', underReview: 'Under Review', approved: 'Approved',
+      noApplications: 'No applications found. Start by submitting a request!',
+      documentHistory: 'Document History', noDocuments: 'No documents yet',
+      messages: 'Messages', noMessages: 'No messages yet',
+      performance: 'Your Performance', completionRate: 'Completion Rate', averageWait: 'Average Wait Time',
+      days: 'days', you: 'You', admin: 'Admin', download: 'Download document',
+      serviceTypes: {},
+    };
   const [applications, setApplications] = useState([]);
   const [queries, setQueries] = useState([]);
   const [documentHistory, setDocumentHistory] = useState([]);
@@ -48,7 +79,7 @@ export default function EnhancedCitizenDashboard() {
                 filename: doc.fileName,
                 uploadedAt: doc.uploadedAt,
                 url: doc.fileUrl,
-                uploadedBy: 'You',
+                uploadedBy: isHindi ? 'आप' : 'You',
               });
             });
 
@@ -60,7 +91,7 @@ export default function EnhancedCitizenDashboard() {
                 filename: doc.fileName,
                 uploadedAt: doc.uploadedAt,
                 url: doc.fileUrl,
-                uploadedBy: 'Admin',
+                uploadedBy: isHindi ? 'व्यवस्थापक' : 'Admin',
               });
             });
           });
@@ -97,7 +128,7 @@ export default function EnhancedCitizenDashboard() {
 
     fetchData();
     markAsRead();
-  }, [session, markAsRead]);
+  }, [isHindi, session, markAsRead]);
 
   const getStats = () => {
     const completed = applications.filter((a) => a.status === 'Completed').length;
@@ -124,7 +155,7 @@ export default function EnhancedCitizenDashboard() {
   const recommendations = getServiceRecommendations();
 
   if (loading) {
-    return <div className="text-center py-12">Loading your dashboard...</div>;
+    return <div className="text-center py-12">{text.loading}</div>;
   }
 
   const filteredApplications =
@@ -135,7 +166,7 @@ export default function EnhancedCitizenDashboard() {
       {/* Connection Status */}
       {!isConnected && (
         <div className="bg-amber-100 border border-amber-300 text-amber-800 p-3 rounded-lg">
-          ⚠️ Real-time updates unavailable - you&apos;ll be notified when connection is restored
+          {text.connection}
         </div>
       )}
 
@@ -143,25 +174,25 @@ export default function EnhancedCitizenDashboard() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <DashboardCard
           icon={CheckCircle}
-          label="Completed"
+          label={text.completed}
           value={stats.completed}
           color="green"
         />
         <DashboardCard
           icon={Clock}
-          label="In Progress"
+          label={text.inProgress}
           value={stats.pending}
           color="blue"
         />
         <DashboardCard
           icon={AlertCircle}
-          label="Need Docs"
+          label={text.needDocs}
           value={stats.needDocs}
           color="amber"
         />
         <DashboardCard
           icon={MessageCircle}
-          label="Open Queries"
+          label={text.openQueries}
           value={stats.openQueries}
           color="purple"
         />
@@ -172,7 +203,7 @@ export default function EnhancedCitizenDashboard() {
         <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900 dark:to-cyan-900 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
           <p className="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
-            Suggested Services
+            {text.suggested}
           </p>
           <div className="flex flex-wrap gap-2">
             {recommendations.map((service) => (
@@ -202,18 +233,18 @@ export default function EnhancedCitizenDashboard() {
           {/* Applications List */}
           <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">My Applications</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{text.myApplications}</h2>
               <div className="flex gap-2">
                 <select
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                   className="px-3 py-1 rounded-lg border border-slate-200 text-sm dark:border-slate-600 dark:bg-slate-700"
                 >
-                  <option value="all">All</option>
-                  <option value="Submitted">Submitted</option>
-                  <option value="Under Review">Under Review</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Completed">Completed</option>
+                  <option value="all">{text.all}</option>
+                  <option value="Submitted">{text.submitted}</option>
+                  <option value="Under Review">{text.underReview}</option>
+                  <option value="Approved">{text.approved}</option>
+                  <option value="Completed">{text.completed}</option>
                 </select>
               </div>
             </div>
@@ -232,9 +263,9 @@ export default function EnhancedCitizenDashboard() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="font-bold text-slate-900 dark:text-white capitalize">{app.serviceType || app.type}</p>
+                        <p className="font-bold text-slate-900 dark:text-white capitalize">{text.serviceTypes[app.serviceType || app.type] || (app.serviceType || app.type)}</p>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Submitted: {new Date(app.createdAt).toLocaleDateString()}
+                          {text.submitted}: {new Date(app.createdAt).toLocaleDateString(locale)}
                         </p>
                       </div>
                       <span
@@ -248,7 +279,7 @@ export default function EnhancedCitizenDashboard() {
                             : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200'
                         }`}
                       >
-                        {app.status}
+                        {app.status === 'Submitted' ? text.submitted : app.status === 'Under Review' ? text.underReview : app.status === 'Approved' ? text.approved : app.status === 'Completed' ? text.completed : app.status === 'Need Documents' ? text.needDocs : app.status}
                       </span>
                     </div>
                   </div>
@@ -256,7 +287,7 @@ export default function EnhancedCitizenDashboard() {
               </div>
             ) : (
               <p className="text-slate-600 dark:text-slate-400 text-center py-8">
-                No applications found. Start by submitting a request!
+                {text.noApplications}
               </p>
             )}
           </div>
@@ -268,7 +299,7 @@ export default function EnhancedCitizenDashboard() {
           <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Document History
+              {text.documentHistory}
             </h3>
             {documentHistory.length > 0 ? (
               <div className="space-y-2">
@@ -277,13 +308,14 @@ export default function EnhancedCitizenDashboard() {
                     <div>
                       <p className="font-medium text-slate-900 dark:text-white text-sm">{doc.filename}</p>
                       <p className="text-xs text-slate-600 dark:text-slate-400">
-                        {doc.uploadedBy} · {new Date(doc.uploadedAt).toLocaleDateString()}
+                        {doc.uploadedBy} · {new Date(doc.uploadedAt).toLocaleDateString(locale)}
                       </p>
                     </div>
                     {doc.url && (
                       <a
                         href={doc.url}
                         download
+                        aria-label={text.download}
                         className="p-2 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition"
                       >
                         <Download className="h-4 w-4" />
@@ -293,7 +325,7 @@ export default function EnhancedCitizenDashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-slate-600 dark:text-slate-400 text-center py-6">No documents yet</p>
+              <p className="text-slate-600 dark:text-slate-400 text-center py-6">{text.noDocuments}</p>
             )}
           </div>
         </div>
@@ -304,7 +336,7 @@ export default function EnhancedCitizenDashboard() {
           <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
-              Messages
+              {text.messages}
             </h3>
             {communicationHistory.length > 0 ? (
               <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -313,22 +345,22 @@ export default function EnhancedCitizenDashboard() {
                     <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{comm.title}</p>
                     <p className="text-xs text-slate-700 dark:text-slate-200 mt-1 line-clamp-2">{comm.message}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                      {new Date(comm.createdAt).toLocaleDateString()}
+                      {new Date(comm.createdAt).toLocaleDateString(locale)}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-slate-600 dark:text-slate-400 text-center py-6">No messages yet</p>
+              <p className="text-slate-600 dark:text-slate-400 text-center py-6">{text.noMessages}</p>
             )}
           </div>
 
           {/* Performance Stats */}
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
-            <h3 className="font-bold text-slate-900 dark:text-white mb-4">Your Performance</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white mb-4">{text.performance}</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span>Completion Rate</span>
+                <span>{text.completionRate}</span>
                 <span className="font-bold">
                   {applications.length > 0
                     ? Math.round((stats.completed / applications.length) * 100)
@@ -349,7 +381,7 @@ export default function EnhancedCitizenDashboard() {
                 />
               </div>
               <div className="flex justify-between pt-2">
-                <span>Average Wait Time</span>
+                <span>{text.averageWait}</span>
                 <span className="font-bold">
                   {applications.length > 0
                     ? Math.round(
@@ -361,7 +393,7 @@ export default function EnhancedCitizenDashboard() {
                         }, 0) / applications.length
                       )
                     : 0}{' '}
-                  days
+                  {text.days}
                 </span>
               </div>
             </div>

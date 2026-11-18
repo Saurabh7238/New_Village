@@ -1,9 +1,10 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import ServiceApplicationForm from '@/components/ServiceApplicationForm';
 import { useLanguage } from '@/app/language-provider';
 
-export default function DeathPage() {
+function DeathPage() {
   const { language } = useLanguage();
   const today = new Date().toISOString().split('T')[0];
 
@@ -60,3 +61,5 @@ export default function DeathPage() {
     </div>
   );
 }
+
+export default withLocalizedPage(DeathPage);

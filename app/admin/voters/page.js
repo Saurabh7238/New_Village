@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -25,7 +26,7 @@ const VOTER_TYPE_LABELS = {
   "gram-panchayat": "Gram Panchayat",
 };
 
-export default function AdminVotersPage() {
+function AdminVotersPage() {
   const { data: session, status } = useSession();
   const { language } = useLanguage();
   const [voterList, setVoterList] = useState([]);
@@ -422,6 +423,7 @@ export default function AdminVotersPage() {
     );
   }
 
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl">
@@ -789,3 +791,5 @@ export default function AdminVotersPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminVotersPage);

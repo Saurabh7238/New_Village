@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -354,7 +355,7 @@ function MemberForm({ member, onSubmit, onCancel, addToast }) {
   );
 }
 
-export default function AdminMembersPage() {
+function AdminMembersPage() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -579,3 +580,5 @@ export default function AdminMembersPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminMembersPage);

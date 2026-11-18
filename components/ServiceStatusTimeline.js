@@ -1,16 +1,19 @@
 'use client';
 
 import { CheckCircle, Clock, AlertCircle, XCircle, FileText } from 'lucide-react';
+import { useLanguage } from '@/app/language-provider';
 
 export default function ServiceStatusTimeline({ application }) {
+  const { language } = useLanguage();
+  const isHindi = language === 'hi';
   const statusSteps = [
-    { status: 'Submitted', icon: FileText, color: 'blue', desc: 'Application submitted' },
-    { status: 'Under Review', icon: Clock, color: 'amber', desc: 'Being reviewed' },
-    { status: 'Need Documents', icon: AlertCircle, color: 'purple', desc: 'Additional documents needed' },
-    { status: 'Updated', icon: FileText, color: 'cyan', desc: 'Documents updated' },
-    { status: 'Approved', icon: CheckCircle, color: 'green', desc: 'Approved' },
-    { status: 'Rejected', icon: XCircle, color: 'red', desc: 'Rejected' },
-    { status: 'Completed', icon: CheckCircle, color: 'green', desc: 'Completed' },
+    { status: 'Submitted', label: isHindi ? 'जमा किया गया' : 'Submitted', icon: FileText, color: 'blue', desc: isHindi ? 'आवेदन जमा किया गया' : 'Application submitted' },
+    { status: 'Under Review', label: isHindi ? 'समीक्षा में' : 'Under Review', icon: Clock, color: 'amber', desc: isHindi ? 'समीक्षा की जा रही है' : 'Being reviewed' },
+    { status: 'Need Documents', label: isHindi ? 'दस्तावेज़ आवश्यक' : 'Need Documents', icon: AlertCircle, color: 'purple', desc: isHindi ? 'अतिरिक्त दस्तावेज़ आवश्यक हैं' : 'Additional documents needed' },
+    { status: 'Updated', label: isHindi ? 'अपडेट किया गया' : 'Updated', icon: FileText, color: 'cyan', desc: isHindi ? 'दस्तावेज़ अपडेट किए गए' : 'Documents updated' },
+    { status: 'Approved', label: isHindi ? 'स्वीकृत' : 'Approved', icon: CheckCircle, color: 'green', desc: isHindi ? 'स्वीकृत' : 'Approved' },
+    { status: 'Rejected', label: isHindi ? 'अस्वीकृत' : 'Rejected', icon: XCircle, color: 'red', desc: isHindi ? 'अस्वीकृत' : 'Rejected' },
+    { status: 'Completed', label: isHindi ? 'पूर्ण' : 'Completed', icon: CheckCircle, color: 'green', desc: isHindi ? 'पूर्ण' : 'Completed' },
   ];
 
   const currentStatusIndex = statusSteps.findIndex((s) => s.status === application?.status);
@@ -41,7 +44,7 @@ export default function ServiceStatusTimeline({ application }) {
 
   return (
     <div className="rounded-lg bg-white p-6 dark:bg-slate-800">
-      <h3 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">Application Status Timeline</h3>
+      <h3 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">{isHindi ? 'आवेदन स्थिति की समयरेखा' : 'Application Status Timeline'}</h3>
       
       <div className="space-y-4">
         {statusSteps.map((step, idx) => {
@@ -80,13 +83,13 @@ export default function ServiceStatusTimeline({ application }) {
                 <p className={`font-bold ${isCurrent ? 'text-lg' : ''} ${
                   isCompleted || isRejected ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
                 }`}>
-                  {step.status}
+                  {step.label}
                 </p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">{step.desc}</p>
                 
                 {isCurrent && (
                   <div className="mt-2 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    Current Status
+                    {isHindi ? 'वर्तमान स्थिति' : 'Current Status'}
                   </div>
                 )}
               </div>
@@ -98,19 +101,19 @@ export default function ServiceStatusTimeline({ application }) {
       {/* Key Info */}
       <div className="mt-6 grid grid-cols-2 gap-4 rounded-lg bg-slate-50 p-4 dark:bg-slate-700 sm:grid-cols-3">
         <div>
-          <p className="text-xs text-slate-600 dark:text-slate-400">Submitted</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{isHindi ? 'जमा किया गया' : 'Submitted'}</p>
           <p className="font-bold text-slate-900 dark:text-white">
-            {new Date(application?.createdAt).toLocaleDateString()}
+            {new Date(application?.createdAt).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN')}
           </p>
         </div>
         <div>
-          <p className="text-xs text-slate-600 dark:text-slate-400">Last Updated</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{isHindi ? 'अंतिम अपडेट' : 'Last Updated'}</p>
           <p className="font-bold text-slate-900 dark:text-white">
-            {new Date(application?.updatedAt).toLocaleDateString()}
+            {new Date(application?.updatedAt).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN')}
           </p>
         </div>
         <div>
-          <p className="text-xs text-slate-600 dark:text-slate-400">Days Pending</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{isHindi ? 'लंबित दिन' : 'Days Pending'}</p>
           <p className="font-bold text-slate-900 dark:text-white">
             {Math.floor((new Date() - new Date(application?.createdAt)) / (1000 * 60 * 60 * 24))}
           </p>
@@ -120,7 +123,7 @@ export default function ServiceStatusTimeline({ application }) {
       {/* Admin Remarks */}
       {application?.adminRemarks && (
         <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-700">
-          <p className="font-bold text-slate-900 dark:text-white">Admin Remarks</p>
+          <p className="font-bold text-slate-900 dark:text-white">{isHindi ? 'व्यवस्थापक की टिप्पणी' : 'Admin Remarks'}</p>
           <p className="mt-2 text-slate-700 dark:text-slate-300">{application.adminRemarks}</p>
         </div>
       )}

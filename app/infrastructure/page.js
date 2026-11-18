@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -42,7 +43,7 @@ const TYPE_ICONS = {
   Other: FaEllipsisH,
 };
 
-export default function InfrastructurePage() {
+function InfrastructurePage() {
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -128,3 +129,5 @@ export default function InfrastructurePage() {
     </div>
   );
 }
+
+export default withLocalizedPage(InfrastructurePage);

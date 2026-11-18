@@ -34,7 +34,8 @@ export default function Header() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { labels: langLabels, language, toggleLanguage } = useLanguage();
-  const { villageName, sloganEnabled, slogan, sloganHindi, branding: siteBranding } = useSiteSettings();
+  const { villageName, villageNameHindi, sloganEnabled, slogan, sloganHindi, branding: siteBranding } = useSiteSettings();
+  const localizedVillageName = language === "hi" ? villageNameHindi || villageName : villageName;
 
   const displayName =
     session?.user?.name ||
@@ -224,17 +225,17 @@ export default function Header() {
     [langLabels.gallery, "/gallery"],
     [langLabels.map, "/map"],
     [langLabels.infra, "/infrastructure"],
-    ["Emergency Contacts", "/emergency"],
-    [language === "hi" ? "गांव की सूचनाएं" : "Community updates", "/community"],
+    [langLabels.emergencyContacts, "/emergency"],
+    [langLabels.communityUpdates, "/community"],
   ];
 
   const navItems = [
     [langLabels.home, "/"],
-    ["Services", null, serviceItems],
+    [langLabels.services, null, serviceItems],
   ];
 
   if (session?.user?.role === "admin") {
-    navItems.push(["Admin Panel", "/admin"]);
+    navItems.push([langLabels.adminPanel, "/admin"]);
   }
 
   const baseClass = "fixed inset-x-0 top-0 z-[100] w-full transition-colors duration-300";
@@ -268,6 +269,11 @@ export default function Header() {
     acc[type] = visibleNotifications.filter((item) => (item.type || item.category || "").toLowerCase() === type).length;
     return acc;
   }, { message: 0, circular: 0, order: 0 });
+  const notificationTypeLabels = {
+    message: language === "hi" ? "संदेश" : "Message",
+    circular: language === "hi" ? "परिपत्र" : "Circular",
+    order: language === "hi" ? "आदेश" : "Order",
+  };
 
   const notificationTypeStyles = {
     message: {
@@ -302,7 +308,7 @@ export default function Header() {
           <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/90 shadow-md shadow-black/10 ring-2 ring-white/20 sm:h-12 sm:w-12">
             <Image
               src={siteBranding.darkLogo?.url || siteBranding.logo?.url || '/api/site-assets/logo'}
-              alt={`${villageName} Heritage Village logo`}
+              alt={`${localizedVillageName} ${language === "hi" ? "विरासत ग्राम का लोगो" : "Heritage Village logo"}`}
               fill
               sizes="(max-width: 640px) 40px, 48px"
               unoptimized
@@ -311,8 +317,8 @@ export default function Header() {
             />
           </span>
           <span className="min-w-0 leading-none text-white">
-            <span className="block truncate text-sm font-extrabold tracking-wide text-white sm:text-lg">{villageName}</span>
-            <span className="mt-0.5 block truncate text-[10px] font-semibold tracking-[0.2em] text-yellow-200 uppercase sm:text-[11px]">Portal</span>
+            <span className="block truncate text-sm font-extrabold tracking-wide text-white sm:text-lg">{localizedVillageName}</span>
+            <span className="mt-0.5 block truncate text-[10px] font-semibold tracking-[0.2em] text-yellow-200 uppercase sm:text-[11px]">{langLabels.portal}</span>
           </span>
         </Link>
 
@@ -321,16 +327,16 @@ export default function Header() {
           <Link
             href="/emergency"
             className="grid h-9 w-9 place-items-center rounded-md bg-red-600 text-white shadow transition hover:scale-105 hover:bg-red-700 sm:h-10 sm:w-auto sm:px-3"
-            aria-label="Emergency contacts"
-            title="Emergency contacts"
+            aria-label={langLabels.emergencyContacts}
+            title={langLabels.emergencyContacts}
           >
             <Phone className="h-4 w-4" aria-hidden="true" />
-            <span className="ml-1.5 hidden text-sm font-bold sm:inline">Emergency</span>
+            <span className="ml-1.5 hidden text-sm font-bold sm:inline">{langLabels.emergency}</span>
           </Link>
           <button
             onClick={toggleLargeText}
             className="grid h-9 w-9 place-items-center rounded-md bg-white text-sm font-bold text-teal-800 shadow transition hover:bg-teal-50 sm:h-10 sm:w-10"
-            aria-label={largeText ? "Use normal text size" : "Use larger text size"}
+            aria-label={largeText ? langLabels.normalText : langLabels.largerText}
             aria-pressed={largeText}
           >
             A+
@@ -346,7 +352,7 @@ export default function Header() {
           <button
             onClick={toggleDarkMode}
             className="grid h-9 w-9 place-items-center rounded-md bg-white text-teal-800 shadow transition hover:bg-teal-50 sm:h-10 sm:w-10"
-            aria-label="Toggle dark mode"
+            aria-label={langLabels.toggleDarkMode}
           >
             {darkMode ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
           </button>
@@ -357,7 +363,7 @@ export default function Header() {
                 setShowNotifications((current) => !current);
               }}
               className="relative grid h-9 w-9 place-items-center rounded-md bg-white text-teal-800 shadow transition hover:bg-teal-50 sm:h-10 sm:w-10"
-              aria-label="Notifications"
+              aria-label={langLabels.notifications}
               aria-expanded={showNotifications}
             >
               <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -369,14 +375,14 @@ export default function Header() {
             </button>
             {showNotifications && (
               <div className="absolute right-0 top-full z-[60] mt-3 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-800 shadow-xl dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-                <div className="border-b border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">Notifications</div>
+                <div className="border-b border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">{langLabels.notifications}</div>
                 <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/60">
                   {Object.entries(notificationTypeCounts).map(([type, count]) => (
                     <span
                       key={type}
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${notificationTypeStyles[type]?.badge || "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"}`}
                     >
-                      <span>{TYPE_LABELS[type] || type}</span>
+                      <span>{notificationTypeLabels[type] || TYPE_LABELS[type] || type}</span>
                       <span className={`rounded-full px-1.5 text-[9px] text-white ${notificationTypeStyles[type]?.dot || "bg-emerald-600"}`}>
                         {count}
                       </span>
@@ -418,7 +424,7 @@ export default function Header() {
                       </button>
                     </li>
                   )) : (
-                    <li className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">No notifications</li>
+                    <li className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{langLabels.noNotifications}</li>
                   )}
                 </ul>
               </div>
@@ -534,16 +540,16 @@ export default function Header() {
                   <>
                     <li>
                       <Link href="/dashboard" className={`${menuItemBaseClass} ${pathname === "/dashboard" ? menuItemActiveClass : visitedLinks.includes("/dashboard") ? menuItemVisitedClass : menuItemInactiveClass}`} onClick={() => { markVisited("/dashboard"); setOpen(false); }}>
-                        Dashboard
+                        {langLabels.dashboard}
                       </Link>
                     </li>
                     <li>
                       <Link href="/dashboard/profile" className={`${menuItemBaseClass} ${pathname === "/dashboard/profile" ? menuItemActiveClass : visitedLinks.includes("/dashboard/profile") ? menuItemVisitedClass : menuItemInactiveClass}`} onClick={() => { markVisited("/dashboard/profile"); setOpen(false); }}>
-                        My Profile
+                        {langLabels.myProfile}
                       </Link>
                     </li>
                     <li className="rounded-2xl bg-slate-100 px-5 py-4 text-sm font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-100">
-                      Logged in as {displayName}
+                      {langLabels.loggedInAs} {displayName}
                     </li>
                     <li>
                       <button
@@ -553,7 +559,7 @@ export default function Header() {
                         }}
                         className={`${menuItemBaseClass} bg-slate-100 text-red-700 hover:bg-red-50 hover:text-red-800 dark:bg-slate-700 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200`}
                       >
-                        Logout
+                        {langLabels.logout}
                       </button>
                     </li>
                   </>
@@ -564,14 +570,14 @@ export default function Header() {
                       className="flex flex-1 items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-100 dark:bg-gray-900 dark:text-green-100 dark:hover:bg-green-800"
                       onClick={() => setOpen(false)}
                     >
-                      Log In
+                      {langLabels.logIn}
                     </Link>
                     <Link
                       href="/register"
                       className="flex flex-1 items-center justify-center rounded-md bg-green-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800"
                       onClick={() => setOpen(false)}
                     >
-                      Sign Up
+                      {langLabels.signUp}
                     </Link>
                   </li>
                   )}

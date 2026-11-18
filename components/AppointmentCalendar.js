@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useLanguage } from '@/app/language-provider';
 
 export default function AppointmentCalendar() {
+  const { language } = useLanguage();
+  const isHindi = language === 'hi';
+  const locale = isHindi ? 'hi-IN' : 'en-IN';
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -68,7 +72,10 @@ export default function AppointmentCalendar() {
     days.push(i);
   }
 
-  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const monthName = currentDate.toLocaleString(locale, { month: 'long', year: 'numeric' });
+  const weekdays = Array.from({ length: 7 }, (_, index) =>
+    new Date(2024, 0, 7 + index).toLocaleDateString(locale, { weekday: 'short' })
+  );
 
   return (
     <div className="rounded-lg bg-white p-6 dark:bg-slate-800">
@@ -78,12 +85,14 @@ export default function AppointmentCalendar() {
           <div className="flex gap-2">
             <button
               onClick={prevMonth}
+              aria-label={isHindi ? 'पिछला महीना' : 'Previous month'}
               className="rounded bg-slate-200 p-2 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={nextMonth}
+              aria-label={isHindi ? 'अगला महीना' : 'Next month'}
               className="rounded bg-slate-200 p-2 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600"
             >
               <ChevronRight className="h-5 w-5" />
@@ -94,7 +103,7 @@ export default function AppointmentCalendar() {
 
       <div className="grid grid-cols-7 gap-1">
         {/* Day headers */}
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+        {weekdays.map((day) => (
           <div key={day} className="bg-slate-100 p-2 text-center font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-300">
             {day}
           </div>
@@ -137,7 +146,7 @@ export default function AppointmentCalendar() {
                     ))}
                     {dayAppointments.length > 2 && (
                       <div className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                        +{dayAppointments.length - 2} more
+                        +{dayAppointments.length - 2} {isHindi ? 'और' : 'more'}
                       </div>
                     )}
                   </div>
@@ -152,7 +161,7 @@ export default function AppointmentCalendar() {
       {selectedDay && (
         <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-700">
           <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">
-            Appointments for {currentDate.toLocaleString('default', { month: 'long' })} {selectedDay}
+            {isHindi ? 'अपॉइंटमेंट' : 'Appointments'} {isHindi ? 'के लिए' : 'for'} {currentDate.toLocaleString(locale, { month: 'long' })} {selectedDay}
           </h3>
           {getAppointmentsForDay(selectedDay).length > 0 ? (
             <div className="space-y-2">
@@ -175,7 +184,7 @@ export default function AppointmentCalendar() {
                           : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200'
                       }`}
                     >
-                      {apt.status}
+                      {isHindi && apt.status === 'Approved' ? 'स्वीकृत' : isHindi && apt.status === 'Pending' ? 'लंबित' : apt.status}
                     </span>
                   </div>
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -185,7 +194,7 @@ export default function AppointmentCalendar() {
               ))}
             </div>
           ) : (
-            <p className="text-slate-600 dark:text-slate-400">No appointments scheduled for this day</p>
+            <p className="text-slate-600 dark:text-slate-400">{isHindi ? 'इस दिन के लिए कोई अपॉइंटमेंट निर्धारित नहीं है।' : 'No appointments scheduled for this day'}</p>
           )}
         </div>
       )}

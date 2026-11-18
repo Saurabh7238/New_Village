@@ -1,5 +1,6 @@
 "use client";
 
+import { withLocalizedPage } from "@/app/localized-page";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,7 +10,7 @@ import { QUERY_CATEGORIES } from "@/lib/queryDisplay";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { useToast, ToastContainer } from "@/components/Toast";
 
-export default function GrievancePage() {
+function GrievancePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
@@ -198,3 +199,5 @@ export default function GrievancePage() {
     </div>
   );
 }
+
+export default withLocalizedPage(GrievancePage);

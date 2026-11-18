@@ -1,4 +1,5 @@
 "use client";
+import { withAdminTranslations } from "../admin-translations";
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -6,7 +7,7 @@ import Link from "next/link";
 import { useToast, ToastContainer } from "@/components/Toast";
 import { BUDGET_STATUSES, formatBudgetAmount, formatLastUpdated } from "@/lib/budgetDisplay";
 
-export default function AdminBudgetPage() {
+function AdminBudgetPage() {
   const { data: session, status } = useSession();
   const [budgetList, setBudgetList] = useState([]);
   const [budgetForm, setBudgetForm] = useState({
@@ -35,6 +36,7 @@ export default function AdminBudgetPage() {
       addToast("Please upload PDF only.", "error");
       return;
     }
+
     if (file.size > 10 * 1024 * 1024) {
       addToast("PDF too large (max 10MB).", "error");
       return;
@@ -280,3 +282,5 @@ export default function AdminBudgetPage() {
     </div>
   );
 }
+
+export default withAdminTranslations(AdminBudgetPage);
