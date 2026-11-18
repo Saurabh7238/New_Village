@@ -1,3 +1,5 @@
+"use client";
+
 import DottedSpinner from "@/components/DottedSpinner";
 import { useLanguage } from "@/app/language-provider";
 
