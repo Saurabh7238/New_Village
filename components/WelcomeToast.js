@@ -65,7 +65,7 @@ export default function WelcomeToast() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.25 }}
-          className="mx-auto max-w-6xl px-4 py-4 text-center text-sm font-semibold text-green-900 bg-white/95 dark:bg-gray-900/95 dark:text-green-100 border-b border-green-200 dark:border-green-800"
+          className="mx-auto mb-10 max-w-6xl px-4 py-4 text-center text-sm font-semibold text-green-900 bg-white/95 dark:bg-gray-900/95 dark:text-green-100 border-b border-green-200 dark:border-green-800"
         >
           {message}
         </motion.div>
