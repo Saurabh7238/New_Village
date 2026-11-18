@@ -543,8 +543,6 @@ export default function HomePage() {
             </div>
           </section>
 
-          <UpcomingCommunityUpdates />
-
           {settingsLoaded && images.length > 0 && <section aria-label={t.villagePhotos} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div role="region" aria-label={t.villagePhotosScrolling} className="overflow-hidden pb-2">
               <motion.div
@@ -564,6 +562,8 @@ export default function HomePage() {
               </motion.div>
             </div>
           </section>}
+
+          <UpcomingCommunityUpdates />
 
           <section aria-labelledby="governance-updates-heading" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div className="mb-4">
