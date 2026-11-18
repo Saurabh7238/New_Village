@@ -8,6 +8,7 @@ import PwaRegistration from "../components/PwaRegistration";
 import SiteFooter from "../components/SiteFooter";
 import { LanguageProvider } from "./language-provider";
 import { SiteSettingsProvider } from "./site-settings-provider";
+import { DataSaverProvider } from "./data-saver-provider";
 
 export const metadata = {
   metadataBase: new URL("https://www.grampanchayatchiutahara.online"),
@@ -88,6 +89,7 @@ export default function RootLayout({ children }) {
                 if (isDark) document.documentElement.classList.add('dark');
                 if (localStorage.getItem('text-size-large') === 'true') document.documentElement.classList.add('text-size-large');
                 if (localStorage.getItem('high-contrast') === 'true') document.documentElement.classList.add('high-contrast');
+                if (localStorage.getItem('data-saver') === 'true') document.documentElement.classList.add('data-saver');
               } catch (e) {}
             `,
           }}
@@ -97,6 +99,7 @@ export default function RootLayout({ children }) {
         <Providers>
           <LanguageProvider>
             <SiteSettingsProvider>
+            <DataSaverProvider>
             <noscript>
               <div className="bg-red-100 text-red-700 text-center p-2 text-sm">
                 This site works best with JavaScript enabled.
@@ -111,6 +114,7 @@ export default function RootLayout({ children }) {
             <ScrollToTopButton />
             <ChatWidget />
             <SiteFooter />
+            </DataSaverProvider>
             </SiteSettingsProvider>
           </LanguageProvider>
         </Providers>

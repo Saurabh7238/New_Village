@@ -10,7 +10,9 @@ import { Bell, Moon, Sun, Phone, Contrast, Menu as MenuIcon, X } from "lucide-re
 import WeatherBadge from "./WeatherBadge";
 import { useLanguage } from "@/app/language-provider";
 import { useSiteSettings } from "@/app/site-settings-provider";
+import { useDataSaver } from "@/app/data-saver-provider";
 import { GREETING_CATEGORIES, TYPE_LABELS } from "@/lib/notificationConstants";
+import VoiceNavigator from "./VoiceNavigator";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -35,6 +37,7 @@ export default function Header() {
   const { data: session, status } = useSession();
   const { labels: langLabels, language, toggleLanguage } = useLanguage();
   const { villageName, sloganEnabled, slogan, sloganHindi, branding: siteBranding } = useSiteSettings();
+  const { enabled: dataSaverEnabled, toggle: toggleDataSaver } = useDataSaver();
 
   const displayName =
     session?.user?.name ||
@@ -225,6 +228,7 @@ export default function Header() {
     [langLabels.map, "/map"],
     [langLabels.infra, "/infrastructure"],
     ["Emergency Contacts", "/emergency"],
+    [language === "hi" ? "गांव की सूचनाएं" : "Community updates", "/community"],
   ];
 
   const navItems = [
@@ -528,6 +532,18 @@ export default function Header() {
                       </span>
                     </button>
                   </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={toggleDataSaver}
+                      aria-pressed={dataSaverEnabled}
+                      className="flex min-h-10 w-full items-center justify-between rounded-lg bg-slate-100 px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-emerald-50 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-emerald-950/60"
+                    >
+                      <span>{language === "hi" ? "कम डेटा मोड" : "Low-data mode"}</span>
+                      <span>{dataSaverEnabled ? (language === "hi" ? "चालू" : "On") : (language === "hi" ? "बंद" : "Off")}</span>
+                    </button>
+                  </li>
+                  <VoiceNavigator />
 
                   {status === "authenticated" && session ? (
                   <>

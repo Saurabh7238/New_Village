@@ -12,6 +12,7 @@ import LoginRequiredModal from "@/components/LoginRequiredModal";
 import DottedSpinner from "@/components/DottedSpinner";
 import { useLanguage } from "@/app/language-provider";
 import { useSiteSettings } from "@/app/site-settings-provider";
+import { useDataSaver } from "@/app/data-saver-provider";
 import { sanitizePublicReviews } from "@/lib/reviewVisibility";
 import { getInfraCategoryByType, INFRA_CATEGORIES } from "@/lib/infrastructureDisplay";
 import { DEFAULT_VILLAGE_PROFILE } from "@/lib/villageProfile";
@@ -40,6 +41,7 @@ const DEFAULT_SLIDES = [
 
 export default function HomePage() {
   const { language } = useLanguage();
+  const { enabled: dataSaverEnabled } = useDataSaver();
   const { villageName, villageNameHindi, homeSettings: savedHomeSettings, settingsLoaded } = useSiteSettings();
   const { status: authStatus } = useSession();
   const reduceMotion = useReducedMotion();
@@ -393,6 +395,7 @@ export default function HomePage() {
         alt={slide.alt || `${villageName} village highlight ${index + 1}`}
         fill
         sizes="(max-width: 640px) 78vw, 18rem"
+        quality={dataSaverEnabled ? 40 : 75}
         priority={!duplicate && index === 0}
         className="object-cover transition-transform duration-300 group-hover:scale-105"
       />
@@ -528,10 +531,10 @@ export default function HomePage() {
             <div role="region" aria-label="Village photos; continuously scrolling" className="overflow-hidden pb-2">
               <motion.div
                 className="flex w-max"
-                animate={{ x: ["-25%", "0%"] }}
-                transition={{ duration: 30, ease: "linear", repeat: Infinity }}
+                animate={dataSaverEnabled ? undefined : { x: ["-25%", "0%"] }}
+                transition={dataSaverEnabled ? { duration: 0 } : { duration: 30, ease: "linear", repeat: Infinity }}
               >
-                {Array.from({ length: 4 }, (_, groupIndex) => (
+                {Array.from({ length: dataSaverEnabled ? 1 : 4 }, (_, groupIndex) => (
                   <div
                     key={`slide-group-${groupIndex}`}
                     aria-hidden={groupIndex > 0 ? "true" : undefined}
