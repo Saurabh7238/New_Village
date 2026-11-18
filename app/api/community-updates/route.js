@@ -6,8 +6,9 @@ import CommunityUpdate from '@/models/CommunityUpdate';
 
 export const runtime = 'nodejs';
 
-const KINDS = ['facility', 'camp', 'outage', 'lost-found'];
-const PUBLIC_FIELDS = 'kind title description location schedule startsAt endsAt status isLost createdAt';
+const KINDS = ['facility', 'camp', 'outage', 'lost-found', 'meeting', 'event'];
+const SCHEDULED_KINDS = ['camp', 'meeting', 'event'];
+const PUBLIC_FIELDS = 'kind title description location schedule startsAt endsAt status isLost views createdAt';
 
 function cleanText(value, maxLength) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
@@ -27,6 +28,9 @@ function normalizePayload(payload) {
   }
   if ((startsAt && Number.isNaN(startsAt.getTime())) || (endsAt && Number.isNaN(endsAt.getTime()))) {
     return { error: 'Enter valid start and end dates.' };
+  }
+  if (SCHEDULED_KINDS.includes(kind) && !startsAt) {
+    return { error: 'A start date and time is required for meetings, camps, and events.' };
   }
   if (startsAt && endsAt && endsAt < startsAt) {
     return { error: 'The end date must be after the start date.' };
@@ -50,6 +54,7 @@ export async function GET(request) {
   try {
     await dbConnect();
     const wantsAdmin = new URL(request.url).searchParams.get('admin') === 'true';
+    const wantsScheduled = new URL(request.url).searchParams.get('scheduled') === 'true';
     const adminSession = wantsAdmin ? await requireAdminSession() : null;
     if (wantsAdmin && !adminSession) {
       return NextResponse.json({ message: 'Admin access required.' }, { status: 403 });
@@ -58,7 +63,14 @@ export async function GET(request) {
     const now = new Date();
     const query = adminSession
       ? {}
-      : {
+      : wantsScheduled
+        ? {
+            status: 'published',
+            kind: { $in: SCHEDULED_KINDS },
+            startsAt: { $gte: now },
+            $or: [{ endsAt: { $exists: false } }, { endsAt: null }, { endsAt: { $gte: now } }],
+          }
+        : {
           status: 'published',
           $or: [{ endsAt: { $exists: false } }, { endsAt: null }, { endsAt: { $gte: now } }],
         };
@@ -70,6 +82,7 @@ export async function GET(request) {
       updates: updates.map((item) => ({
         ...item,
         id: item._id.toString(),
+        views: Number.isSafeInteger(item.views) ? item.views : null,
         ...(adminSession ? {} : { reporterName: undefined, reporterContact: undefined, _id: undefined }),
       })),
     }, { headers: { 'Cache-Control': adminSession ? 'no-store' : 'public, max-age=60, stale-while-revalidate=300' } });

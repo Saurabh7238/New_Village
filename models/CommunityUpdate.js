@@ -4,7 +4,7 @@ const CommunityUpdateSchema = new mongoose.Schema(
   {
     kind: {
       type: String,
-      enum: ['facility', 'camp', 'outage', 'lost-found'],
+      enum: ['facility', 'camp', 'outage', 'lost-found', 'meeting', 'event'],
       required: true,
     },
     title: { type: String, required: true, maxlength: 120, trim: true },
@@ -20,6 +20,7 @@ const CommunityUpdateSchema = new mongoose.Schema(
       index: true,
     },
     isLost: { type: Boolean, default: false },
+    views: { type: Number, default: 0, min: 0 },
     reporterName: { type: String, default: '', maxlength: 100, trim: true },
     reporterContact: { type: String, default: '', maxlength: 100, trim: true },
     createdBy: { type: String, default: '' },

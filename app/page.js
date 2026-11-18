@@ -15,6 +15,7 @@ import { useSiteSettings } from "@/app/site-settings-provider";
 import { sanitizePublicReviews } from "@/lib/reviewVisibility";
 import { getInfraCategoryByType, INFRA_CATEGORIES } from "@/lib/infrastructureDisplay";
 import { DEFAULT_VILLAGE_PROFILE } from "@/lib/villageProfile";
+import UpcomingCommunityUpdates from "@/components/UpcomingCommunityUpdates";
 
 const INFRA_TYPE_ICONS = {
   Road: Route,
@@ -523,6 +524,8 @@ export default function HomePage() {
               </motion.div>
             </div>
           </section>
+
+          <UpcomingCommunityUpdates />
 
           {settingsLoaded && images.length > 0 && <section aria-label="Village photos" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
             <div role="region" aria-label="Village photos; continuously scrolling" className="overflow-hidden pb-2">

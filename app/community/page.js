@@ -3,21 +3,16 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/app/language-provider";
+import CommunityUpdateCard from "@/components/CommunityUpdateCard";
 
 const KIND_LABELS = {
   facility: ["Facility hours & closures", "सुविधा समय और बंद होने की सूचना"],
+  meeting: ["Meetings", "बैठकें"],
   camp: ["Health & agriculture camps", "स्वास्थ्य और कृषि शिविर"],
+  event: ["Events", "कार्यक्रम"],
   outage: ["Service outages", "सेवा बाधित होने की सूचना"],
   "lost-found": ["Lost & found", "खोया-पाया"],
 };
-
-function formatDate(value, language) {
-  if (!value) return "";
-  return new Intl.DateTimeFormat(language === "hi" ? "hi-IN" : "en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 export default function CommunityPage() {
   const { language } = useLanguage();
@@ -152,26 +147,17 @@ export default function CommunityPage() {
         <div className="grid gap-5 md:grid-cols-2">
           {Object.entries(KIND_LABELS).map(([kind, labels]) => (
             <section key={kind} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-              <h2 className="text-xl font-bold">{language === "hi" ? labels[1] : labels[0]}</h2>
+                  <h2 className="flex items-center justify-between gap-2 text-xl font-bold">
+                    {language === "hi" ? labels[1] : labels[0]}
+                    <span className="rounded-full bg-teal-700 px-2.5 py-0.5 text-sm text-white">{groupedUpdates[kind].length}</span>
+                  </h2>
               {groupedUpdates[kind].length ? (
                 <ul className="mt-4 space-y-3">
                   {groupedUpdates[kind].map((item) => (
-                    <li key={item.id} className="rounded-lg border border-slate-100 p-4 dark:border-slate-700">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <h3 className="font-bold">{kind === "lost-found" ? `${item.isLost ? text.lost : text.found}: ` : ""}{item.title}</h3>
-                        {(item.startsAt || item.endsAt) && (
-                          <time className="text-xs text-slate-500 dark:text-slate-400" dateTime={item.startsAt || item.endsAt}>
-                            {formatDate(item.startsAt || item.endsAt, language)}
-                          </time>
-                        )}
-                      </div>
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">{item.description}</p>
-                      {item.location && <p className="mt-2 text-sm"><strong>{text.where}:</strong> {item.location}</p>}
-                      {item.schedule && <p className="mt-1 text-sm"><strong>{text.schedule}:</strong> {item.schedule}</p>}
-                      {item.endsAt && new Date(item.endsAt) < new Date() && (
-                        <p className="mt-2 text-xs font-semibold text-slate-500">{text.closed}</p>
-                      )}
-                    </li>
+                        <li key={item.id}>
+                          {kind === "lost-found" && <p className="mb-1 text-xs font-semibold">{item.isLost ? text.lost : text.found}</p>}
+                          <CommunityUpdateCard item={item} language={language} />
+                        </li>
                   ))}
                 </ul>
               ) : (

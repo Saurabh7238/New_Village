@@ -5,17 +5,23 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
 const KINDS = [
+  ["meeting", "Meeting"],
   ["facility", "Facility hours or closure"],
   ["camp", "Health or agriculture camp"],
+  ["event", "Event"],
   ["outage", "Service outage"],
 ];
 
 const KIND_LABELS = {
+  meeting: "Meeting",
   facility: "Facility",
   camp: "Camp",
+  event: "Event",
   outage: "Service outage",
   "lost-found": "Lost & found",
 };
+
+const SCHEDULED_KINDS = ["meeting", "camp", "event"];
 
 const EMPTY_FORM = {
   kind: "facility",
@@ -190,8 +196,8 @@ export default function AdminCommunityPage() {
             <input maxLength={300} value={form.schedule} onChange={(event) => setForm((current) => ({ ...current, schedule: event.target.value }))} placeholder="e.g. Mon–Fri, 9 AM–5 PM" className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 dark:border-slate-600 dark:bg-slate-800" />
           </label>
           <label className="text-sm font-semibold">
-            Starts (optional)
-            <input type="datetime-local" value={form.startsAt} onChange={(event) => setForm((current) => ({ ...current, startsAt: event.target.value }))} className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 dark:border-slate-600 dark:bg-slate-800" />
+            {SCHEDULED_KINDS.includes(form.kind) ? "Starts (required)" : "Starts (optional)"}
+            <input required={SCHEDULED_KINDS.includes(form.kind)} type="datetime-local" value={form.startsAt} onChange={(event) => setForm((current) => ({ ...current, startsAt: event.target.value }))} className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 dark:border-slate-600 dark:bg-slate-800" />
           </label>
           <label className="text-sm font-semibold">
             Ends (optional)
@@ -233,10 +239,10 @@ export default function AdminCommunityPage() {
               <li key={item.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
                 <div>
                   <p className="font-semibold">{KIND_LABELS[item.kind]} · {item.title}</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">{item.status} · {item.location || "No location"}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">{item.status} · {item.location || "No location"} · {Number.isSafeInteger(item.views) ? item.views : "Unknown"} views</p>
                 </div>
                 <div className="flex gap-2">
-                  {["facility", "camp", "outage"].includes(item.kind) && <button onClick={() => editListing(item)} className="rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600">Edit</button>}
+                  {["facility", "camp", "outage", "meeting", "event"].includes(item.kind) && <button onClick={() => editListing(item)} className="rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600">Edit</button>}
                   {item.status === "published" && <button onClick={() => updateStatus(item, "resolved")} className="rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600">Mark resolved</button>}
                   <button onClick={() => removeListing(item)} className="rounded border border-red-300 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:text-red-300">Delete</button>
                 </div>
